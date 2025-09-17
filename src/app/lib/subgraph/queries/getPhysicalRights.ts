@@ -3,11 +3,12 @@ import { graphFGOFuturesClient } from "../clients/graphql";
 import { getCoreContractAddresses, getCurrentNetwork } from "../../constants";
 
 const PHYSICAL_RIGHTS_BUYER = `
-query($buyer: String!, $holderEscrow: String!) {
-  physicalRights_collection(orderBy: blockTimestamp, orderDirection: desc, where: { buyer: $buyer, holder_not: $holderEscrow }) {
+query($originalBuyer: String!, $first: Int!, $skip: Int!) {
+  physicalRights_collection(where: { and: [{holder: $originalBuyer},{originalBuyer: $originalBuyer}] }, first: $first, skip: $skip) {
     childId
     orderId
     buyer
+    originalBuyer
     holder
     child {
       uri
@@ -18,64 +19,23 @@ query($buyer: String!, $holderEscrow: String!) {
         title
       }
     }
-    order {
-      orderStatus
-      fulfillment {
-        currentStep
-        createdAt
-        lastUpdated
-        fulfillmentOrderSteps {
-          notes
-          completedAt
-          stepIndex
-          isCompleted
-        }
-      }
-      parent {
-        designId
-        parentContract
-        uri
-        workflow {
-          physicalSteps {
-            instructions
-            subPerformers {
-              performer
-              splitBasisPoints
-            }
-            fulfiller {
-              fulfillerId
-              fulfiller
-              infraId
-              uri
-              metadata {
-                image
-                title
-                link
-              }
-            }
-          }
-        }
-        metadata {
-          title
-          image
-        }
-      }
-    }
     guaranteedAmount
     purchaseMarket
   }
 }
 `;
 
-export const getPhysicalRightsBuyer = async (buyer: string): Promise<any> => {
-  const network = getCurrentNetwork();
-  const contracts = getCoreContractAddresses(network.chainId);
-
+export const getPhysicalRightsBuyer = async (
+  originalBuyer: string,
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(PHYSICAL_RIGHTS_BUYER),
     variables: {
-      buyer,
-      holderEscrow: contracts.escrow,
+      originalBuyer,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
@@ -95,12 +55,13 @@ export const getPhysicalRightsBuyer = async (buyer: string): Promise<any> => {
 };
 
 const PHYSICAL_RIGHTS_ALL = `
-query($holderEscrow) {
-  physicalRights_collection(orderBy: blockTimestamp, orderDirection: desc, where: {holder_not: $holderEscrow}) {
+query($holderEscrow: String!, $first: Int!, $skip: Int!) {
+  physicalRights_collection(where: {holder_not: $holderEscrow}, first: $first, skip: $skip) {
     childId
     orderId
     buyer
     holder
+    originalBuyer
     child {
       uri
       childContract
@@ -110,56 +71,16 @@ query($holderEscrow) {
         title
       }
     }
-    order {
-      orderStatus
-      fulfillment {
-        currentStep
-        createdAt
-        lastUpdated
-        fulfillmentOrderSteps {
-          notes
-          completedAt
-          stepIndex
-          isCompleted
-        }
-      }
-      parent {
-        designId
-        parentContract
-        uri
-        workflow {
-          physicalSteps {
-            instructions
-            subPerformers {
-              performer
-              splitBasisPoints
-            }
-            fulfiller {
-              fulfillerId
-              fulfiller
-              infraId
-              uri
-              metadata {
-                image
-                title
-                link
-              }
-            }
-          }
-        }
-        metadata {
-          title
-          image
-        }
-      }
-    }
     guaranteedAmount
     purchaseMarket
   }
 }
 `;
 
-export const getPhysicalRightsAll = async (): Promise<any> => {
+export const getPhysicalRightsAll = async (
+  first: number,
+  skip: number
+): Promise<any> => {
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
 
@@ -167,6 +88,8 @@ export const getPhysicalRightsAll = async (): Promise<any> => {
     query: gql(PHYSICAL_RIGHTS_ALL),
     variables: {
       holderEscrow: contracts.escrow,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
@@ -186,11 +109,12 @@ export const getPhysicalRightsAll = async (): Promise<any> => {
 };
 
 const PHYSICAL_RIGHTS_ALL_ESCROW = `
-query($holderEscrow) {
-  physicalRights_collection(orderBy: blockTimestamp, orderDirection: desc, where: {holder: $holderEscrow}) {
+query($holderEscrow: String!, $first: Int!, $skip: Int!) {
+  physicalRights_collection(where: {holder: $holderEscrow}, first: $first, skip: $skip) {
     childId
     orderId
     buyer
+    originalBuyer
     holder
     child {
       uri
@@ -201,56 +125,16 @@ query($holderEscrow) {
         title
       }
     }
-    order {
-      orderStatus
-      fulfillment {
-        currentStep
-        createdAt
-        lastUpdated
-        fulfillmentOrderSteps {
-          notes
-          completedAt
-          stepIndex
-          isCompleted
-        }
-      }
-      parent {
-        designId
-        parentContract
-        uri
-        workflow {
-          physicalSteps {
-            instructions
-            subPerformers {
-              performer
-              splitBasisPoints
-            }
-            fulfiller {
-              fulfillerId
-              fulfiller
-              infraId
-              uri
-              metadata {
-                image
-                title
-                link
-              }
-            }
-          }
-        }
-        metadata {
-          title
-          image
-        }
-      }
-    }
     guaranteedAmount
     purchaseMarket
   }
 }
 `;
 
-export const getPhysicalRightsAllEscrowed = async (): Promise<any> => {
+export const getPhysicalRightsAllEscrowed = async (
+  first: number,
+  skip: number
+): Promise<any> => {
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
 
@@ -258,6 +142,8 @@ export const getPhysicalRightsAllEscrowed = async (): Promise<any> => {
     query: gql(PHYSICAL_RIGHTS_ALL_ESCROW),
     variables: {
       holderEscrow: contracts.escrow,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
@@ -277,11 +163,12 @@ export const getPhysicalRightsAllEscrowed = async (): Promise<any> => {
 };
 
 const PHYSICAL_RIGHTS_BUYER_ESCROW = `
-query($buyer: String!, $holderEscrow: String!) {
-  physicalRights_collection(orderBy: blockTimestamp, orderDirection: desc, where: { buyer: $buyer, holder: $holderEscrow }) {
+query($originalBuyer: String!, $holderEscrow: String!, $first: Int!, $skip: Int!) {
+  physicalRights_collection(where: { and: [ {originalBuyer: $originalBuyer}, {holder: $holderEscrow}] }, first: $first, skip: $skip) {
     childId
     orderId
     buyer
+    originalBuyer
     holder
     child {
       uri
@@ -292,49 +179,6 @@ query($buyer: String!, $holderEscrow: String!) {
         title
       }
     }
-    order {
-      orderStatus
-      fulfillment {
-        currentStep
-        createdAt
-        lastUpdated
-        fulfillmentOrderSteps {
-          notes
-          completedAt
-          stepIndex
-          isCompleted
-        }
-      }
-      parent {
-        designId
-        parentContract
-        uri
-        workflow {
-          physicalSteps {
-            instructions
-            subPerformers {
-              performer
-              splitBasisPoints
-            }
-            fulfiller {
-              fulfillerId
-              fulfiller
-              infraId
-              uri
-              metadata {
-                image
-                title
-                link
-              }
-            }
-          }
-        }
-        metadata {
-          title
-          image
-        }
-      }
-    }
     guaranteedAmount
     purchaseMarket
   }
@@ -342,7 +186,9 @@ query($buyer: String!, $holderEscrow: String!) {
 `;
 
 export const getPhysicalRightsBuyerEscrowed = async (
-  buyer: string
+  originalBuyer: string,
+  first: number,
+  skip: number
 ): Promise<any> => {
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
@@ -350,8 +196,10 @@ export const getPhysicalRightsBuyerEscrowed = async (
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(PHYSICAL_RIGHTS_BUYER_ESCROW),
     variables: {
-      buyer,
+      originalBuyer,
       holderEscrow: contracts.escrow,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",

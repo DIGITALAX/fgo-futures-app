@@ -21,6 +21,19 @@ export interface AppContextType {
   setSettlementBots: (e: SetStateAction<SettlementBot[]>) => void;
   openContract: OpenContractModal | undefined;
   setOpenContract: (e: SetStateAction<OpenContractModal | undefined>) => void;
+  sellOrder: SellOrderModal | undefined;
+  fillOrder: FillOrderModal | undefined;
+  setFillOrder: (e: SetStateAction<FillOrderModal | undefined>) => void;
+  setSellOrder: (e: SetStateAction<SellOrderModal | undefined>) => void;
+  stats: HeaderStats;
+  setStats: (e: SetStateAction<HeaderStats>) => void;
+}
+
+export interface HeaderStats {
+  mona: number;
+  dlta: number;
+  genesis: number;
+  blockTimestamp?: number;
 }
 
 export interface OpenContractModal {
@@ -29,4 +42,19 @@ export interface OpenContractModal {
   maxAmount: number;
   childContract: string;
   originalMarket: string;
+}
+
+export interface SellOrderModal {
+  orderId: number;
+  maxQuantity: number;
+  contractTitle: string;
+  contractImage: string;
+}
+
+export interface FillOrderModal {
+  orderId: number;
+  maxQuantity: number;
+  contractTitle: string;
+  contractImage: string;
+  pricePerUnit: number;
 }

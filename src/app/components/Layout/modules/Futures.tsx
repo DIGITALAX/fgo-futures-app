@@ -82,7 +82,7 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
   };
 
   return (
-    <div className="w-full lex items-center justify-start relative p-4">
+    <div className="w-full lex items-center justify-start relative">
       <div className="relative w-full">
         <div className="absolute inset-0 flex">
           {Array.from({ length: gridDimensions.cols }).map((_, colIndex) => (

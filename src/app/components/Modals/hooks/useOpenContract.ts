@@ -26,12 +26,12 @@ const useOpenContract = () => {
     childContract: context?.openContract?.childContract || "",
     originalMarket: context?.openContract?.originalMarket || "",
     trustedSettlementBots: [],
-    image: "",
     title: "",
   });
 
   const handleOpenContract = async () => {
-    if (!walletClient || !publicClient || !address) return;
+    if (!walletClient || !publicClient || !address || !openContractForm.image!)
+      return;
     setOpenContractLoading(true);
     try {
       const formData = new FormData();

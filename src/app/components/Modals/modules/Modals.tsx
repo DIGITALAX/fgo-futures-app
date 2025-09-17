@@ -5,6 +5,8 @@ import { Success } from "./Success";
 import { Error } from "./Error";
 import { AppContext } from "@/app/lib/providers/Providers";
 import { OpenContract } from "./OpenContract";
+import { SellOrder } from "./SellOrder";
+import { FillOrder } from "./FillOrder";
 
 export const Modals = ({ dict }: { dict: any }) => {
   const context = useContext(AppContext);
@@ -14,6 +16,8 @@ export const Modals = ({ dict }: { dict: any }) => {
   return (
     <>
       {context?.openContract && <OpenContract dict={dict} />}
+      {context?.sellOrder && <SellOrder dict={dict} />}
+      {context?.fillOrder && <FillOrder dict={dict} />}
       {context.successData && <Success dict={dict} />}
       {context.errorData && <Error dict={dict} />}
     </>

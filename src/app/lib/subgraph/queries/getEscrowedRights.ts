@@ -2,8 +2,8 @@ import { gql } from "@apollo/client";
 import { graphFGOFuturesClient } from "../clients/graphql";
 
 const ESCROWED_RIGHTS_BUYER = `
-query($depositor: String!) {
-  escrowedRights(orderBy: blockTimestamp, orderDirection: desc, where: { depositor: $depositor }) {
+query($depositor: String!, $first: Int!, $skip: Int!) {
+  escrowedRights(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip, where: { depositor: $depositor }) {
     rightsKey
     depositor
     childContract
@@ -11,6 +11,13 @@ query($depositor: String!) {
     childId
     orderId
     amount
+    child {
+      uri
+      metadata {
+        title
+        image
+      }
+    }
     blockNumber
     blockTimestamp
     amountUsedForFutures
@@ -21,11 +28,17 @@ query($depositor: String!) {
 }
 `;
 
-export const getEscrowedRightsBuyer = async (depositor: string): Promise<any> => {
+export const getEscrowedRightsBuyer = async (
+  depositor: string,
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(ESCROWED_RIGHTS_BUYER),
     variables: {
       depositor,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
@@ -44,11 +57,9 @@ export const getEscrowedRightsBuyer = async (depositor: string): Promise<any> =>
   }
 };
 
-
-
 const ESCROWED_RIGHTS_ALL = `
-query {
-  escrowedRights(orderBy: blockTimestamp, orderDirection: desc) {
+query($first: Int!, $skip: Int!) {
+  escrowedRights(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip) {
     rightsKey
     depositor
     childContract
@@ -57,6 +68,13 @@ query {
     orderId
     amount
     blockNumber
+    child {
+      uri
+      metadata {
+        title
+        image
+      }
+    }
     blockTimestamp
     amountUsedForFutures
     transactionHash
@@ -66,10 +84,17 @@ query {
 }
 `;
 
-export const getEscrowedRightsAll = async (): Promise<any> => {
+export const getEscrowedRightsAll = async (
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(ESCROWED_RIGHTS_ALL),
     fetchPolicy: "no-cache",
+    variables: {
+      first,
+      skip,
+    },
     errorPolicy: "all",
   });
   const timeoutPromise = new Promise((resolve) => {

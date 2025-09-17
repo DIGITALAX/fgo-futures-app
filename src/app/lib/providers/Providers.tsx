@@ -9,7 +9,10 @@ import { getCurrentNetwork } from "../constants";
 import {
   AppContextType,
   ErrorData,
+  FillOrderModal,
+  HeaderStats,
   OpenContractModal,
+  SellOrderModal,
   SuccessData,
 } from "@/app/components/Modals/types/models.types";
 import { SettlementBot } from "@/app/components/Layout/types/layout.types";
@@ -43,6 +46,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [openContract, setOpenContract] = useState<
     OpenContractModal | undefined
   >();
+  const [sellOrder, setSellOrder] = useState<SellOrderModal | undefined>();
+  const [fillOrder, setFillOrder] = useState<FillOrderModal | undefined>();
+  const [stats, setStats] = useState<HeaderStats>({
+    mona: 0,
+    genesis: 0,
+    dlta: 0,
+  });
 
   const showSuccess = (message: string, txHash?: string) => {
     setSuccessData({ message, txHash });
@@ -71,6 +81,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setSettlementBots,
     openContract,
     setOpenContract,
+    sellOrder,
+    setSellOrder,
+    fillOrder,
+    setFillOrder,
+    stats,
+    setStats,
   };
 
   return (

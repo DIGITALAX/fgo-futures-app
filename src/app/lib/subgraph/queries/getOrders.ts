@@ -2,8 +2,8 @@ import { gql } from "@apollo/client";
 import { graphFGOFuturesClient } from "../clients/graphql";
 
 const ORDERS_ALL = `
-query {
-  orders(orderBy: blockTimestamp, orderDirection: desc) {
+query($first: Int!, $skip: Int!) {
+  orders(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip) {
     id
     orderId
     tokenId
@@ -15,6 +15,8 @@ query {
     filledPrice
     contract {
         uri
+        originalHolder
+        isSettled
         metadata {
             image
             title
@@ -31,9 +33,16 @@ query {
 }
 `;
 
-export const getOrdersAll = async (): Promise<any> => {
+export const getOrdersAll = async (
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(ORDERS_ALL),
+    variables: {
+      first,
+      skip,
+    },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
   });
@@ -52,8 +61,8 @@ export const getOrdersAll = async (): Promise<any> => {
 };
 
 const ORDERS_USER = `
-query($user: String!) {
-  orders(orderBy: blockTimestamp, orderDirection: desc, where: { or: [{seller: $user}, {filler: $user}] }) {
+query($user: String!, $first: Int!, $skip: Int!) {
+  orders(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip, where: { or: [{seller: $user}, {filler: $user}] }) {
     id
     orderId
     tokenId
@@ -65,6 +74,8 @@ query($user: String!) {
     filledPrice
     contract {
         uri
+        originalHolder
+        isSettled
         metadata {
             image
             title
@@ -81,11 +92,17 @@ query($user: String!) {
 }
 `;
 
-export const getOrdersUser = async (user: string): Promise<any> => {
+export const getOrdersUser = async (
+  user: string,
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(ORDERS_USER),
     variables: {
       user,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",

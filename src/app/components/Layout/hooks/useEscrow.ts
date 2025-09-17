@@ -11,8 +11,9 @@ import {
   getCoreContractAddresses,
   getCurrentNetwork,
 } from "@/app/lib/constants";
+import { dummyEscrowedRights } from "@/app/lib/dummy/testData";
 
-const useSettled = () => {
+const useEscrow = () => {
   const context = useContext(AppContext);
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -25,6 +26,11 @@ const useSettled = () => {
   const [escrowUserLoading, setEscrowUserLoading] = useState<boolean>(false);
   const [depositLoading, setDepositLoading] = useState<boolean>(false);
   const [withdrawLoading, setWithdrawLoading] = useState<boolean>(false);
+
+  const [escrowedRightsSkip, setEscrowedRightsSkip] = useState<number>(0);
+  const [escrowedRightsUserSkip, setEscrowedRightsUserSkip] = useState<number>(0);
+  const [hasMoreEscrowedRights, setHasMoreEscrowedRights] = useState<boolean>(true);
+  const [hasMoreEscrowedRightsUser, setHasMoreEscrowedRightsUser] = useState<boolean>(true);
 
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
@@ -85,23 +91,64 @@ const useSettled = () => {
     setWithdrawLoading(false);
   };
 
-  const getEscrowAll = async () => {
+  const getEscrowAll = async (reset: boolean = false) => {
     setEscrowLoading(true);
     try {
-      const res = await getEscrowedRightsAll();
-      setEscrowedRights(res?.data?.escrowedRights);
+      const skipValue = reset ? 0 : escrowedRightsSkip;
+      const res = await getEscrowedRightsAll(20, skipValue);
+      
+      let allRights = res?.data?.escrowedRights;
+      
+      if (!allRights || allRights.length < 20) {
+        setHasMoreEscrowedRights(false);
+      }
+      
+      if (reset) {
+        setEscrowedRights(allRights?.length < 1 ? dummyEscrowedRights : allRights);
+        setEscrowedRightsSkip(20);
+      } else {
+        setEscrowedRights(prev => [
+          ...prev,
+          ...(allRights?.length < 1 ? [] : allRights)
+        ]);
+        setEscrowedRightsSkip(prev => prev + 20);
+      }
     } catch (err: any) {
       console.error(err.message);
     }
     setEscrowLoading(false);
   };
 
-  const getEscrowUser = async () => {
-    if (!address) return;
+  const getEscrowUser = async (reset: boolean = false) => {
+    if (!address) {
+      setEscrowedRightsUser(dummyEscrowedRights.slice(0, 1));
+      return;
+    }
     setEscrowUserLoading(true);
     try {
-      const res = await getEscrowedRightsBuyer(address);
-      setEscrowedRightsUser(res?.data?.escrowedRights);
+      const skipValue = reset ? 0 : escrowedRightsUserSkip;
+      const res = await getEscrowedRightsBuyer(address, 20, skipValue);
+      
+      let allRights = res?.data?.escrowedRights;
+      
+      if (!allRights || allRights.length < 20) {
+        setHasMoreEscrowedRightsUser(false);
+      }
+      
+      if (reset) {
+        setEscrowedRightsUser(
+          allRights?.length < 1
+            ? dummyEscrowedRights.slice(0, 1)
+            : allRights
+        );
+        setEscrowedRightsUserSkip(20);
+      } else {
+        setEscrowedRightsUser(prev => [
+          ...prev,
+          ...(allRights?.length < 1 ? [] : allRights)
+        ]);
+        setEscrowedRightsUserSkip(prev => prev + 20);
+      }
     } catch (err: any) {
       console.error(err.message);
     }
@@ -110,15 +157,27 @@ const useSettled = () => {
 
   useEffect(() => {
     if (escrowedRights?.length < 1) {
-      getEscrowAll();
+      getEscrowAll(true);
     }
   }, [context?.hideSuccess]);
 
   useEffect(() => {
-    if (address && escrowedRightsUser.length < 1) {
-      getEscrowUser();
+    if (escrowedRightsUser?.length < 1 && address) {
+      getEscrowUser(true);
     }
   }, [address, context?.hideSuccess]);
+
+  const loadMoreEscrowedRights = () => {
+    if (!escrowLoading && hasMoreEscrowedRights) {
+      getEscrowAll(false);
+    }
+  };
+
+  const loadMoreEscrowedRightsUser = () => {
+    if (!escrowUserLoading && hasMoreEscrowedRightsUser) {
+      getEscrowUser(false);
+    }
+  };
 
   return {
     escrowLoading,
@@ -129,7 +188,11 @@ const useSettled = () => {
     handleWithdrawPhysicalRights,
     depositLoading,
     withdrawLoading,
+    hasMoreEscrowedRights,
+    hasMoreEscrowedRightsUser,
+    loadMoreEscrowedRights,
+    loadMoreEscrowedRightsUser,
   };
 };
 
-export default useSettled;
+export default useEscrow;

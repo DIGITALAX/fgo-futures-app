@@ -1,5 +1,3 @@
-import { SetStateAction } from "react";
-
 export interface FuturesSimulationElement {
   id: string;
   name: string;
@@ -18,10 +16,24 @@ export interface GridDimensions {
   rows: number;
 }
 
+export interface Fulfiller {
+  fulfillerId: string;
+  fulfiller: string;
+  infraId: string;
+  uri: string;
+  metadata: {
+    image: string;
+    title: string;
+    link: string;
+  };
+  childOrders: ChildOrder[];
+}
+
 export interface PhysicalRight {
   childId: string;
   orderId: string;
   holder: string;
+  originalBuyer: string;
   buyer: string;
   child: {
     uri: string;
@@ -32,49 +44,6 @@ export interface PhysicalRight {
       title: string;
     };
   };
-  order: {
-    orderStatus: string;
-    fulfillment: {
-      currentStep: string;
-      createdAt: string;
-      lastUpdated: string;
-      fulfillmentOrderSteps: {
-        notes: string;
-        completedAt: string;
-        stepIndex: string;
-        isCompleted: string;
-      };
-    };
-    parent: {
-      designId: string;
-      parentContract: string;
-      uri: string;
-      workflow: {
-        physicalSteps: {
-          instructions: string;
-          subPerformers: {
-            performer: string;
-            splitBasisPoints: string;
-          };
-          fulfiller: {
-            fulfillerId: string;
-            fulfiller: string;
-            infraId: string;
-            uri: string;
-            metadata: {
-              image: string;
-              title: string;
-              link: string;
-            };
-          };
-        };
-      };
-      metadata: {
-        title: string;
-        image: string;
-      };
-    };
-  };
   guaranteedAmount: string;
   purchaseMarket: string;
 }
@@ -82,6 +51,7 @@ export interface PhysicalRight {
 export interface Order {
   orderId: string;
   tokenId: string;
+  balanceOf: number;
   quantity: string;
   pricePerUnit: string;
   seller: string;
@@ -89,10 +59,15 @@ export interface Order {
   blockTimestamp: string;
   filledPrice: string;
   contract: {
+    originalHolder: string;
+    isSettled: boolean;
     uri: string;
     metadata: {
       image: string;
       title: string;
+    };
+    escrowed: {
+      amountUsedInFutures: string;
     };
   };
   filledQuantity: string;
@@ -138,30 +113,61 @@ export interface SettlementBot {
 
 export interface ContractSettled {
   contractId: string;
-  reward: string;
-  settlementBot: {
+  childId: string;
+  orderId: string;
+  quantity: string;
+  uri: string;
+  metadata: {
+    image: string;
+    title: string;
+  };
+  finalFillers: string[];
+  timeSinceCompletion: string;
+  maxSettlementDelay: string;
+  pricePerUnit: string;
+  childContract: string;
+  originalHolder: string;
+  originalMarket: string;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+  createdAt: string;
+  settledAt: string;
+  settlementRewardBPS: string;
+  isActive: boolean;
+  isSettled: boolean;
+  trustedSettlementBots: {
     stakeAmount: string;
+    bot: string;
     totalSettlements: string;
     averageDelaySeconds: string;
     totalSlashEvents: string;
     totalAmountSlashed: string;
   };
-  actualCompletionTime: string;
-  blockTimestamp: string;
-  transactionHash: string;
-  blockNumber: string;
-  settler: string;
-  emergency: string;
-  contract: {
-    pricePerUnit: string;
-    child: {
-      uri: string;
-      physicalPrice: string;
-      metadata: {
-        title: string;
-        image: string;
-      };
+  child: {
+    uri: string;
+    physicalPrice: string;
+    metadata: {
+      title: string;
+      image: string;
     };
+  };
+  settledContract: {
+    contractId: string;
+    reward: string;
+    settlementBot: {
+      stakeAmount: string;
+      totalSettlements: string;
+      averageDelaySeconds: string;
+      totalSlashEvents: string;
+      totalAmountSlashed: string;
+    };
+    actualCompletionTime: string;
+    blockTimestamp: string;
+    transactionHash: string;
+    blockNumber: string;
+    settler: string;
+    emergency: string;
   };
 }
 
@@ -179,6 +185,13 @@ export interface EscrowedRight {
   transactionHash: string;
   depositedAt: string;
   futuresCreated: boolean;
+  child: {
+    uri: string;
+    metadata: {
+      image: string;
+      title: string;
+    };
+  };
 }
 
 export interface CoreContractAddresses {
@@ -197,6 +210,10 @@ export type TransferProps = {
   physicalLoading: boolean;
   physicalUserLoading: boolean;
   physicalRightsUser: PhysicalRight[];
+  hasMorePhysicalRights: boolean;
+  hasMorePhysicalRightsUser: boolean;
+  loadMorePhysicalRights: () => void;
+  loadMorePhysicalRightsUser: () => void;
   dict: any;
 };
 
@@ -214,6 +231,10 @@ export type EscrowProps = {
   physicalEscrowedLoading: boolean;
   physicalUserEscrowedLoading: boolean;
   physicalRightsUserEscrowed: PhysicalRight[];
+  hasMorePhysicalRightsEscrowed: boolean;
+  hasMorePhysicalRightsUserEscrowed: boolean;
+  loadMorePhysicalRightsEscrowed: () => void;
+  loadMorePhysicalRightsUserEscrowed: () => void;
 };
 
 export type CreateProps = {
@@ -230,17 +251,17 @@ export type CreateProps = {
   escrowedRights: EscrowedRight[];
   escrowedRightsUser: EscrowedRight[];
   withdrawLoading: boolean;
+  hasMoreEscrowedRights: boolean;
+  hasMoreEscrowedRightsUser: boolean;
+  loadMoreEscrowedRights: () => void;
+  loadMoreEscrowedRightsUser: () => void;
 };
 
 export type OrderProps = {
   dict: any;
-  handleCancelFuture: (contractId: number) => Promise<void>;
   orderCancelLoading: boolean;
-  orderFillLoading: boolean;
-  sellOrderLoading: boolean;
+  handleCancelFuture: (contractId: number) => Promise<void>;
   futureCancelLoading: boolean;
-  handleSellOrder: (orderId: number, quantity: number) => Promise<void>;
-  handleFillOrder: (orderId: number, quantity: number) => Promise<void>;
   handleCancelOrder: (orderId: number) => Promise<void>;
 };
 
@@ -254,6 +275,8 @@ export interface FutureContract {
     image: string;
     title: string;
   };
+  timeSinceCompletion: string;
+  maxSettlementDelay: string;
   pricePerUnit: string;
   childContract: string;
   originalHolder: string;
@@ -293,6 +316,40 @@ export interface OpenContractForm {
   childContract: string;
   originalMarket: string;
   trustedSettlementBots: string[];
-  image: string;
+  image?: File;
   title: string;
+}
+
+export interface ChildOrder {
+  orderStatus: string;
+  fulfillment: {
+    currentStep: string;
+    createdAt: string;
+    lastUpdated: string;
+    fulfillmentOrderSteps: {
+      notes: string;
+      completedAt: string;
+      stepIndex: string;
+      isCompleted: string;
+    };
+  };
+  parent: {
+    designId: string;
+    parentContract: string;
+    uri: string;
+    workflow: {
+      physicalSteps: {
+        instructions: string;
+        subPerformers: {
+          performer: string;
+          splitBasisPoints: string;
+        };
+        fulfiller: Fulfiller;
+      };
+    };
+    metadata: {
+      title: string;
+      image: string;
+    };
+  };
 }

@@ -1,23 +1,34 @@
 "use client";
 
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useContext, useState } from "react";
 import { OrderProps } from "../types/layout.types";
 import useOrders from "../hooks/useOrders";
+import { useAccount } from "wagmi";
+import { AppContext } from "@/app/lib/providers/Providers";
+import Image from "next/image";
+import InfiniteScroll from "react-infinite-scroll-component";
 
 const Orders: FunctionComponent<OrderProps> = ({
   dict,
   handleCancelFuture,
-  futureCancelLoading,
   orderCancelLoading,
-  orderFillLoading,
-  sellOrderLoading,
-  handleSellOrder,
-  handleFillOrder,
+  futureCancelLoading,
   handleCancelOrder,
 }) => {
   const [activeTab, setActiveTab] = useState<"all" | "my">("all");
+  const { address } = useAccount();
+  const context = useContext(AppContext);
 
-  const { orders, ordersLoading, userOrders, userOrdersLoading } = useOrders();
+  const { 
+    orders, 
+    ordersLoading, 
+    userOrders, 
+    userOrdersLoading,
+    hasMoreOrders,
+    hasMoreUserOrders,
+    loadMoreOrders,
+    loadMoreUserOrders
+  } = useOrders();
 
   return (
     <div className="w-full flex flex-col border border-black h-[20rem]">
@@ -46,24 +57,41 @@ const Orders: FunctionComponent<OrderProps> = ({
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0">
-        {(activeTab === "all" ? ordersLoading : userOrdersLoading) ? (
+      <div 
+        className="flex-1 overflow-y-auto min-h-0" 
+        id={`orders-scrollable-${activeTab}`}
+      >
+        {(activeTab === "all" ? ordersLoading : userOrdersLoading) && (activeTab === "all" ? orders : userOrders)?.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-xs text-gray-500">Loading...</div>
           </div>
         ) : (
-          <div>
+          <InfiniteScroll
+            dataLength={(activeTab === "all" ? orders : userOrders)?.length || 0}
+            next={activeTab === "all" ? loadMoreOrders : loadMoreUserOrders}
+            hasMore={activeTab === "all" ? hasMoreOrders : hasMoreUserOrders}
+            loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
+            scrollableTarget={`orders-scrollable-${activeTab}`}
+            endMessage={
+              <div className="text-center text-xs text-gray-400 py-2">
+                No more orders to load
+              </div>
+            }
+          >
             {(activeTab === "all" ? orders : userOrders)?.map((order) => (
               <div
                 key={order.orderId}
                 className="border-b border-gray-300 p-3 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 flex-shrink-0">
-                    <img
+                  <div className="w-10 h-10 flex-shrink-0 relative">
+                    <Image
+                      draggable={false}
+                      fill
+                      style={{ objectFit: "cover" }}
                       src={order.contract.metadata.image}
                       alt={order.contract.metadata.title}
-                      className="w-full h-full object-cover border border-gray-300"
+                      className="border border-gray-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -110,17 +138,83 @@ const Orders: FunctionComponent<OrderProps> = ({
                         {order.filler.slice(-4)}
                       </div>
                     )}
+                    {(() => {
+                      const canCancel =
+                        order.isActive &&
+                        !order.filled &&
+                        address &&
+                        order.seller?.toLowerCase() === address.toLowerCase();
+
+                      const canSell =
+                        !order.contract.isSettled &&
+                        order.balanceOf > 0 &&
+                        address &&
+                        order.filler?.toLowerCase() === address.toLowerCase();
+
+                      const canFillOrder = 
+                        !order.filled && 
+                        !order.contract.isSettled &&
+                        address &&
+                        order.seller?.toLowerCase() !== address.toLowerCase();
+
+                      return canCancel || canSell || canFillOrder ? (
+                        <div className="mt-2 flex gap-2">
+                          {canCancel && (
+                            <button
+                              onClick={() =>
+                                handleCancelOrder(Number(order.orderId))
+                              }
+                              disabled={orderCancelLoading}
+                              className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                              {orderCancelLoading ? "..." : "Cancel Order"}
+                            </button>
+                          )}
+                          {canSell && (
+                            <button
+                              onClick={() => {
+                                context?.setSellOrder({
+                                  orderId: Number(order.orderId),
+                                  maxQuantity: order.balanceOf,
+                                  contractTitle: order.contract.metadata.title,
+                                  contractImage: order.contract.metadata.image,
+                                });
+                              }}
+                              className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                              Sell Order
+                            </button>
+                          )}
+                          {canFillOrder && (
+                            <button
+                              onClick={() => {
+                                context?.setFillOrder({
+                                  orderId: Number(order.orderId),
+                                  maxQuantity: Number(order.quantity),
+                                  contractTitle: order.contract.metadata.title,
+                                  contractImage: order.contract.metadata.image,
+                                  pricePerUnit: Number(order.pricePerUnit),
+                                });
+                              }}
+                              className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                              Fill Order
+                            </button>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </div>
             ))}
-          </div>
+          </InfiniteScroll>
         )}
         {(activeTab === "all" ? orders : userOrders)?.length === 0 &&
           !(activeTab === "all" ? ordersLoading : userOrdersLoading) && (
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
-                <p className="text-sm">
+                <p className="text-sm pt-2">
                   No {activeTab === "all" ? "orders" : "user orders"} found
                 </p>
               </div>

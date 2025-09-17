@@ -4,7 +4,7 @@ import {
   getCurrentNetwork,
 } from "@/app/lib/constants";
 import { AppContext } from "@/app/lib/providers/Providers";
-import { use, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { SettlementBot } from "../types/layout.types";
 import {
@@ -21,14 +21,11 @@ const useRegisterBot = () => {
     SettlementBot | undefined
   >();
   const [claimLoading, setClaimLoading] = useState<boolean>(false);
-  const [validBalance, setValidBalance] = useState<{
-    dltaBalance: bigint;
-    genesisBalance: bigint;
-  }>({
-    dltaBalance: BigInt(0),
-    genesisBalance: BigInt(0),
-  });
   const [stakeAmount, setStakeAmount] = useState<number>(0);
+  const [settlementBots, setSettlementBots] = useState<SettlementBot[]>([]);
+  const [settlementBotsLoading, setSettlementBotsLoading] = useState<boolean>(false);
+  const [settlementBotsSkip, setSettlementBotsSkip] = useState<number>(0);
+  const [hasMoreSettlementBots, setHasMoreSettlementBots] = useState<boolean>(true);
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -45,53 +42,39 @@ const useRegisterBot = () => {
     }
   };
 
-  const getAllSettlementBots = async () => {
-    if (!address) return;
+  const getAllSettlementBots = async (reset: boolean = false) => {
+    setSettlementBotsLoading(true);
     try {
-      const data = await getSettlementBotsAll();
-      context?.setSettlementBots(data?.data?.settlementBots);
-    } catch (err: any) {
-      console.error(err.message);
-    }
-  };
-
-  const checkMonaBalance = async (): Promise<boolean> => {
-    if (!address || !publicClient) return false;
-
-    try {
-      const mona = await publicClient.readContract({
-        address: contracts.mona,
-        abi: [
-          {
-            type: "function",
-            name: "balanceOf",
-            inputs: [
-              { name: "owner", type: "address", internalType: "address" },
-            ],
-            outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-            stateMutability: "view",
-          },
-        ],
-        functionName: "balanceOf",
-        args: [address],
-      });
-
-      if (Number(mona) < stakeAmount) {
-        return false;
+      const skipValue = reset ? 0 : settlementBotsSkip;
+      const data = await getSettlementBotsAll(20, skipValue);
+      
+      let allBots = data?.data?.settlementBots;
+      
+      if (!allBots || allBots.length < 20) {
+        setHasMoreSettlementBots(false);
+      }
+      
+      if (reset) {
+        setSettlementBots(allBots || []);
+        setSettlementBotsSkip(20);
+        context?.setSettlementBots(allBots || []);
       } else {
-        return true;
+        const newBots = [...settlementBots, ...(allBots || [])];
+        setSettlementBots(newBots);
+        setSettlementBotsSkip(prev => prev + 20);
+        context?.setSettlementBots(newBots);
       }
     } catch (err: any) {
       console.error(err.message);
-      return false;
     }
+    setSettlementBotsLoading(false);
   };
 
   const handleRegisterSettlement = async () => {
     if (!walletClient || !publicClient || !address) return;
     setRegisterSettlementLoading(true);
     try {
-      const valid = await checkMonaBalance();
+      const valid = Number(context?.stats?.mona) >= stakeAmount;
       if (!valid) {
         setRegisterSettlementLoading(false);
         context?.showError("Invalid Stake Amount.");
@@ -119,7 +102,7 @@ const useRegisterBot = () => {
     if (!walletClient || !publicClient || !address || !settlementBot) return;
     setStakeLoading(true);
     try {
-      const valid = await checkMonaBalance();
+      const valid = Number(context?.stats?.mona) >= stakeAmount;
       if (!valid) {
         setRegisterSettlementLoading(false);
         context?.showError("Invalid Stake Amount.");
@@ -164,54 +147,6 @@ const useRegisterBot = () => {
     setStakeLoading(false);
   };
 
-  const getValidTokens = async (): Promise<void> => {
-    if (!address || !publicClient) return;
-
-    try {
-      const [dltaBalance, genesisBalance] = await Promise.all([
-        publicClient.readContract({
-          address: contracts.dlta,
-          abi: [
-            {
-              type: "function",
-              name: "balanceOf",
-              inputs: [
-                { name: "owner", type: "address", internalType: "address" },
-              ],
-              outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-              stateMutability: "view",
-            },
-          ],
-          functionName: "balanceOf",
-          args: [address],
-        }),
-        publicClient.readContract({
-          address: contracts.genesis,
-          abi: [
-            {
-              type: "function",
-              name: "balanceOf",
-              inputs: [
-                { name: "owner", type: "address", internalType: "address" },
-              ],
-              outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-              stateMutability: "view",
-            },
-          ],
-          functionName: "balanceOf",
-          args: [address],
-        }),
-      ]);
-
-      setValidBalance({
-        dltaBalance,
-        genesisBalance,
-      });
-    } catch (error: any) {
-      console.error((error as any).message);
-      context?.showError(error?.message);
-    }
-  };
 
   const handleClaimChildSettled = async (contractId: number) => {
     if (!walletClient || !publicClient || !address) return;
@@ -236,39 +171,38 @@ const useRegisterBot = () => {
   };
 
   useEffect(() => {
-    if (
-      address &&
-      validBalance.dltaBalance == BigInt(0) &&
-      validBalance.genesisBalance == BigInt(0)
-    ) {
-      getValidTokens();
-    }
-  }, [address]);
-
-  useEffect(() => {
     if (address && !settlementBot) {
       getUserSettlementBot();
     }
   }, [address]);
 
   useEffect(() => {
-    if (context && context?.settlementBots?.length < 1) {
-      getAllSettlementBots();
+    if (settlementBots?.length < 1) {
+      getAllSettlementBots(true);
     }
-  }, [context]);
+  }, [context?.hideSuccess]);
+
+  const loadMoreSettlementBots = () => {
+    if (!settlementBotsLoading && hasMoreSettlementBots) {
+      getAllSettlementBots(false);
+    }
+  };
 
   return {
     registerSettlementLoading,
     handleRegisterSettlement,
     stakeAmount,
     setStakeAmount,
-    validBalance,
     handleIncreaseStake,
     handleWithdrawStake,
     stakeLoading,
     settlementBot,
     handleClaimChildSettled,
     claimLoading,
+    settlementBots,
+    settlementBotsLoading,
+    hasMoreSettlementBots,
+    loadMoreSettlementBots,
   };
 };
 

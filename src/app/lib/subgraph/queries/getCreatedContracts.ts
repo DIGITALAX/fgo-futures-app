@@ -2,8 +2,8 @@ import { gql } from "@apollo/client";
 import { graphFGOFuturesClient } from "../clients/graphql";
 
 const FUTURE_CONTRACTS_BUYER = `
-query($buyer: String!) {
-  futureContracts(orderBy: blockTimestamp, orderDirection: desc, where: { buyer: $buyer }) {
+query($buyer: String!, $first: Int!, $skip: Int!) {
+  futuresContracts(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip, where: { buyer: $buyer }) {
     contractId
     childId
     orderId
@@ -45,11 +45,17 @@ query($buyer: String!) {
 }
 `;
 
-export const getFutureContractsBuyer = async (buyer: string): Promise<any> => {
+export const getFutureContractsBuyer = async (
+  buyer: string,
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(FUTURE_CONTRACTS_BUYER),
     variables: {
       buyer,
+      first,
+      skip,
     },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
@@ -69,8 +75,8 @@ export const getFutureContractsBuyer = async (buyer: string): Promise<any> => {
 };
 
 const FUTURE_CONTRACTS_ALL = `
-query {
-  futureContracts(orderBy: blockTimestamp, orderDirection: desc)) {
+query($first: Int!, $skip: Int!) {
+  futuresContracts(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip) {
     contractId
     childId
     orderId
@@ -112,9 +118,16 @@ query {
 }
 `;
 
-export const getFutureContractsAll = async (): Promise<any> => {
+export const getFutureContractsAll = async (
+  first: number,
+  skip: number
+): Promise<any> => {
   const queryPromise = graphFGOFuturesClient.query({
     query: gql(FUTURE_CONTRACTS_ALL),
+    variables: {
+      first,
+      skip,
+    },
     fetchPolicy: "no-cache",
     errorPolicy: "all",
   });
