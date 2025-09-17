@@ -1,0 +1,4 @@
+User-Agent: *
+Allow: /
+
+Sitemap: https://futures.themanufactory.xyz/sitemap.xml

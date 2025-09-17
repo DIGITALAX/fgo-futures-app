@@ -1,26 +1,166 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: "JB";
+  src: url("/fonts/JetBrainsMono-Medium.ttf");
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@font-face {
+  font-family: "PPMond";
+  src: url("/fonts/ppmondwest-regular.otf");
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer utils {
+  .font-mond {
+    font-family: "PPMond";
+  }
+
+  .font-jb {
+    font-family: "JB";
+  }
+
+  .grid-cols-18 {
+    grid-template-columns: repeat(18, minmax(0, 1fr));
+  }
+
+  .grid-rows-7 {
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+
+  .animate-flash-quick {
+    animation: flash-quick 0.6s ease-in-out;
+  }
+
+  .animate-flash-long {
+    animation: flash-long 3s ease-in-out;
+  }
+
+  .animate-flash-pulse {
+    animation: flash-pulse 1.5s ease-in-out;
+  }
+
+  .animate-flash-burst {
+    animation: flash-burst 0.3s ease-in-out infinite;
+    animation-iteration-count: 4;
+  }
+
+  .text-xxs {
+    font-size: 0.4rem;
+  }
+
+  .text-xs {
+    font-size: 0.6rem;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+html {
+  overflow-x: hidden;
+  background: linear-gradient(90deg, #e6fdf8, #fbeefa, #f3eefb);
+  color: black;
+  font-family: "PPMond";
+}
+
+html::selection {
+  background-color: #f3eefb;
+}
+
+/* Hide default scrollbars completely */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+@keyframes flash-quick {
+  0% {
+    background: white;
+    border-color: rgb(229 231 235);
+  }
+  50% {
+    background: linear-gradient(135deg, #c8f7f0, #a8e6d8);
+    border-color: #7dc4b8;
+    transform: scale(1.08);
+  }
+  100% {
+    background: white;
+    border-color: rgb(229 231 235);
+    transform: scale(1);
+  }
+}
+
+@keyframes flash-long {
+  0% {
+    background: white;
+    border-color: rgb(229 231 235);
+  }
+  25% {
+    background: linear-gradient(135deg, #e0d4f5, #d0b8eb);
+    border-color: #b899d9;
+    transform: scale(1.05);
+  }
+  50% {
+    background: linear-gradient(135deg, #d0b8eb, #c3a6e0);
+    border-color: #a987cd;
+    transform: scale(1.07);
+  }
+  75% {
+    background: linear-gradient(135deg, #e0d4f5, #d0b8eb);
+    border-color: #b899d9;
+    transform: scale(1.05);
+  }
+  100% {
+    background: white;
+    border-color: rgb(229 231 235);
+    transform: scale(1);
+  }
+}
+
+@keyframes flash-pulse {
+  0%,
+  100% {
+    background: white;
+    border-color: rgb(229 231 235);
+    transform: scale(1);
+  }
+  20%,
+  80% {
+    background: linear-gradient(135deg, #b8e8e0, #97dfd1);
+    border-color: #6dc7b5;
+    transform: scale(1.04);
+  }
+  40%,
+  60% {
+    background: linear-gradient(135deg, #a1e0d5, #7fd4c3);
+    border-color: #5db8a5;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes flash-burst {
+  0% {
+    background: white;
+    border-color: rgb(229 231 235);
+    transform: scale(1);
+  }
+  50% {
+    background: linear-gradient(135deg, #c5f0e7, #9fe5d8);
+    border-color: #7bd8c5;
+    transform: scale(1.1);
+  }
+  100% {
+    background: white;
+    border-color: rgb(229 231 235);
+    transform: scale(1);
+  }
 }
