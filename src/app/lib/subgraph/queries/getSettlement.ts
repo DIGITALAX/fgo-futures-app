@@ -8,7 +8,7 @@ query($bot: String!) {
     bot
     totalSettlements
     averageDelaySeconds
-    monaStaked
+    stakeAmount
     totalSlashEvents
     totalAmountSlashed
     blockNumber
@@ -34,7 +34,6 @@ query($bot: String!) {
                   image
               }
             }
-            
         }
     }
   }
@@ -71,7 +70,7 @@ query($first: Int!, $skip: Int!) {
     bot
     totalSettlements
     averageDelaySeconds
-    monaStaked
+    stakeAmount
     totalSlashEvents
     totalAmountSlashed
     blockNumber
@@ -96,7 +95,6 @@ query($first: Int!, $skip: Int!) {
                 image
             }
             }
-            
         }
     }
   }

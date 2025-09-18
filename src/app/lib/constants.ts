@@ -41,6 +41,7 @@ export const CORE_CONTRACT_ADDRESSES: Record<number, CoreContractAddresses> = {
     settlement: "0x",
     trading: "0x",
     mona: "0x3D7f4Fc4E17Ead2ABBcf282A38F209D683e03835",
+    simChild: "0x7ef3b77a0f112768ac3a2253e8f617e3e83b5279",
   },
   [NETWORKS.LENS_MAINNET.chainId]: {
     futures: "0x",
@@ -51,6 +52,7 @@ export const CORE_CONTRACT_ADDRESSES: Record<number, CoreContractAddresses> = {
     settlement: "0x",
     trading: "0x",
     mona: "0x",
+    simChild: "0x",
   },
 };
 

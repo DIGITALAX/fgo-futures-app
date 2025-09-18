@@ -99,11 +99,6 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
             hasMore={hasMoreContracts}
             loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
             scrollableTarget="settlement-scrollable"
-            endMessage={
-              <div className="text-center text-xs text-gray-400 py-2">
-                No more settlements to load
-              </div>
-            }
           >
             {contractsSettled?.map((settlement) => (
               <div
@@ -141,7 +136,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       </span>
                     </div>
 
-                    <div className="text-xs font-medium text-gray-700 mb-1 truncate">
+                    <div className="text-xs text-gray-700 mb-1 truncate">
                       {settlement.child.metadata.title}
                     </div>
 

@@ -4,7 +4,7 @@ import {
   getCurrentNetwork,
 } from "@/app/lib/constants";
 import { AppContext } from "@/app/lib/providers/Providers";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { SettlementBot } from "../types/layout.types";
 import {
@@ -23,37 +23,73 @@ const useRegisterBot = () => {
   const [claimLoading, setClaimLoading] = useState<boolean>(false);
   const [stakeAmount, setStakeAmount] = useState<number>(0);
   const [settlementBots, setSettlementBots] = useState<SettlementBot[]>([]);
-  const [settlementBotsLoading, setSettlementBotsLoading] = useState<boolean>(false);
+  const [settlementBotsLoading, setSettlementBotsLoading] =
+    useState<boolean>(false);
   const [settlementBotsSkip, setSettlementBotsSkip] = useState<number>(0);
-  const [hasMoreSettlementBots, setHasMoreSettlementBots] = useState<boolean>(true);
+  const [hasMoreSettlementBots, setHasMoreSettlementBots] =
+    useState<boolean>(true);
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
+  
+  const lastRequestTime = useRef<number>(0);
+  const requestCache = useRef<{ [key: string]: any }>({});
 
   const getUserSettlementBot = async () => {
     if (!address) return;
     try {
       const data = await getSettlementBotsUser(address);
+      console.log({ data });
       setSettlementBot(data?.data?.settlementBots?.[0]);
     } catch (err: any) {
       console.error(err.message);
     }
   };
 
-  const getAllSettlementBots = async (reset: boolean = false) => {
+  const getAllSettlementBots = useCallback(async (reset: boolean = false) => {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime.current;
+    
+    if (timeSinceLastRequest < 1000) {
+      console.log("Request throttled - too soon since last request");
+      return;
+    }
+    
+    if (settlementBotsLoading) {
+      console.log("Request skipped - already loading");
+      return;
+    }
+    
     setSettlementBotsLoading(true);
+    lastRequestTime.current = now;
+    
     try {
       const skipValue = reset ? 0 : settlementBotsSkip;
+      const cacheKey = `settlement-bots-${skipValue}`;
+      
+      if (requestCache.current[cacheKey] && !reset) {
+        console.log("Using cached data for", cacheKey);
+        const cachedData = requestCache.current[cacheKey];
+        const newBots = [...settlementBots, ...(cachedData || [])];
+        setSettlementBots(newBots);
+        setSettlementBotsSkip((prev) => prev + 20);
+        context?.setSettlementBots(newBots);
+        setSettlementBotsLoading(false);
+        return;
+      }
+      
       const data = await getSettlementBotsAll(20, skipValue);
-      
+      console.log({ data });
       let allBots = data?.data?.settlementBots;
-      
+
       if (!allBots || allBots.length < 20) {
         setHasMoreSettlementBots(false);
       }
       
+      requestCache.current[cacheKey] = allBots;
+
       if (reset) {
         setSettlementBots(allBots || []);
         setSettlementBotsSkip(20);
@@ -61,14 +97,14 @@ const useRegisterBot = () => {
       } else {
         const newBots = [...settlementBots, ...(allBots || [])];
         setSettlementBots(newBots);
-        setSettlementBotsSkip(prev => prev + 20);
+        setSettlementBotsSkip((prev) => prev + 20);
         context?.setSettlementBots(newBots);
       }
     } catch (err: any) {
       console.error(err.message);
     }
     setSettlementBotsLoading(false);
-  };
+  }, [settlementBotsSkip, settlementBots, settlementBotsLoading, context]);
 
   const handleRegisterSettlement = async () => {
     if (!walletClient || !publicClient || !address) return;
@@ -147,7 +183,6 @@ const useRegisterBot = () => {
     setStakeLoading(false);
   };
 
-
   const handleClaimChildSettled = async (contractId: number) => {
     if (!walletClient || !publicClient || !address) return;
     setClaimLoading(true);
@@ -177,16 +212,16 @@ const useRegisterBot = () => {
   }, [address]);
 
   useEffect(() => {
-    if (settlementBots?.length < 1) {
+    if (settlementBots?.length < 1 && !settlementBotsLoading) {
       getAllSettlementBots(true);
     }
-  }, [context?.hideSuccess]);
+  }, [getAllSettlementBots, settlementBots?.length, settlementBotsLoading]);
 
-  const loadMoreSettlementBots = () => {
+  const loadMoreSettlementBots = useCallback(() => {
     if (!settlementBotsLoading && hasMoreSettlementBots) {
       getAllSettlementBots(false);
     }
-  };
+  }, [getAllSettlementBots, settlementBotsLoading, hasMoreSettlementBots]);
 
   return {
     registerSettlementLoading,

@@ -66,14 +66,10 @@ const Create: FunctionComponent<CreateProps> = ({
           <InfiniteScroll
             dataLength={(activeTab === "all" ? escrowedRights : escrowedRightsUser)?.length || 0}
             next={activeTab === "all" ? loadMoreEscrowedRights : loadMoreEscrowedRightsUser}
-            hasMore={activeTab === "all" ? hasMoreEscrowedRights : hasMoreEscrowedRightsUser}
+            hasMore={activeTab === "all" ? hasMoreEscrowedRights && !escrowLoading : hasMoreEscrowedRightsUser && !escrowUserLoading}
             loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
             scrollableTarget={`create-scrollable-${activeTab}`}
-            endMessage={
-              <div className="text-center text-xs text-gray-400 py-2">
-                No more escrowed rights to load
-              </div>
-            }
+            scrollThreshold={0.8}
           >
             {(activeTab === "all" ? escrowedRights : escrowedRightsUser)?.map(
               (right) => (
@@ -94,7 +90,7 @@ const Create: FunctionComponent<CreateProps> = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium truncate">
+                        <span className="text-xs truncate">
                           {right.child?.metadata?.title}
                         </span>
                         <span className="text-xs text-gray-600 ml-2">

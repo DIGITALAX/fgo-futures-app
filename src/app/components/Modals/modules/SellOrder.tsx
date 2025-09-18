@@ -54,7 +54,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">
+              <div className="text-sm truncate">
                 {context.sellOrder.contractTitle}
               </div>
               <div className="text-xs text-gray-600">
@@ -64,7 +64,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Quantity (Max: {context.sellOrder.maxQuantity})
             </label>
             <input
@@ -87,7 +87,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Price Per Unit ($MONA)
             </label>
             <input

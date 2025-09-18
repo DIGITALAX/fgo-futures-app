@@ -64,14 +64,10 @@ const Escrow: FunctionComponent<EscrowProps> = ({
           <InfiniteScroll
             dataLength={(activeTab === "all" ? physicalRightsEscrowed : physicalRightsUserEscrowed)?.length || 0}
             next={activeTab === "all" ? loadMorePhysicalRightsEscrowed : loadMorePhysicalRightsUserEscrowed}
-            hasMore={activeTab === "all" ? hasMorePhysicalRightsEscrowed : hasMorePhysicalRightsUserEscrowed}
+            hasMore={activeTab === "all" ? hasMorePhysicalRightsEscrowed && !physicalEscrowedLoading : hasMorePhysicalRightsUserEscrowed && !physicalUserEscrowedLoading}
             loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
             scrollableTarget={`escrow-scrollable-${activeTab}`}
-            endMessage={
-              <div className="text-center text-xs text-gray-400 py-2">
-                No more escrowed rights to load
-              </div>
-            }
+            scrollThreshold={0.8}
           >
             {(activeTab === "all"
               ? physicalRightsEscrowed
@@ -94,7 +90,7 @@ const Escrow: FunctionComponent<EscrowProps> = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium truncate">
+                      <span className="text-xs truncate">
                         {right.child?.metadata?.title}
                       </span>
                       <span className="text-xs text-gray-600 ml-2">

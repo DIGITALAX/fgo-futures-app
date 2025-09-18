@@ -390,7 +390,7 @@ export const dummySettlementBots: SettlementBot[] = [
     bot: "0xbot111222333444555666777888999aaabbbccc",
     totalSettlements: "234",
     averageDelaySeconds: "95",
-    monaStaked: "5000000000000000000000",
+    stakeAmount: "5000000000000000000000",
     totalSlashEvents: "1",
     totalAmountSlashed: "100000000000000000000", // 100 MONA
     blockNumber: "18745000",
@@ -424,7 +424,7 @@ export const dummySettlementBots: SettlementBot[] = [
     bot: "0xbot222333444555666777888999aaabbbcccddd",
     totalSettlements: "567",
     averageDelaySeconds: "72",
-    monaStaked: "8000000000000000000000",
+    stakeAmount: "8000000000000000000000",
     totalSlashEvents: "0",
     totalAmountSlashed: "0",
     blockNumber: "18746000",
@@ -478,7 +478,7 @@ export const dummySettlementBots: SettlementBot[] = [
     bot: "0xbot333444555666777888999aaabbbcccdddee",
     totalSettlements: "892",
     averageDelaySeconds: "45",
-    monaStaked: "12000000000000000000000",
+    stakeAmount: "12000000000000000000000",
     totalSlashEvents: "2",
     totalAmountSlashed: "500000000000000000000", // 500 MONA
     blockNumber: "18744000",
@@ -552,7 +552,7 @@ export const dummySettlementBots: SettlementBot[] = [
     bot: "0xbot444555666777888999aaabbbcccdddeeeff",
     totalSettlements: "45",
     averageDelaySeconds: "180",
-    monaStaked: "3000000000000000000000",
+    stakeAmount: "3000000000000000000000",
     totalSlashEvents: "5",
     totalAmountSlashed: "1200000000000000000000", // 1200 MONA
     blockNumber: "18747000",

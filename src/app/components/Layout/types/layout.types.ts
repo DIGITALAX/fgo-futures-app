@@ -1,8 +1,10 @@
 export interface FuturesSimulationElement {
-  id: string;
-  name: string;
-  image: string;
-  price: number;
+  metadata: {
+    title: string;
+    image: string;
+  };
+  physicalPrice: number;
+  childId: string;
   position: {
     row: number;
     col: number;
@@ -84,7 +86,7 @@ export interface SettlementBot {
   bot: string;
   totalSettlements: string;
   averageDelaySeconds: string;
-  monaStaked: string;
+  stakeAmount: string;
   totalSlashEvents: string;
   totalAmountSlashed: string;
   blockNumber: string;
@@ -203,6 +205,7 @@ export interface CoreContractAddresses {
   genesis: `0x${string}`;
   mona: `0x${string}`;
   settlement: `0x${string}`;
+  simChild: `0x${string}`;
 }
 
 export type TransferProps = {

@@ -8,3 +8,15 @@ export const graphFGOFuturesClient = new ApolloClient({
   link: fgoFuturesLink,
   cache: new InMemoryCache(),
 });
+
+
+const fgoLink = new HttpLink({
+  uri: `https://api.studio.thegraph.com/query/109132/fractional-garment-ownership/version/latest`,
+});
+
+export const graphFGOClient = new ApolloClient({
+  link: fgoLink,
+  cache: new InMemoryCache(),
+});
+
+

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
 import { PhysicalRight } from "../types/layout.types";
 import {
   getPhysicalRightsAll,
@@ -39,11 +39,45 @@ const usePhysicalRights = () => {
   const [hasMorePhysicalRightsUser, setHasMorePhysicalRightsUser] = useState<boolean>(true);
   const [hasMorePhysicalRightsEscrowed, setHasMorePhysicalRightsEscrowed] = useState<boolean>(true);
   const [hasMorePhysicalRightsUserEscrowed, setHasMorePhysicalRightsUserEscrowed] = useState<boolean>(true);
+  
+  const lastRequestTimes = useRef({
+    physicalRights: 0,
+    physicalRightsUser: 0,
+    physicalRightsEscrowed: 0,
+    physicalRightsUserEscrowed: 0,
+  });
+  const requestCache = useRef<{ [key: string]: any }>({});
 
-  const getPhysicalRights = async (reset: boolean = false) => {
+  const getPhysicalRights = useCallback(async (reset: boolean = false) => {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTimes.current.physicalRights;
+    
+    if (timeSinceLastRequest < 1000) {
+      console.log("Physical rights request throttled");
+      return;
+    }
+    
+    if (physicalLoading) {
+      console.log("Physical rights request skipped - already loading");
+      return;
+    }
+    
     setPhysicalLoading(true);
+    lastRequestTimes.current.physicalRights = now;
+    
     try {
       const skipValue = reset ? 0 : physicalRightsSkip;
+      const cacheKey = `physical-rights-${skipValue}`;
+      
+      if (requestCache.current[cacheKey] && !reset) {
+        console.log("Using cached physical rights data");
+        const cachedData = requestCache.current[cacheKey];
+        setPhysicalRights(prev => [...prev, ...(cachedData?.length < 1 ? [] : cachedData)]);
+        setPhysicalRightsSkip(prev => prev + 20);
+        setPhysicalLoading(false);
+        return;
+      }
+      
       const data = await getPhysicalRightsAll(20, skipValue);
       
       let allRights = data?.data?.physicalRights_collection;
@@ -51,6 +85,8 @@ const usePhysicalRights = () => {
       if (!allRights || allRights.length < 20) {
         setHasMorePhysicalRights(false);
       }
+      
+      requestCache.current[cacheKey] = allRights;
       
       if (reset) {
         setPhysicalRights(allRights?.length < 1 ? dummyPhysicalRights : allRights);
@@ -66,7 +102,7 @@ const usePhysicalRights = () => {
       console.error(err.message);
     }
     setPhysicalLoading(false);
-  };
+  }, [physicalRightsSkip, physicalLoading]);
 
   const getPhysicalRightsEscrowed = async (reset: boolean = false) => {
     setPhysicalEscrowedLoading(true);
@@ -187,29 +223,29 @@ const usePhysicalRights = () => {
     }
   }, [address, context?.hideSuccess]);
 
-  const loadMorePhysicalRights = () => {
+  const loadMorePhysicalRights = useCallback(() => {
     if (!physicalLoading && hasMorePhysicalRights) {
       getPhysicalRights(false);
     }
-  };
+  }, [getPhysicalRights, physicalLoading, hasMorePhysicalRights]);
 
-  const loadMorePhysicalRightsUser = () => {
+  const loadMorePhysicalRightsUser = useCallback(() => {
     if (!physicalUserLoading && hasMorePhysicalRightsUser) {
       getPhysicalRightsUser(false);
     }
-  };
+  }, [physicalUserLoading, hasMorePhysicalRightsUser]);
 
-  const loadMorePhysicalRightsEscrowed = () => {
+  const loadMorePhysicalRightsEscrowed = useCallback(() => {
     if (!physicalEscrowedLoading && hasMorePhysicalRightsEscrowed) {
       getPhysicalRightsEscrowed(false);
     }
-  };
+  }, [physicalEscrowedLoading, hasMorePhysicalRightsEscrowed]);
 
-  const loadMorePhysicalRightsUserEscrowed = () => {
+  const loadMorePhysicalRightsUserEscrowed = useCallback(() => {
     if (!physicalUserEscrowedLoading && hasMorePhysicalRightsUserEscrowed) {
       getPhysicalRightsUserEscrowed(false);
     }
-  };
+  }, [physicalUserEscrowedLoading, hasMorePhysicalRightsUserEscrowed]);
 
   return {
     physicalRights,

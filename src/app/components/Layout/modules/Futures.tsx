@@ -3,6 +3,7 @@
 import { FunctionComponent } from "react";
 import useFuturesSimulation from "../hooks/useFuturesSimulation";
 import Image from "next/image";
+import { INFURA_GATEWAY } from "@/app/lib/constants";
 
 const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
   const {
@@ -26,10 +27,10 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
     if (element) {
       return (
         <div
-          key={element.id}
+          key={element.childId}
           className={`aspect-square border border-black flex flex-col cursor-pointer relative overflow-hidden ${
-            flashingElements.has(element.id)
-              ? `animate-${flashingElements.get(element.id)}`
+            flashingElements.has(element.childId)
+              ? `animate-${flashingElements.get(element.childId)}`
               : ""
           }`}
           style={{
@@ -42,17 +43,19 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
               draggable={false}
               fill
               className="object-cover"
-              src={element.image}
-              alt={element.name}
+              src={`${INFURA_GATEWAY}${
+                element.metadata.image?.split("ipfs://")?.[1]
+              }`}
+              alt={element.metadata.title}
             />
           </div>
 
-          <div className="flex w-full h-1/4 p-1 flex-col justify-center">
-            <div className="text-xs text-center font-medium leading-tight">
-              {element.name}
+          <div className="flex w-full h-1/4 px-1 py-2 flex-col justify-center">
+            <div className="text-xxs text-center leading-tight">
+              {element.metadata.title}
             </div>
-            <div className="text-xxs text-center font-normal">
-              {element.price} $MONA
+            <div className="text-xxs text-center">
+              {(Number(element.physicalPrice) ).toFixed(2)} $MONA
             </div>
           </div>
         </div>
@@ -89,9 +92,7 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
             <div
               key={`col-bg-${colIndex}`}
               className={`flex-1 ${
-                highlightedColumns.has(colIndex)
-                  ? "bg-white"
-                  : ""
+                highlightedColumns.has(colIndex) ? "bg-white" : ""
               }`}
               style={{
                 marginLeft: colIndex === 0 ? 0 : "0.5rem",
@@ -105,7 +106,7 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
           style={{
             gridTemplateColumns: `repeat(${gridDimensions.cols}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${gridDimensions.rows}, minmax(0, 1fr))`,
-            gridAutoRows: "minmax(80px, 1fr)"
+            gridAutoRows: "minmax(80px, 1fr)",
           }}
         >
           {generateAllCells()}

@@ -56,11 +56,6 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
           hasMore={hasMoreFulfillers}
           loader={<div className="text-center text-xs text-gray-500 py-2">Loading more fulfillers...</div>}
           scrollableTarget="fulfillers-scrollable"
-          endMessage={
-            <div className="text-center text-xs text-gray-400 py-2">
-              No more fulfillers to load
-            </div>
-          }
         >
           <div className="space-y-8">
             {fulfillers?.map((fulfiller) => (
@@ -128,7 +123,7 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
               </div>
             </div>
             <div>
-              <div className="text-md font-medium text-gray-700 mb-3">
+              <div className="text-md text-gray-700 mb-3">
                 Orders & Fulfillment Progress ({fulfiller.childOrders?.length || 0})
               </div>
               
@@ -156,7 +151,7 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
                             </div>
                             
                             <div>
-                              <div className="font-medium text-gray-800 mb-1">
+                              <div className="text-gray-800 mb-1">
                                 {order.parent.metadata.title}
                               </div>
                               <div className="flex items-center gap-2">
@@ -166,7 +161,7 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
                                 <span className="text-xs text-gray-600">
                                   Step {order.fulfillment.currentStep}
                                 </span>
-                                <span className="text-xs font-medium text-gray-600">
+                                <span className="text-xs text-gray-600">
                                   {getStepStatusText(order.fulfillment.fulfillmentOrderSteps.isCompleted)}
                                 </span>
                               </div>
@@ -182,7 +177,7 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
                         <div className="border-t border-gray-200 p-4 bg-white">
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div>
-                              <div className="text-sm font-medium text-gray-700 mb-3">Order Information</div>
+                              <div className="text-sm text-gray-700 mb-3">Order Information</div>
                               
                               <div className="space-y-2 text-sm">
                                 <div className="grid grid-cols-2 gap-2">
@@ -215,23 +210,23 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
                                 </div>
                               </div>
                               <div className="mt-4">
-                                <div className="text-sm font-medium text-gray-700 mb-2">Current Step Notes</div>
+                                <div className="text-sm text-gray-700 mb-2">Current Step Notes</div>
                                 <div className="bg-gray-50 p-3 border border-gray-200 text-sm">
                                   {order.fulfillment.fulfillmentOrderSteps.notes}
                                 </div>
                               </div>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-700 mb-3">Workflow Step Details</div>
+                              <div className="text-sm text-gray-700 mb-3">Workflow Step Details</div>
                               
                               <div className="bg-white border border-black p-3 mb-3">
-                                <div className="text-sm font-medium text-gray-700 mb-2">Instructions</div>
+                                <div className="text-sm text-gray-700 mb-2">Instructions</div>
                                 <div className="text-sm text-gray-600">
                                   {order.parent.workflow.physicalSteps.instructions}
                                 </div>
                               </div>
                               <div className="border border-black bg-white p-3">
-                                <div className="text-sm font-medium text-gray-700 mb-2">
+                                <div className="text-sm text-gray-700 mb-2">
                                   Step Fulfiller (Specialist)
                                 </div>
                                 
@@ -248,7 +243,7 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
                                   </div>
                                   
                                   <div className="flex-1">
-                                    <div className="font-medium text-gray-700 text-sm">
+                                    <div className="text-gray-700 text-sm">
                                       {order.parent.workflow.physicalSteps.fulfiller.metadata.title}
                                     </div>
                                     <div className="text-xs text-gray-600 font-mono">
@@ -282,7 +277,7 @@ const Fulfillers: FunctionComponent<{dict: any}> = ({ dict }) => {
                               </div>
                               {order.fulfillment.fulfillmentOrderSteps.isCompleted === "true" && (
                                 <div className="mt-3 bg-white border border-black p-3">
-                                  <div className="text-sm font-medium text-gray-700 mb-1">Step Completed</div>
+                                  <div className="text-sm text-gray-700 mb-1">Step Completed</div>
                                   <div className="text-xs text-gray-600">
                                     Completed: {new Date(parseInt(order.fulfillment.fulfillmentOrderSteps.completedAt)).toLocaleDateString()}
                                   </div>

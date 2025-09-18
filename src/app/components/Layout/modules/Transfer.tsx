@@ -65,14 +65,10 @@ const Transfer: FunctionComponent<TransferProps> = ({
           <InfiniteScroll
             dataLength={(activeTab === "all" ? physicalRights : physicalRightsUser)?.length || 0}
             next={activeTab === "all" ? loadMorePhysicalRights : loadMorePhysicalRightsUser}
-            hasMore={activeTab === "all" ? hasMorePhysicalRights : hasMorePhysicalRightsUser}
+            hasMore={activeTab === "all" ? hasMorePhysicalRights && !physicalLoading : hasMorePhysicalRightsUser && !physicalUserLoading}
             loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
             scrollableTarget={`transfer-scrollable-${activeTab}`}
-            endMessage={
-              <div className="text-center text-xs text-gray-400 py-2">
-                No more physical rights to load
-              </div>
-            }
+            scrollThreshold={0.8}
           >
             {(activeTab === "all" ? physicalRights : physicalRightsUser)?.map(
               (right) => (
@@ -93,7 +89,7 @@ const Transfer: FunctionComponent<TransferProps> = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium truncate">
+                        <span className="text-xs truncate">
                           {right.child?.metadata?.title}
                         </span>
                         <span className="text-xs text-gray-600 ml-2">

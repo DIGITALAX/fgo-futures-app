@@ -41,7 +41,7 @@ export const Success = ({ dict }: { dict: any }) => {
 
           {context.successData.txHash && (
             <div className="border border-black p-3">
-              <div className="text-xs font-medium mb-2">Transaction Hash:</div>
+              <div className="text-xs mb-2">Transaction Hash:</div>
               {explorerUrl ? (
                 <a
                   href={explorerUrl}

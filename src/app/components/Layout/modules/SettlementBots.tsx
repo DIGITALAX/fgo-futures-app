@@ -53,14 +53,10 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
           <InfiniteScroll
             dataLength={settlementBots?.length || 0}
             next={loadMoreSettlementBots}
-            hasMore={hasMoreSettlementBots}
+            hasMore={hasMoreSettlementBots && !settlementBotsLoading}
             loader={<div className="text-center text-xs text-gray-500 py-2">Loading more bots...</div>}
             scrollableTarget="settlementbots-scrollable"
-            endMessage={
-              <div className="text-center text-xs text-gray-400 py-2">
-                No more settlement bots to load
-              </div>
-            }
+            scrollThreshold={0.8}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayBots?.map((bot, index) => {
@@ -118,7 +114,7 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                   </div>
                   <div>
                     <span className="text-gray-600">Slashes:</span>
-                    <div className="font-medium text-red-600">
+                    <div className="text-red-600">
                       {bot.totalSlashEvents}
                     </div>
                   </div>
@@ -127,7 +123,7 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 {Number(bot.totalAmountSlashed) > 0 && (
                   <div className="mt-2 text-xs">
                     <span className="text-gray-600">Amount Slashed:</span>
-                    <div className="font-medium text-red-600">
+                    <div className="text-red-600">
                       {(
                         Number(bot.totalAmountSlashed) /
                         10 ** 18
@@ -151,7 +147,7 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
               </div>
 
               <div className="flex-1">
-                <div className="text-xs font-medium text-gray-700 mb-2">
+                <div className="text-xs text-gray-700 mb-2">
                   Recent Settlements ({bot.settledContracts?.length || 0})
                 </div>
 
@@ -174,7 +170,7 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-700 truncate">
+                          <div className="text-gray-700 truncate">
                             {contract.contract.metadata.title}
                           </div>
 

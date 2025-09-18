@@ -16,7 +16,7 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
           <Futures dict={dict} />
           <Settlement dict={dict} />
         </div>
-        <div className="relative w-full h-10 border-y border-black py-3 flex flex-row">
+        <div className="relative w-full overflow-none h-10 border-y border-black py-3 flex flex-row">
           <Marquee gradient={false} speed={70} direction={"right"}>
             {Array.from({ length: 30 }).map((_, index: number) => {
               return (

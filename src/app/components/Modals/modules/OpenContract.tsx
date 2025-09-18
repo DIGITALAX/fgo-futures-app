@@ -88,7 +88,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium mb-1">Child ID</label>
+              <label className="block text-xs mb-1">Child ID</label>
               <input
                 type="text"
                 value={openContractForm.childId}
@@ -97,7 +97,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Order ID</label>
+              <label className="block text-xs mb-1">Order ID</label>
               <input
                 type="text"
                 value={openContractForm.orderId}
@@ -108,7 +108,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Amount (Max: {context?.openContract?.maxAmount || 0})
             </label>
             <input
@@ -133,7 +133,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Price Per Unit ($MONA)
             </label>
             <input
@@ -152,7 +152,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Settlement Reward BPS
             </label>
             <input
@@ -174,7 +174,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Contract Title
             </label>
             <input
@@ -192,7 +192,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Contract Image
             </label>
             <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1">
+            <label className="block text-xs mb-1">
               Trusted Settlement Bots ({selectedBots.length}/5)
             </label>
             <div className="mb-2">

@@ -69,14 +69,10 @@ const Orders: FunctionComponent<OrderProps> = ({
           <InfiniteScroll
             dataLength={(activeTab === "all" ? orders : userOrders)?.length || 0}
             next={activeTab === "all" ? loadMoreOrders : loadMoreUserOrders}
-            hasMore={activeTab === "all" ? hasMoreOrders : hasMoreUserOrders}
+            hasMore={(activeTab === "all" ? hasMoreOrders && !ordersLoading : hasMoreUserOrders && !userOrdersLoading)}
             loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
             scrollableTarget={`orders-scrollable-${activeTab}`}
-            endMessage={
-              <div className="text-center text-xs text-gray-400 py-2">
-                No more orders to load
-              </div>
-            }
+            scrollThreshold={0.8}
           >
             {(activeTab === "all" ? orders : userOrders)?.map((order) => (
               <div
@@ -96,7 +92,7 @@ const Orders: FunctionComponent<OrderProps> = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium truncate">
+                      <span className="text-xs truncate">
                         {order.contract.metadata.title}
                       </span>
                       <span
