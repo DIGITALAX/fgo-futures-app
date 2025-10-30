@@ -21,8 +21,11 @@ const useRegisterBot = () => {
     SettlementBot | undefined
   >();
   const [claimLoading, setClaimLoading] = useState<boolean>(false);
-  const [stakeAmount, setStakeAmount] = useState<number>(0);
-  const [settlementBots, setSettlementBots] = useState<SettlementBot[]>([]);
+  const [stakeAmount, setStakeAmount] = useState<number>(
+    context?.minStake ?? 0
+  );
+  const [approveLoading, setApproveLoading] = useState<boolean>(false);
+  const [isStakeApproved, setIsStakeApproved] = useState<boolean>(false);
   const [settlementBotsLoading, setSettlementBotsLoading] =
     useState<boolean>(false);
   const [settlementBotsSkip, setSettlementBotsSkip] = useState<number>(0);
@@ -33,78 +36,175 @@ const useRegisterBot = () => {
   const { data: walletClient } = useWalletClient();
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
-  
+
   const lastRequestTime = useRef<number>(0);
   const requestCache = useRef<{ [key: string]: any }>({});
+
+  const checkAllowance = useCallback(async (): Promise<boolean> => {
+    if (!publicClient || !address) {
+      setIsStakeApproved(false);
+      return false;
+    }
+
+    try {
+      const allowance = (await publicClient.readContract({
+        address: contracts.mona as `0x${string}`,
+        abi: [
+          {
+            type: "function",
+            name: "allowance",
+            stateMutability: "view",
+            inputs: [
+              { name: "owner", type: "address", internalType: "address" },
+              { name: "spender", type: "address", internalType: "address" },
+            ],
+            outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+          },
+        ],
+        functionName: "allowance",
+        args: [address as `0x${string}`, contracts.settlement as `0x${string}`],
+      })) as bigint;
+
+      const approved = allowance >= BigInt(stakeAmount * 10 ** 18);
+      setIsStakeApproved(approved);
+      return approved;
+    } catch (err: any) {
+      console.error(err?.message || err);
+      setIsStakeApproved(false);
+      return false;
+    }
+  }, [
+    publicClient,
+    address,
+    contracts.mona,
+    contracts.settlement,
+    stakeAmount,
+  ]);
 
   const getUserSettlementBot = async () => {
     if (!address) return;
     try {
       const data = await getSettlementBotsUser(address);
-      console.log({ data });
       setSettlementBot(data?.data?.settlementBots?.[0]);
     } catch (err: any) {
       console.error(err.message);
     }
   };
 
-  const getAllSettlementBots = useCallback(async (reset: boolean = false) => {
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastRequestTime.current;
-    
-    if (timeSinceLastRequest < 1000) {
-      console.log("Request throttled - too soon since last request");
-      return;
-    }
-    
-    if (settlementBotsLoading) {
-      console.log("Request skipped - already loading");
-      return;
-    }
-    
-    setSettlementBotsLoading(true);
-    lastRequestTime.current = now;
-    
-    try {
-      const skipValue = reset ? 0 : settlementBotsSkip;
-      const cacheKey = `settlement-bots-${skipValue}`;
-      
-      if (requestCache.current[cacheKey] && !reset) {
-        console.log("Using cached data for", cacheKey);
-        const cachedData = requestCache.current[cacheKey];
-        const newBots = [...settlementBots, ...(cachedData || [])];
-        setSettlementBots(newBots);
-        setSettlementBotsSkip((prev) => prev + 20);
-        context?.setSettlementBots(newBots);
-        setSettlementBotsLoading(false);
+  const getAllSettlementBots = useCallback(
+    async (reset: boolean = false) => {
+      const now = Date.now();
+      const timeSinceLastRequest = now - lastRequestTime.current;
+
+      if (timeSinceLastRequest < 1000) {
         return;
       }
-      
-      const data = await getSettlementBotsAll(20, skipValue);
-      console.log({ data });
-      let allBots = data?.data?.settlementBots;
 
-      if (!allBots || allBots.length < 20) {
-        setHasMoreSettlementBots(false);
+      if (settlementBotsLoading) {
+        return;
       }
-      
-      requestCache.current[cacheKey] = allBots;
 
-      if (reset) {
-        setSettlementBots(allBots || []);
-        setSettlementBotsSkip(20);
-        context?.setSettlementBots(allBots || []);
-      } else {
-        const newBots = [...settlementBots, ...(allBots || [])];
-        setSettlementBots(newBots);
-        setSettlementBotsSkip((prev) => prev + 20);
-        context?.setSettlementBots(newBots);
+      setSettlementBotsLoading(true);
+      lastRequestTime.current = now;
+
+      try {
+        const skipValue = reset ? 0 : settlementBotsSkip;
+        const cacheKey = `settlement-bots-${skipValue}`;
+
+        if (requestCache.current[cacheKey] && !reset) {
+          const cachedData = requestCache.current[cacheKey];
+          const newBots = [
+            ...(context?.settlementBots || []),
+            ...(cachedData || []),
+          ];
+          setSettlementBotsSkip((prev) => prev + 20);
+          context?.setSettlementBots(newBots);
+          setSettlementBotsLoading(false);
+          return;
+        }
+
+        const data = await getSettlementBotsAll(20, skipValue);
+        let allBots = data?.data?.settlementBots;
+
+        if (!allBots || allBots.length < 20) {
+          setHasMoreSettlementBots(false);
+        }
+
+        requestCache.current[cacheKey] = allBots;
+
+        if (reset) {
+          setSettlementBotsSkip(20);
+          context?.setSettlementBots(allBots || []);
+        } else {
+          const newBots = [
+            ...(context?.settlementBots || []),
+            ...(allBots || []),
+          ];
+          setSettlementBotsSkip((prev) => prev + 20);
+          context?.setSettlementBots(newBots);
+        }
+      } catch (err: any) {
+        console.error(err.message);
       }
+      setSettlementBotsLoading(false);
+    },
+    [
+      settlementBotsSkip,
+      context?.settlementBots,
+      settlementBotsLoading,
+      context,
+    ]
+  );
+
+  const approveStake = useCallback(async (): Promise<boolean> => {
+    if (!walletClient || !publicClient || !address) return false;
+
+    setApproveLoading(true);
+    try {
+      const hash = await walletClient.writeContract({
+        address: contracts.mona as `0x${string}`,
+        abi: [
+          {
+            type: "function",
+            name: "approve",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "spender", type: "address", internalType: "address" },
+              { name: "amount", type: "uint256", internalType: "uint256" },
+            ],
+            outputs: [{ name: "", type: "bool", internalType: "bool" }],
+          },
+        ],
+        functionName: "approve",
+        args: [
+          contracts.settlement as `0x${string}`,
+          BigInt(stakeAmount * 10 ** 18),
+        ],
+        account: address,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      context?.showSuccess("Stake allowance approved!", hash);
+      await checkAllowance();
+      return true;
     } catch (err: any) {
       console.error(err.message);
+      context?.showError(err.message);
+      return false;
+    } finally {
+      setApproveLoading(false);
     }
-    setSettlementBotsLoading(false);
-  }, [settlementBotsSkip, settlementBots, settlementBotsLoading, context]);
+  }, [
+    walletClient,
+    publicClient,
+    address,
+    contracts.mona,
+    contracts.settlement,
+    stakeAmount,
+    context,
+    checkAllowance,
+  ]);
 
   const handleRegisterSettlement = async () => {
     if (!walletClient || !publicClient || !address) return;
@@ -113,20 +213,29 @@ const useRegisterBot = () => {
       const valid = Number(context?.stats?.mona) >= stakeAmount;
       if (!valid) {
         setRegisterSettlementLoading(false);
-        context?.showError("Invalid Stake Amount.");
+        context?.showError("Insufficient MONA balance.");
         return;
       }
+
+      const approved = await checkAllowance();
+      if (!approved) {
+        context?.showError("Please approve the stake amount first.");
+        setRegisterSettlementLoading(false);
+        return;
+      }
+
       const hash = await walletClient.writeContract({
         address: contracts.settlement,
         abi: ABIS.FGOFuturesSettlement,
         functionName: "registerSettlementBot",
-        args: [stakeAmount],
+        args: [stakeAmount * 10 ** 18],
         account: address,
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
 
       context?.showSuccess("Settlement Bot Registered!", hash);
+      await checkAllowance();
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -140,26 +249,51 @@ const useRegisterBot = () => {
     try {
       const valid = Number(context?.stats?.mona) >= stakeAmount;
       if (!valid) {
-        setRegisterSettlementLoading(false);
-        context?.showError("Invalid Stake Amount.");
+        setStakeLoading(false);
+        context?.showError("Insufficient MONA balance.");
         return;
       }
+
+      const approved = await checkAllowance();
+      if (!approved) {
+        context?.showError("Please approve the stake amount first.");
+        setStakeLoading(false);
+        return;
+      }
+
       const hash = await walletClient.writeContract({
         address: contracts.settlement,
         abi: ABIS.FGOFuturesSettlement,
         functionName: "increaseStake",
-        args: [stakeAmount],
+        args: [stakeAmount * 10 ** 18],
         account: address,
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
 
       context?.showSuccess("Settlement Bot Stake Increased!", hash);
+      await checkAllowance();
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
     }
     setStakeLoading(false);
+  };
+
+  const handleMinStake = async () => {
+    if (!publicClient) return;
+    try {
+      const res = await publicClient.readContract({
+        address: contracts.settlement,
+        abi: ABIS.FGOFuturesSettlement,
+        functionName: "getMinStakeAmount",
+        args: [],
+      });
+      context?.setMinStake(Number(res) / 10 ** 18);
+      setStakeAmount(Number(res) / 10 ** 18);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   };
 
   const handleWithdrawStake = async () => {
@@ -212,10 +346,24 @@ const useRegisterBot = () => {
   }, [address]);
 
   useEffect(() => {
-    if (settlementBots?.length < 1 && !settlementBotsLoading) {
+    if ((!context?.minStake || context.minStake == 0) && publicClient) {
+      handleMinStake();
+    }
+  }, [publicClient]);
+
+  useEffect(() => {
+    checkAllowance();
+  }, [checkAllowance]);
+
+  useEffect(() => {
+    if (Number(context?.settlementBots?.length) < 1 && !settlementBotsLoading) {
       getAllSettlementBots(true);
     }
-  }, [getAllSettlementBots, settlementBots?.length, settlementBotsLoading]);
+  }, [
+    getAllSettlementBots,
+    context?.settlementBots?.length,
+    settlementBotsLoading,
+  ]);
 
   const loadMoreSettlementBots = useCallback(() => {
     if (!settlementBotsLoading && hasMoreSettlementBots) {
@@ -231,10 +379,12 @@ const useRegisterBot = () => {
     handleIncreaseStake,
     handleWithdrawStake,
     stakeLoading,
+    approveStake,
+    approveLoading,
+    isStakeApproved,
     settlementBot,
     handleClaimChildSettled,
     claimLoading,
-    settlementBots,
     settlementBotsLoading,
     hasMoreSettlementBots,
     loadMoreSettlementBots,

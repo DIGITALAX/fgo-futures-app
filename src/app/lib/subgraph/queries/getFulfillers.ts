@@ -31,6 +31,7 @@ query($first: Int!, $skip: Int!) {
         parentContract
         uri
         workflow {
+          estimatedDeliveryDuration
           physicalSteps {
             instructions
             subPerformers {

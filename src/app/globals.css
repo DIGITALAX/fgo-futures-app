@@ -10,6 +10,17 @@
   src: url("/fonts/ppmondwest-regular.otf");
 }
 
+@font-face {
+  font-family: "Liquid";
+  src: url("/fonts/Liquid.ttf");
+}
+
+@font-face {
+  font-family: "FashionWacks";
+  src: url("/fonts/FashionWacks.otf");
+}
+
+
 @layer utils {
   .font-mond {
     font-family: "PPMond";
@@ -17,6 +28,14 @@
 
   .font-jb {
     font-family: "JB";
+  }
+
+  .font-fash {
+    font-family: "FashionWacks";
+  }
+
+  .font-liq {
+    font-family: "Liquid";
   }
 
   .grid-cols-18 {

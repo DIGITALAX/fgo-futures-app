@@ -32,6 +32,17 @@ const useOpenContract = () => {
   const handleOpenContract = async () => {
     if (!walletClient || !publicClient || !address || !openContractForm.image!)
       return;
+
+    const estimatedDeliveryDuration = context?.openContract?.estimatedDeliveryDuration || 0;
+    const currentTime = Math.floor(Date.now() / 1000);
+    const timeUntilDelivery = estimatedDeliveryDuration - currentTime;
+    const oneHour = 3600;
+
+    if (timeUntilDelivery < oneHour) {
+      context?.showError("Cannot create future: Must have at least 1 hour between current time and estimated delivery duration to allow for trading.");
+      return;
+    }
+
     setOpenContractLoading(true);
     try {
       const formData = new FormData();

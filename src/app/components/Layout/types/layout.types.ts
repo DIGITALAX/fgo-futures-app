@@ -37,6 +37,7 @@ export interface PhysicalRight {
   holder: string;
   originalBuyer: string;
   buyer: string;
+  blockTimestamp: string;
   child: {
     uri: string;
     childContract: string;
@@ -47,6 +48,7 @@ export interface PhysicalRight {
     };
   };
   guaranteedAmount: string;
+  estimatedDeliveryDuration: string;
   purchaseMarket: string;
 }
 
@@ -86,7 +88,6 @@ export interface SettlementBot {
   bot: string;
   totalSettlements: string;
   averageDelaySeconds: string;
-  stakeAmount: string;
   totalSlashEvents: string;
   totalAmountSlashed: string;
   blockNumber: string;
@@ -96,7 +97,6 @@ export interface SettlementBot {
     contractId: string;
     reward: string;
     settlementBot: string;
-    actualCompletionTime: string;
     blockTimestamp: string;
     transactionHash: string;
     blockNumber: string;
@@ -138,6 +138,8 @@ export interface ContractSettled {
   settlementRewardBPS: string;
   isActive: boolean;
   isSettled: boolean;
+  fulfillerSettlement: string;
+  futuresSettlementDate: string;
   trustedSettlementBots: {
     stakeAmount: string;
     bot: string;
@@ -164,7 +166,6 @@ export interface ContractSettled {
       totalSlashEvents: string;
       totalAmountSlashed: string;
     };
-    actualCompletionTime: string;
     blockTimestamp: string;
     transactionHash: string;
     blockNumber: string;
@@ -187,6 +188,7 @@ export interface EscrowedRight {
   transactionHash: string;
   depositedAt: string;
   futuresCreated: boolean;
+  estimatedDeliveryDuration: string;
   child: {
     uri: string;
     metadata: {
@@ -199,13 +201,12 @@ export interface EscrowedRight {
 export interface CoreContractAddresses {
   futures: `0x${string}`;
   escrow: `0x${string}`;
-  child: `0x${string}`;
-  dlta: `0x${string}`;
+  futuresCoordination: `0x${string}`;
+  ionic: `0x${string}`;
   trading: `0x${string}`;
   genesis: `0x${string}`;
   mona: `0x${string}`;
   settlement: `0x${string}`;
-  simChild: `0x${string}`;
 }
 
 export type TransferProps = {
@@ -227,9 +228,10 @@ export type EscrowProps = {
     amount: number;
     originalMarket: string;
     childContract: string;
+    key: string;
   }) => Promise<void>;
   dict: any;
-  depositLoading: boolean;
+  depositLoadingKey: string | null;
   physicalRightsEscrowed: PhysicalRight[];
   physicalEscrowedLoading: boolean;
   physicalUserEscrowedLoading: boolean;
@@ -247,13 +249,14 @@ export type CreateProps = {
     amount: number;
     originalMarket: string;
     childContract: string;
+    key: string;
   }) => Promise<void>;
   dict: any;
   escrowLoading: boolean;
   escrowUserLoading: boolean;
   escrowedRights: EscrowedRight[];
   escrowedRightsUser: EscrowedRight[];
-  withdrawLoading: boolean;
+  withdrawLoadingKey: string | null;
   hasMoreEscrowedRights: boolean;
   hasMoreEscrowedRightsUser: boolean;
   loadMoreEscrowedRights: () => void;
@@ -341,6 +344,7 @@ export interface ChildOrder {
     parentContract: string;
     uri: string;
     workflow: {
+      estimatedDeliveryDuration: string;
       physicalSteps: {
         instructions: string;
         subPerformers: {

@@ -34,12 +34,13 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
     settlementBot,
     handleClaimChildSettled,
     claimLoading,
+    approveLoading,
+    approveStake,
+    isStakeApproved,
   } = useRegisterBot();
 
-  const [showStakeInput, setShowStakeInput] = useState(false);
-
   const isEligible =
-    Number(context?.stats?.dlta) > 0 || Number(context?.stats?.genesis) > 0;
+    Number(context?.stats?.ionic) > 0 || Number(context?.stats?.genesis) > 0;
 
   const canEmergencySettle = (settlement: ContractSettled) => {
     if (!address || !context?.stats?.blockTimestamp) return false;
@@ -86,8 +87,8 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
         </div>
       </div>
 
-      <div 
-        className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden" 
+      <div
+        className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden"
         id="settlement-scrollable"
       >
         {contractsLoading && contractsSettled?.length === 0 ? (
@@ -97,7 +98,11 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
             dataLength={contractsSettled?.length || 0}
             next={loadMoreContracts}
             hasMore={hasMoreContracts}
-            loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
+            loader={
+              <div className="text-center text-xs text-gray-500 py-2">
+                Loading more...
+              </div>
+            }
             scrollableTarget="settlement-scrollable"
           >
             {contractsSettled?.map((settlement) => (
@@ -250,58 +255,81 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
               Current Stake: {Number(settlementBot.stakeAmount) / 10 ** 18}{" "}
               $MONA
             </div>
-
-            {showStakeInput && (
-              <input
-                type="number"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(Number(e.target.value))}
-                placeholder="Stake amount"
-                className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
-              />
-            )}
+            <input
+              type="number"
+              value={stakeAmount}
+              onChange={(e) => setStakeAmount(Number(e.target.value))}
+              placeholder="Stake amount"
+              className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
+            />
 
             <div className="flex gap-1">
               <button
                 onClick={() => {
-                  setShowStakeInput(!showStakeInput);
-                  if (showStakeInput) handleIncreaseStake();
+                  if (!isStakeApproved) {
+                    approveStake();
+                  } else {
+                    handleIncreaseStake();
+                  }
                 }}
-                disabled={stakeLoading}
-                className="flex-1 py-1 px-2 text-xs rounded transition-all bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300"
+                disabled={stakeLoading || approveLoading}
+                className={`w-full py-2 px-3 text-xs border border-black transition-colors ${
+                  stakeLoading
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-white text-gray-400 cursor-not-allowed"
+                }`}
               >
-                {showStakeInput ? "Confirm" : "Increase Stake"}
+                {!isStakeApproved
+                  ? "Approve Stake"
+                  : approveLoading || stakeLoading
+                  ? "..."
+                  : "Increase Stake"}
               </button>
               <button
                 onClick={handleWithdrawStake}
                 disabled={stakeLoading}
-                className="flex-1 py-1 px-2 text-xs rounded transition-all bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300"
+                className={`w-full py-2 px-3 text-xs border border-black transition-colors ${
+                  stakeLoading
+                    ? "bg-black text-white hover:bg-gray-800"
+                    : "bg-white text-gray-400 cursor-not-allowed"
+                }`}
               >
-                Withdraw Stake
+                {stakeLoading ? "..." : "Withdraw Stake"}
               </button>
             </div>
           </>
         ) : (
           <>
-            {showStakeInput && (
-              <input
-                type="number"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(Number(e.target.value))}
-                placeholder="Stake amount"
-                className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
-              />
-            )}
+            <div className="text-xs text-gray-600 mb-2">
+              Min Stake: {context?.minStake} $MONA
+            </div>
+
+            <input
+              type="number"
+              value={stakeAmount}
+              min={context?.minStake}
+              onChange={(e) =>
+                setStakeAmount(
+                  Number(e.target.value) < context?.minStake!
+                    ? context?.minStake!
+                    : Number(e.target.value)
+                )
+              }
+              placeholder={String(context?.minStake!)}
+              className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
+            />
 
             <button
               onClick={() => {
-                if (!showStakeInput) {
-                  setShowStakeInput(true);
+                if (!isStakeApproved) {
+                  approveStake();
                 } else {
                   handleRegisterSettlement();
                 }
               }}
-              disabled={!isEligible || registerSettlementLoading}
+              disabled={
+                !isEligible || approveLoading || registerSettlementLoading
+              }
               className={`w-full py-2 px-3 text-xs border border-black transition-colors ${
                 isEligible
                   ? "bg-black text-white hover:bg-gray-800"
@@ -310,11 +338,13 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
             >
               {registerSettlementLoading
                 ? "Registering..."
-                : showStakeInput
-                ? "Confirm Registration"
+                : approveLoading
+                ? "Approving..."
+                : !isStakeApproved
+                ? "Approve Stake"
                 : isEligible
                 ? "Register Settlement Bot"
-                : "DLTA/Genesis Required"}
+                : "IONIC + Genesis Required"}
             </button>
           </>
         )}

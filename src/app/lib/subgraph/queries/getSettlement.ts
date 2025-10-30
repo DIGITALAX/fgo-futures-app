@@ -18,7 +18,6 @@ query($bot: String!) {
         contractId
         reward
         settlementBot
-        actualCompletionTime
         blockTimestamp
         transactionHash
         blockNumber
@@ -26,6 +25,7 @@ query($bot: String!) {
             pricePerUnit
             quantity
             settlementRewardBPS
+            futuresSettlementDate
             child {
               uri
               physicalPrice
@@ -79,7 +79,6 @@ query($first: Int!, $skip: Int!) {
     settledContracts {
         contractId
         reward
-        actualCompletionTime
         blockTimestamp
         transactionHash
         blockNumber
@@ -87,6 +86,7 @@ query($first: Int!, $skip: Int!) {
             pricePerUnit
             quantity
             settlementRewardBPS
+            futuresSettlementDate
             child {
             uri
             physicalPrice
@@ -178,13 +178,13 @@ query($first: Int!, $skip: Int!) {
       totalSlashEvents
       totalAmountSlashed
     }
-    actualCompletionTime
     blockTimestamp
     transactionHash
     blockNumber
     settler
-    emergency  
-    }     
+    emergency
+    }
+    futuresSettlementDate     
   }
 }
 `;

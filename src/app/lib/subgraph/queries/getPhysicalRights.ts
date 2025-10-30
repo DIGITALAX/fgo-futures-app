@@ -19,6 +19,7 @@ query($originalBuyer: String!, $first: Int!, $skip: Int!) {
         title
       }
     }
+    estimatedDeliveryDuration
     guaranteedAmount
     purchaseMarket
   }
@@ -71,6 +72,7 @@ query($holderEscrow: String!, $first: Int!, $skip: Int!) {
         title
       }
     }
+    estimatedDeliveryDuration
     guaranteedAmount
     purchaseMarket
   }
@@ -125,6 +127,7 @@ query($holderEscrow: String!, $first: Int!, $skip: Int!) {
         title
       }
     }
+    estimatedDeliveryDuration
     guaranteedAmount
     purchaseMarket
   }
@@ -179,6 +182,7 @@ query($originalBuyer: String!, $holderEscrow: String!, $first: Int!, $skip: Int!
         title
       }
     }
+    estimatedDeliveryDuration
     guaranteedAmount
     purchaseMarket
   }

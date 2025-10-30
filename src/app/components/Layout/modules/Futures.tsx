@@ -1,6 +1,6 @@
 "use client";
 
-import { FunctionComponent } from "react";
+import { FunctionComponent, useMemo } from "react";
 import useFuturesSimulation from "../hooks/useFuturesSimulation";
 import Image from "next/image";
 import { INFURA_GATEWAY } from "@/app/lib/constants";
@@ -15,34 +15,41 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
     highlightedColumns,
   } = useFuturesSimulation();
 
+  const elementMap = useMemo(() => {
+    const map = new Map<string, (typeof elements)[number]>();
+    elements.forEach((element) => {
+      const key = `${element.position.row}-${element.position.col}`;
+      map.set(key, element);
+    });
+    return map;
+  }, [elements]);
+
   const renderGridCell = (row: number, col: number) => {
     if (shouldSkipPosition(row, col)) {
       return null;
     }
 
-    const element = elements.find(
-      (el) => el.position.row === row && el.position.col === col
-    );
+    const element = elementMap.get(`${row}-${col}`);
 
     if (element) {
       return (
         <div
-          key={element.childId}
-          className={`aspect-square border border-black flex flex-col cursor-pointer relative overflow-hidden ${
+          key={`cell-${row}-${col}`}
+          className={`aspect-square border border-black flex gap-1 flex-col cursor-pointer relative p-px overflow-hidden ${
             flashingElements.has(element.childId)
               ? `animate-${flashingElements.get(element.childId)}`
               : ""
-          }`}
+          } active:bg-orange-200`}
           style={{
             gridRow: row + 1,
             gridColumn: col + 1,
           }}
         >
-          <div className="relative w-full h-3/4">
+          <div className="relative w-full h-full">
             <Image
               draggable={false}
               fill
-              className="object-cover"
+              className="object-contain"
               src={`${INFURA_GATEWAY}${
                 element.metadata.image?.split("ipfs://")?.[1]
               }`}
@@ -50,12 +57,12 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
             />
           </div>
 
-          <div className="flex w-full h-1/4 px-1 py-2 flex-col justify-center">
+          <div className="flex w-full h-fit flex-col justify-center">
             <div className="text-xxs text-center leading-tight">
               {element.metadata.title}
             </div>
             <div className="text-xxs text-center">
-              {(Number(element.physicalPrice) ).toFixed(2)} $MONA
+              {(Number(element.physicalPrice) / 10**18).toFixed(2)} $MONA
             </div>
           </div>
         </div>

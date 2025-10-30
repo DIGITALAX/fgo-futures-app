@@ -6,6 +6,8 @@ import { TransferProps } from "../types/layout.types";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { formatDuration } from "@/app/lib/utils";
+import { INFURA_GATEWAY } from "@/app/lib/constants";
 
 const Transfer: FunctionComponent<TransferProps> = ({
   dict,
@@ -24,10 +26,11 @@ const Transfer: FunctionComponent<TransferProps> = ({
   }>({});
   const { address } = useAccount();
 
-  const { transferLoading, handleTransferRights } = useTransfer();
+  const { transferLoadingKey, handleTransferRights } = useTransfer();
+  const nowInSeconds = Math.floor(Date.now() / 1000);
 
   return (
-    <div className="flex flex-col border border-black">
+    <div className="flex h-full flex-col overflow-hidden border border-black">
       <div className="px-4 py-3 border-b border-black">
         <div className="text-lg">Transfer Rights</div>
         <div className="flex gap-2 mt-2">
@@ -53,114 +56,166 @@ const Transfer: FunctionComponent<TransferProps> = ({
           </button>
         </div>
       </div>
-      <div 
-        className="flex-1 overflow-y-auto min-h-0" 
+      <div
+        className="flex-1 min-h-0 overflow-y-auto"
         id={`transfer-scrollable-${activeTab}`}
       >
-        {(activeTab === "all" ? physicalLoading : physicalUserLoading) && (activeTab === "all" ? physicalRights : physicalRightsUser)?.length === 0 ? (
+        {(activeTab === "all" ? physicalLoading : physicalUserLoading) &&
+        (activeTab === "all" ? physicalRights : physicalRightsUser)?.length ===
+          0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-xs text-gray-500">Loading...</div>
           </div>
         ) : (
           <InfiniteScroll
-            dataLength={(activeTab === "all" ? physicalRights : physicalRightsUser)?.length || 0}
-            next={activeTab === "all" ? loadMorePhysicalRights : loadMorePhysicalRightsUser}
-            hasMore={activeTab === "all" ? hasMorePhysicalRights && !physicalLoading : hasMorePhysicalRightsUser && !physicalUserLoading}
-            loader={<div className="text-center text-xs text-gray-500 py-2">Loading more...</div>}
+            dataLength={
+              (activeTab === "all" ? physicalRights : physicalRightsUser)
+                ?.length || 0
+            }
+            next={
+              activeTab === "all"
+                ? loadMorePhysicalRights
+                : loadMorePhysicalRightsUser
+            }
+            hasMore={
+              activeTab === "all"
+                ? hasMorePhysicalRights && !physicalLoading
+                : hasMorePhysicalRightsUser && !physicalUserLoading
+            }
+            loader={
+              <div className="text-center text-xs text-gray-500 py-2">
+                Loading more...
+              </div>
+            }
             scrollableTarget={`transfer-scrollable-${activeTab}`}
             scrollThreshold={0.8}
           >
             {(activeTab === "all" ? physicalRights : physicalRightsUser)?.map(
-              (right) => (
-                <div
-                  key={`${right.childId}-${right.orderId}`}
-                  className="border-b border-gray-300 p-3 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 flex-shrink-0 relative">
-                      <Image
-                        draggable={false}
-                        fill
-                        style={{ objectFit: "cover" }}
-                        src={right.child?.metadata?.image}
-                        alt={right.child?.metadata?.title}
-                        className="border border-gray-300"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs truncate">
-                          {right.child?.metadata?.title}
-                        </span>
-                        <span className="text-xs text-gray-600 ml-2">
-                          {Number(right.child.physicalPrice) / 1e18} $MONA
-                        </span>
+              (right) => {
+                const estimatedSeconds = Number(right.estimatedDeliveryDuration);
+                const blockTimestampSeconds = Number(right.blockTimestamp);
+                const hasEstimatedSeconds =
+                  Number.isFinite(estimatedSeconds) && estimatedSeconds > 0;
+                const hasBlockTimestamp =
+                  Number.isFinite(blockTimestampSeconds) &&
+                  blockTimestampSeconds > 0;
+                const elapsedSeconds = hasBlockTimestamp
+                  ? Math.max(0, nowInSeconds - blockTimestampSeconds)
+                  : 0;
+                const remainingSeconds = hasEstimatedSeconds
+                  ? hasBlockTimestamp
+                    ? Math.max(0, estimatedSeconds - elapsedSeconds)
+                    : estimatedSeconds
+                  : 0;
+
+                const rowKey = `${right.childId}-${right.orderId}`;
+                const isTransferring = transferLoadingKey === rowKey;
+
+                return (
+                  <div
+                    key={rowKey}
+                    className="border-b border-gray-300 p-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 flex-shrink-0 relative">
+                        <Image
+                          draggable={false}
+                          fill
+                       objectFit="contain"
+                          src={`${INFURA_GATEWAY}${
+                            right.child?.metadata?.image?.split("ipfs://")?.[1]
+                          }`}
+                          alt={right.child?.metadata?.title}
+                          className="border border-gray-300"
+                        />
                       </div>
-                      <div className="text-xs text-gray-700 mb-2">
-                        Qty: {right.guaranteedAmount}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs truncate">
+                            {right.child?.metadata?.title}
+                          </span>
+                          <span className="text-xs text-gray-600 ml-2">
+                            {Number(right.child.physicalPrice) / 1e18} $MONA
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-700 mb-1">
+                          Qty: {right.guaranteedAmount}
+                        </div>
+                        <div className="text-xs text-gray-600 mb-2">
+                          Est. Delivery: {formatDuration(remainingSeconds)}
+                        </div>
+                        {(() => {
+                          const canTransfer =
+                            (activeTab === "my" &&
+                              Number(right.guaranteedAmount) > 0) ||
+                            (activeTab === "all" &&
+                              address &&
+                              right.holder?.toLowerCase() ===
+                                address.toLowerCase() &&
+                              Number(right.guaranteedAmount) > 0);
+
+                          return canTransfer ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="1"
+                                max={right.guaranteedAmount}
+                                value={
+                                  transferQuantities[rowKey] || 1
+                                }
+                                onChange={(e) => {
+                                  const value = Math.max(
+                                    1,
+                                    Math.min(
+                                      Number(right.guaranteedAmount),
+                                      Number(e.target.value)
+                                    )
+                                  );
+                                  setTransferQuantities((prev) => ({
+                                    ...prev,
+                                    [rowKey]: value,
+                                  }));
+                                }}
+                                className="w-16 px-2 py-1 text-xs border border-gray-300 text-center"
+                              />
+                              <button
+                                onClick={() =>
+                                  handleTransferRights({
+                                    childId: Number(right.childId),
+                                    orderId: Number(right.orderId),
+                                    amount: transferQuantities[rowKey] || 1,
+                                    childContract: right.child.childContract,
+                                    marketContract: right.purchaseMarket,
+                                    key: rowKey,
+                                  })
+                                }
+                                disabled={isTransferring}
+                                className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                              >
+                                {isTransferring ? "..." : "Transfer"}
+                              </button>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
-                      {(() => {
-                        const canTransfer = (activeTab === "my" && Number(right.guaranteedAmount) > 0) || 
-                          (activeTab === "all" && address && right.holder?.toLowerCase() === address.toLowerCase() && Number(right.guaranteedAmount) > 0);
-                        
-                        return canTransfer ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="1"
-                              max={right.guaranteedAmount}
-                              value={
-                                transferQuantities[
-                                  `${right.childId}-${right.orderId}`
-                                ] || 1
-                              }
-                              onChange={(e) => {
-                                const value = Math.max(
-                                  1,
-                                  Math.min(
-                                    Number(right.guaranteedAmount),
-                                    Number(e.target.value)
-                                  )
-                                );
-                                setTransferQuantities((prev) => ({
-                                  ...prev,
-                                  [`${right.childId}-${right.orderId}`]: value,
-                                }));
-                              }}
-                              className="w-16 px-2 py-1 text-xs border border-gray-300 text-center"
-                            />
-                            <button
-                              onClick={() =>
-                                handleTransferRights(
-                                  Number(right.childId),
-                                  Number(right.orderId),
-                                  transferQuantities[
-                                    `${right.childId}-${right.orderId}`
-                                  ] || 1,
-                                  right.purchaseMarket
-                                )
-                              }
-                              disabled={transferLoading}
-                              className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
-                            >
-                              {transferLoading ? "..." : "Transfer"}
-                            </button>
-                          </div>
-                        ) : null;
-                      })()}
                     </div>
                   </div>
-                </div>
-              )
+                );
+              }
             )}
           </InfiniteScroll>
         )}
-        {(activeTab === "all" ? physicalRights : physicalRightsUser)?.length === 0 &&
+        {(activeTab === "all" ? physicalRights : physicalRightsUser)?.length ===
+          0 &&
           !(activeTab === "all" ? physicalLoading : physicalUserLoading) && (
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
                 <p className="text-sm pt-2">
-                  No {activeTab === "all" ? "physical rights" : "user physical rights"} found
+                  No{" "}
+                  {activeTab === "all"
+                    ? "physical rights"
+                    : "user physical rights"}{" "}
+                  found
                 </p>
               </div>
             </div>

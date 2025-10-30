@@ -27,11 +27,13 @@ export interface AppContextType {
   setSellOrder: (e: SetStateAction<SellOrderModal | undefined>) => void;
   stats: HeaderStats;
   setStats: (e: SetStateAction<HeaderStats>) => void;
+  minStake: number;
+  setMinStake: (e: SetStateAction<number>) => void;
 }
 
 export interface HeaderStats {
   mona: number;
-  dlta: number;
+  ionic: number;
   genesis: number;
   blockTimestamp?: number;
 }
@@ -42,6 +44,7 @@ export interface OpenContractModal {
   maxAmount: number;
   childContract: string;
   originalMarket: string;
+  estimatedDeliveryDuration: number;
 }
 
 export interface SellOrderModal {

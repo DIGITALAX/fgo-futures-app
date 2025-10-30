@@ -8,7 +8,6 @@ import {
   getCurrentNetwork,
 } from "@/app/lib/constants";
 import { ABIS } from "@/abis";
-import { dummyContractsSettled } from "@/app/lib/dummy/testData";
 
 const useSettle = () => {
   const context = useContext(AppContext);
@@ -30,24 +29,22 @@ const useSettle = () => {
     try {
       const skipValue = reset ? 0 : contractsSkip;
       const res = await getContractsSettled(20, skipValue);
-      
+
       let allContracts = res?.data?.futuresContracts;
-      
+
       if (!allContracts || allContracts.length < 20) {
         setHasMoreContracts(false);
       }
-      
+
       if (reset) {
-        setContractsSettled(
-          allContracts?.length < 1 ? dummyContractsSettled : allContracts
-        );
+        setContractsSettled(allContracts);
         setContractsSkip(20);
       } else {
-        setContractsSettled(prev => [
+        setContractsSettled((prev) => [
           ...prev,
-          ...(allContracts?.length < 1 ? [] : allContracts)
+          ...(allContracts?.length < 1 ? [] : allContracts),
         ]);
-        setContractsSkip(prev => prev + 20);
+        setContractsSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);

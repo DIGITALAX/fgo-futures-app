@@ -4,7 +4,18 @@ import {
   GridDimensions,
 } from "../types/layout.types";
 import { FLASH_PATTERNS, INFURA_GATEWAY } from "@/app/lib/constants";
-import { getSimChildren } from "@/app/lib/subgraph/queries/getSimChildren";
+import { getAllChildren } from "@/app/lib/subgraph/queries/getAllChildren";
+
+type GraphChild = {
+  childId: string;
+  physicalPrice: string;
+  metadata?: {
+    title?: string;
+    image?: string;
+  } | null;
+  uri?: string | null;
+  [key: string]: any;
+};
 
 const useFuturesSimulation = () => {
   const [gridDimensions, setGridDimensions] = useState<GridDimensions>({
@@ -20,68 +31,122 @@ const useFuturesSimulation = () => {
   );
   const [futureElementsLoading, setFutureElementsLoading] =
     useState<boolean>(false);
+  const [rawChildren, setRawChildren] = useState<GraphChild[]>([]);
 
-  const getFutureElements = async () => {
-    setFutureElementsLoading(true);
-    try {
-      const data = await getSimChildren();
-      const elements: FuturesSimulationElement[] = [];
-      let materialIndex = 0;
+  const shouldSkipPosition = useCallback(
+    (row: number, col: number, dims: GridDimensions = gridDimensions): boolean => {
+      if (row === 0 && col > 0 && col < dims.cols - 1) return true;
+      if (row === 1 && col > 1 && col < Math.floor(dims.cols * 0.67))
+        return true;
+      if (row === 2 && col > 2 && col < Math.floor(dims.cols * 0.5))
+        return true;
+      if (row === dims.rows - 1 && (col < 2 || col > dims.cols - 2))
+        return true;
+      if (row === dims.rows - 2 && (col < 1 || col > dims.cols - 1))
+        return true;
+      return false;
+    },
+    [gridDimensions]
+  );
 
-      for (let row = 0; row < gridDimensions.rows; row++) {
-        for (let col = 0; col < gridDimensions.cols; col++) {
-          if (shouldSkipPosition(row, col)) {
+  const placeChildrenOnGrid = useCallback(
+    (children: GraphChild[], dims: GridDimensions) => {
+      const placedElements: FuturesSimulationElement[] = [];
+      const seenChildIds = new Set<string>();
+      const filteredChildren = children.filter((child) => {
+        if (!child || !child.childId) return false;
+        if (seenChildIds.has(child.childId)) return false;
+        seenChildIds.add(child.childId);
+        return true;
+      });
+
+      let childIndex = 0;
+
+      for (let row = 0; row < dims.rows; row++) {
+        for (let col = 0; col < dims.cols; col++) {
+          if (shouldSkipPosition(row, col, dims)) {
             continue;
           }
 
-          if (materialIndex < data?.data?.childs?.length) {
-            if (
-              !data?.data?.childs?.[materialIndex] &&
-              data?.data?.childs?.[materialIndex].uri
-            ) {
-              const response = await fetch(
-                `${INFURA_GATEWAY}${data?.data?.childs?.[
-                  materialIndex
-                ].uri.replace("ipfs://", "")}`
-              );
-
-              data.data.childs[materialIndex].metadata = await response.json();
-            }
-            elements.push({
-              id: `${row}-${col}`,
-              ...data?.data?.childs?.[materialIndex],
-              position: { row, col },
-            });
-            materialIndex++;
+          const child = filteredChildren[childIndex];
+          if (!child) {
+            return placedElements;
           }
+
+          const metadata = child.metadata ?? { title: "", image: "" };
+          const metadataTitle =
+            (metadata?.title as string | undefined) ??
+            (metadata as any)?.name ??
+            "";
+          const metadataImage =
+            (metadata?.image as string | undefined) ??
+            (metadata as any)?.image_url ??
+            (metadata as any)?.imageUrl ??
+            "";
+
+          placedElements.push({
+            childId: child.childId,
+            physicalPrice: Number(child.physicalPrice ?? 0),
+            metadata: {
+              title: metadataTitle,
+              image: metadataImage,
+            },
+            position: { row, col },
+          });
+
+          childIndex++;
         }
       }
 
-      setElements(elements);
-    } catch (err: any) {
-      console.error(err.message);
-    }
-    setFutureElementsLoading(false);
-  };
+      return placedElements;
+    },
+    [shouldSkipPosition]
+  );
 
-  const shouldSkipPosition = (row: number, col: number): boolean => {
-    if (row === 0 && col > 0 && col < gridDimensions.cols - 1) return true;
-    if (row === 1 && col > 1 && col < Math.floor(gridDimensions.cols * 0.67))
-      return true;
-    if (row === 2 && col > 2 && col < Math.floor(gridDimensions.cols * 0.5))
-      return true;
-    if (
-      row === gridDimensions.rows - 1 &&
-      (col < 2 || col > gridDimensions.cols - 2)
-    )
-      return true;
-    if (
-      row === gridDimensions.rows - 2 &&
-      (col < 1 || col > gridDimensions.cols - 1)
-    )
-      return true;
-    return false;
-  };
+  const getFutureElements = useCallback(async () => {
+    setFutureElementsLoading(true);
+    try {
+      const data = await getAllChildren();
+      const children: GraphChild[] = data?.data?.childs || [];
+
+      const withMetadata = await Promise.all(
+        children.map(async (child) => {
+          if (!child) return child;
+          if (child.metadata?.image && child.metadata?.title) {
+            return child;
+          }
+          if (!child.uri) return child;
+
+          try {
+            const resolvedUri =
+              typeof child.uri === "string" && child.uri.startsWith("ipfs://")
+                ? `${INFURA_GATEWAY}${child.uri.replace("ipfs://", "")}`
+                : child.uri;
+
+            if (!resolvedUri) {
+              return child;
+            }
+
+            const response = await fetch(resolvedUri);
+            const metadata = await response.json();
+            return {
+              ...child,
+              metadata,
+            };
+          } catch (error) {
+            console.error("Failed to load child metadata", error);
+            return child;
+          }
+        })
+      );
+
+      setRawChildren(withMetadata);
+    } catch (err: any) {
+      console.error(err?.message || err);
+    } finally {
+      setFutureElementsLoading(false);
+    }
+  }, []);
 
   const simulateTrade = useCallback((elementId: string, pattern?: string) => {
     const selectedPattern =
@@ -107,8 +172,22 @@ const useFuturesSimulation = () => {
     }, duration);
   }, []);
 
+  useEffect(() => {
+    getFutureElements();
+  }, [getFutureElements]);
+
+  useEffect(() => {
+    if (!rawChildren.length) {
+      setElements([]);
+      return;
+    }
+
+    const positioned = placeChildrenOnGrid(rawChildren, gridDimensions);
+    setElements(positioned);
+  }, [rawChildren, gridDimensions, placeChildrenOnGrid]);
+
   const getRandomBgColor = () => {
-    const colors = ["bg-white", "bg-blue-50", "bg-amber-50"];
+    const colors = ["bg-white", "bg-blue-50", "bg-amber-50", "bg-orange-50"];
     return colors[Math.floor(Math.random() * colors.length)];
   };
 

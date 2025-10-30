@@ -8,7 +8,6 @@ import {
 } from "@/app/lib/subgraph/queries/getPhysicalRights";
 import { useAccount } from "wagmi";
 import { AppContext } from "@/app/lib/providers/Providers";
-import { dummyPhysicalRights } from "@/app/lib/dummy/testData";
 
 const usePhysicalRights = () => {
   const context = useContext(AppContext);
@@ -30,16 +29,25 @@ const usePhysicalRights = () => {
     useState<boolean>(false);
   const [physicalUserEscrowedLoading, setPhysicalUserEscrowedLoading] =
     useState<boolean>(false);
-  
+
   const [physicalRightsSkip, setPhysicalRightsSkip] = useState<number>(0);
-  const [physicalRightsUserSkip, setPhysicalRightsUserSkip] = useState<number>(0);
-  const [physicalRightsEscrowedSkip, setPhysicalRightsEscrowedSkip] = useState<number>(0);
-  const [physicalRightsUserEscrowedSkip, setPhysicalRightsUserEscrowedSkip] = useState<number>(0);
-    const [hasMorePhysicalRights, setHasMorePhysicalRights] = useState<boolean>(true);
-  const [hasMorePhysicalRightsUser, setHasMorePhysicalRightsUser] = useState<boolean>(true);
-  const [hasMorePhysicalRightsEscrowed, setHasMorePhysicalRightsEscrowed] = useState<boolean>(true);
-  const [hasMorePhysicalRightsUserEscrowed, setHasMorePhysicalRightsUserEscrowed] = useState<boolean>(true);
-  
+  const [physicalRightsUserSkip, setPhysicalRightsUserSkip] =
+    useState<number>(0);
+  const [physicalRightsEscrowedSkip, setPhysicalRightsEscrowedSkip] =
+    useState<number>(0);
+  const [physicalRightsUserEscrowedSkip, setPhysicalRightsUserEscrowedSkip] =
+    useState<number>(0);
+  const [hasMorePhysicalRights, setHasMorePhysicalRights] =
+    useState<boolean>(true);
+  const [hasMorePhysicalRightsUser, setHasMorePhysicalRightsUser] =
+    useState<boolean>(true);
+  const [hasMorePhysicalRightsEscrowed, setHasMorePhysicalRightsEscrowed] =
+    useState<boolean>(true);
+  const [
+    hasMorePhysicalRightsUserEscrowed,
+    setHasMorePhysicalRightsUserEscrowed,
+  ] = useState<boolean>(true);
+
   const lastRequestTimes = useRef({
     physicalRights: 0,
     physicalRightsUser: 0,
@@ -48,83 +56,89 @@ const usePhysicalRights = () => {
   });
   const requestCache = useRef<{ [key: string]: any }>({});
 
-  const getPhysicalRights = useCallback(async (reset: boolean = false) => {
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastRequestTimes.current.physicalRights;
-    
-    if (timeSinceLastRequest < 1000) {
-      console.log("Physical rights request throttled");
-      return;
-    }
-    
-    if (physicalLoading) {
-      console.log("Physical rights request skipped - already loading");
-      return;
-    }
-    
-    setPhysicalLoading(true);
-    lastRequestTimes.current.physicalRights = now;
-    
-    try {
-      const skipValue = reset ? 0 : physicalRightsSkip;
-      const cacheKey = `physical-rights-${skipValue}`;
-      
-      if (requestCache.current[cacheKey] && !reset) {
-        console.log("Using cached physical rights data");
-        const cachedData = requestCache.current[cacheKey];
-        setPhysicalRights(prev => [...prev, ...(cachedData?.length < 1 ? [] : cachedData)]);
-        setPhysicalRightsSkip(prev => prev + 20);
-        setPhysicalLoading(false);
+  const getPhysicalRights = useCallback(
+    async (reset: boolean = false) => {
+      const now = Date.now();
+      const timeSinceLastRequest =
+        now - lastRequestTimes.current.physicalRights;
+
+      if (timeSinceLastRequest < 1000) {
         return;
       }
-      
-      const data = await getPhysicalRightsAll(20, skipValue);
-      
-      let allRights = data?.data?.physicalRights_collection;
-      
-      if (!allRights || allRights.length < 20) {
-        setHasMorePhysicalRights(false);
+
+      if (physicalLoading) {
+        return;
       }
-      
-      requestCache.current[cacheKey] = allRights;
-      
-      if (reset) {
-        setPhysicalRights(allRights?.length < 1 ? dummyPhysicalRights : allRights);
-        setPhysicalRightsSkip(20);
-      } else {
-        setPhysicalRights(prev => [
-          ...prev,
-          ...(allRights?.length < 1 ? [] : allRights)
-        ]);
-        setPhysicalRightsSkip(prev => prev + 20);
+
+      setPhysicalLoading(true);
+      lastRequestTimes.current.physicalRights = now;
+
+      try {
+        const skipValue = reset ? 0 : physicalRightsSkip;
+        const cacheKey = `physical-rights-${skipValue}`;
+
+        if (requestCache.current[cacheKey] && !reset) {
+          const cachedData = requestCache.current[cacheKey];
+          setPhysicalRights((prev) => [
+            ...prev,
+            ...(cachedData?.length < 1 ? [] : cachedData),
+          ]);
+          setPhysicalRightsSkip((prev) => prev + 20);
+          setPhysicalLoading(false);
+          return;
+        }
+
+        const data = await getPhysicalRightsAll(20, skipValue);
+
+        console.log({data})
+
+        let allRights = data?.data?.physicalRights_collection;
+
+        if (!allRights || allRights.length < 20) {
+          setHasMorePhysicalRights(false);
+        }
+
+        requestCache.current[cacheKey] = allRights;
+
+        if (reset) {
+          setPhysicalRights(allRights);
+          setPhysicalRightsSkip(20);
+        } else {
+          setPhysicalRights((prev) => [
+            ...prev,
+            ...(allRights?.length < 1 ? [] : allRights),
+          ]);
+          setPhysicalRightsSkip((prev) => prev + 20);
+        }
+      } catch (err: any) {
+        console.error(err.message);
       }
-    } catch (err: any) {
-      console.error(err.message);
-    }
-    setPhysicalLoading(false);
-  }, [physicalRightsSkip, physicalLoading]);
+      setPhysicalLoading(false);
+    },
+    [physicalRightsSkip, physicalLoading]
+  );
 
   const getPhysicalRightsEscrowed = async (reset: boolean = false) => {
     setPhysicalEscrowedLoading(true);
     try {
       const skipValue = reset ? 0 : physicalRightsEscrowedSkip;
       const data = await getPhysicalRightsAllEscrowed(20, skipValue);
-      
+
       let allRights = data?.data?.physicalRights_collection;
-      
+
       if (!allRights || allRights.length < 20) {
         setHasMorePhysicalRightsEscrowed(false);
       }
-      
+
       if (reset) {
-        setPhysicalRightsEscrowed(allRights?.length < 1 ? dummyPhysicalRights : allRights);
+        setPhysicalRightsEscrowed(allRights);
         setPhysicalRightsEscrowedSkip(20);
       } else {
-        setPhysicalRightsEscrowed(prev => [
+        setPhysicalRightsEscrowed((prev) => [
           ...prev,
-          ...(allRights?.length < 1 ? [] : allRights)
+          ...(allRights?.length < 1 ? [] : allRights),
         ]);
-        setPhysicalRightsEscrowedSkip(prev => prev + 20);
+        setPhysicalRightsEscrowedSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);
@@ -140,26 +154,22 @@ const usePhysicalRights = () => {
     try {
       const skipValue = reset ? 0 : physicalRightsUserSkip;
       const data = await getPhysicalRightsBuyer(address, 20, skipValue);
-      
+
       let allRights = data?.data?.physicalRights_collection;
-      
+
       if (!allRights || allRights.length < 20) {
         setHasMorePhysicalRightsUser(false);
       }
-      
+
       if (reset) {
-        setPhysicalRightsUser(
-          allRights?.length < 1
-            ? dummyPhysicalRights.slice(0, 1)
-            : allRights
-        );
+        setPhysicalRightsUser(allRights);
         setPhysicalRightsUserSkip(20);
       } else {
-        setPhysicalRightsUser(prev => [
+        setPhysicalRightsUser((prev) => [
           ...prev,
-          ...(allRights?.length < 1 ? [] : allRights)
+          ...(allRights?.length < 1 ? [] : allRights),
         ]);
-        setPhysicalRightsUserSkip(prev => prev + 20);
+        setPhysicalRightsUserSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);
@@ -175,26 +185,22 @@ const usePhysicalRights = () => {
     try {
       const skipValue = reset ? 0 : physicalRightsUserEscrowedSkip;
       const data = await getPhysicalRightsBuyerEscrowed(address, 20, skipValue);
-      
+
       let allRights = data?.data?.physicalRights_collection;
-      
+
       if (!allRights || allRights.length < 20) {
         setHasMorePhysicalRightsUserEscrowed(false);
       }
-      
+
       if (reset) {
-        setPhysicalRightsUserEscrowed(
-          allRights?.length < 1
-            ? dummyPhysicalRights.slice(0, 1)
-            : allRights
-        );
+        setPhysicalRightsUserEscrowed(allRights);
         setPhysicalRightsUserEscrowedSkip(20);
       } else {
-        setPhysicalRightsUserEscrowed(prev => [
+        setPhysicalRightsUserEscrowed((prev) => [
           ...prev,
-          ...(allRights?.length < 1 ? [] : allRights)
+          ...(allRights?.length < 1 ? [] : allRights),
         ]);
-        setPhysicalRightsUserEscrowedSkip(prev => prev + 20);
+        setPhysicalRightsUserEscrowedSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);

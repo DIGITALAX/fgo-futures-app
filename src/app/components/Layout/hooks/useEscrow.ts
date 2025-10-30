@@ -11,7 +11,6 @@ import {
   getCoreContractAddresses,
   getCurrentNetwork,
 } from "@/app/lib/constants";
-import { dummyEscrowedRights } from "@/app/lib/dummy/testData";
 
 const useEscrow = () => {
   const context = useContext(AppContext);
@@ -24,32 +23,52 @@ const useEscrow = () => {
     []
   );
   const [escrowUserLoading, setEscrowUserLoading] = useState<boolean>(false);
-  const [depositLoading, setDepositLoading] = useState<boolean>(false);
-  const [withdrawLoading, setWithdrawLoading] = useState<boolean>(false);
+  const [depositLoadingKey, setDepositLoadingKey] = useState<string | null>(
+    null
+  );
+  const [withdrawLoadingKey, setWithdrawLoadingKey] = useState<string | null>(
+    null
+  );
 
   const [escrowedRightsSkip, setEscrowedRightsSkip] = useState<number>(0);
-  const [escrowedRightsUserSkip, setEscrowedRightsUserSkip] = useState<number>(0);
-  const [hasMoreEscrowedRights, setHasMoreEscrowedRights] = useState<boolean>(true);
-  const [hasMoreEscrowedRightsUser, setHasMoreEscrowedRightsUser] = useState<boolean>(true);
+  const [escrowedRightsUserSkip, setEscrowedRightsUserSkip] =
+    useState<number>(0);
+  const [hasMoreEscrowedRights, setHasMoreEscrowedRights] =
+    useState<boolean>(true);
+  const [hasMoreEscrowedRightsUser, setHasMoreEscrowedRightsUser] =
+    useState<boolean>(true);
 
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
 
-  const handleDepositPhysicalRights = async (chosenRights: {
+  type RightsAction = {
     childId: number;
     orderId: number;
     amount: number;
     originalMarket: string;
     childContract: string;
-  }) => {
+    key: string;
+  };
+
+  const handleDepositPhysicalRights = async (chosenRights: RightsAction) => {
     if (!walletClient || !publicClient || !address || !chosenRights) return;
-    setDepositLoading(true);
+
+    const {
+      childId,
+      orderId,
+      amount,
+      originalMarket,
+      childContract,
+      key,
+    } = chosenRights;
+
+    setDepositLoadingKey(key);
     try {
       const hash = await walletClient.writeContract({
         address: contracts.escrow,
         abi: ABIS.FGOFuturesEscrow,
         functionName: "depositPhysicalRights",
-        args: [...Object.values(chosenRights)],
+        args: [childId, orderId, amount, originalMarket, childContract],
         account: address,
       });
 
@@ -60,24 +79,30 @@ const useEscrow = () => {
       console.error(err.message);
       context?.showError(err.message);
     }
-    setDepositLoading(false);
+    setDepositLoadingKey((currentKey) =>
+      currentKey === key ? null : currentKey
+    );
   };
 
-  const handleWithdrawPhysicalRights = async (chosenRights: {
-    childId: number;
-    orderId: number;
-    amount: number;
-    originalMarket: string;
-    childContract: string;
-  }) => {
+  const handleWithdrawPhysicalRights = async (chosenRights: RightsAction) => {
     if (!walletClient || !publicClient || !address || !chosenRights) return;
-    setWithdrawLoading(true);
+
+    const {
+      childId,
+      orderId,
+      amount,
+      originalMarket,
+      childContract,
+      key,
+    } = chosenRights;
+
+    setWithdrawLoadingKey(key);
     try {
       const hash = await walletClient.writeContract({
         address: contracts.escrow,
         abi: ABIS.FGOFuturesEscrow,
         functionName: "withdrawPhysicalRights",
-        args: [...Object.values(chosenRights)],
+        args: [childId, orderId, amount, childContract, originalMarket],
         account: address,
       });
 
@@ -88,7 +113,9 @@ const useEscrow = () => {
       console.error(err.message);
       context?.showError(err.message);
     }
-    setWithdrawLoading(false);
+    setWithdrawLoadingKey((currentKey) =>
+      currentKey === key ? null : currentKey
+    );
   };
 
   const getEscrowAll = async (reset: boolean = false) => {
@@ -96,22 +123,22 @@ const useEscrow = () => {
     try {
       const skipValue = reset ? 0 : escrowedRightsSkip;
       const res = await getEscrowedRightsAll(20, skipValue);
-      
+console.log({res})
       let allRights = res?.data?.escrowedRights;
-      
+
       if (!allRights || allRights.length < 20) {
         setHasMoreEscrowedRights(false);
       }
-      
+
       if (reset) {
-        setEscrowedRights(allRights?.length < 1 ? dummyEscrowedRights : allRights);
+        setEscrowedRights(allRights);
         setEscrowedRightsSkip(20);
       } else {
-        setEscrowedRights(prev => [
+        setEscrowedRights((prev) => [
           ...prev,
-          ...(allRights?.length < 1 ? [] : allRights)
+          ...(allRights?.length < 1 ? [] : allRights),
         ]);
-        setEscrowedRightsSkip(prev => prev + 20);
+        setEscrowedRightsSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);
@@ -121,33 +148,28 @@ const useEscrow = () => {
 
   const getEscrowUser = async (reset: boolean = false) => {
     if (!address) {
-      setEscrowedRightsUser(dummyEscrowedRights.slice(0, 1));
       return;
     }
     setEscrowUserLoading(true);
     try {
       const skipValue = reset ? 0 : escrowedRightsUserSkip;
       const res = await getEscrowedRightsBuyer(address, 20, skipValue);
-      
+
       let allRights = res?.data?.escrowedRights;
-      
+
       if (!allRights || allRights.length < 20) {
         setHasMoreEscrowedRightsUser(false);
       }
-      
+
       if (reset) {
-        setEscrowedRightsUser(
-          allRights?.length < 1
-            ? dummyEscrowedRights.slice(0, 1)
-            : allRights
-        );
+        setEscrowedRightsUser(allRights);
         setEscrowedRightsUserSkip(20);
       } else {
-        setEscrowedRightsUser(prev => [
+        setEscrowedRightsUser((prev) => [
           ...prev,
-          ...(allRights?.length < 1 ? [] : allRights)
+          ...(allRights?.length < 1 ? [] : allRights),
         ]);
-        setEscrowedRightsUserSkip(prev => prev + 20);
+        setEscrowedRightsUserSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);
@@ -186,8 +208,8 @@ const useEscrow = () => {
     escrowedRightsUser,
     handleDepositPhysicalRights,
     handleWithdrawPhysicalRights,
-    depositLoading,
-    withdrawLoading,
+    depositLoadingKey,
+    withdrawLoadingKey,
     hasMoreEscrowedRights,
     hasMoreEscrowedRightsUser,
     loadMoreEscrowedRights,

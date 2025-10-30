@@ -51,8 +51,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [stats, setStats] = useState<HeaderStats>({
     mona: 0,
     genesis: 0,
-    dlta: 0,
+    ionic: 0,
   });
+  const [minStake, setMinStake] = useState<number>(0);
 
   const showSuccess = (message: string, txHash?: string) => {
     setSuccessData({ message, txHash });
@@ -87,6 +88,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setFillOrder,
     stats,
     setStats,
+    minStake,
+    setMinStake,
   };
 
   return (

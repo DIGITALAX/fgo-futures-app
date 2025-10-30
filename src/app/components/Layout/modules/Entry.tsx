@@ -16,21 +16,21 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
           <Futures dict={dict} />
           <Settlement dict={dict} />
         </div>
-        <div className="relative w-full overflow-none h-10 border-y border-black py-3 flex flex-row">
+        <div className="relative w-full h-fit border-y border-black py-3 font-fash flex flex-row">
           <Marquee gradient={false} speed={70} direction={"right"}>
-            {Array.from({ length: 30 }).map((_, index: number) => {
-              return (
-                <span className="relative text-sm px-5" key={index}>
-                  LIQUID FASHION FUTURES ** BOT SETTLEMENT ** AMM LP ** ESCROW
-                  PHYSICAL RIGHTS ** SPECTATE FULFILLMENT **
-                </span>
-              );
-            })}
+            <span className="relative text-sm px-2 whitespace-nowrap w-fit h-fit flex">
+              {
+                "LIQUID FASHION FUTURES ------- BOT SETTLEMENT ------- AMM LP ------- ESCROW PHYSICAL RIGHTS ------- SPECTATE FULFILLMENT ------- HEDGE SUPPLY"
+              }
+            </span>
           </Marquee>
         </div>
       </div>
       <Trade dict={dict} />
-      <SettlmentBots dict={dict} />
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 h-fit">
+        <Fulfillers dict={dict} />
+        <SettlmentBots dict={dict} />
+      </div>
     </div>
   );
 };

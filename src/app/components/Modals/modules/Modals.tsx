@@ -18,8 +18,8 @@ export const Modals = ({ dict }: { dict: any }) => {
       {context?.openContract && <OpenContract dict={dict} />}
       {context?.sellOrder && <SellOrder dict={dict} />}
       {context?.fillOrder && <FillOrder dict={dict} />}
-      {context.successData && <Success dict={dict} />}
-      {context.errorData && <Error dict={dict} />}
+      {context.successData && <Success />}
+      {context.errorData && <Error />}
     </>
   );
 };

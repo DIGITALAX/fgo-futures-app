@@ -3,12 +3,14 @@ import FGOFuturesEscrow from "./FGOFuturesEscrow.json";
 import FGOFuturesSettlement from "./FGOFuturesSettlement.json";
 import FGOFuturesTrading from "./FGOFuturesTrading.json";
 import FGOChild from "./FGOChild.json";
+import FGOFuturesCoordination from "./FGOFuturesCoordination.json";
 
 export const ABIS = {
   FGOFuturesSettlement,
   FGOFuturesContract,
   FGOFuturesEscrow,
   FGOFuturesTrading,
+  FGOFuturesCoordination,
   FGOChild,
 } as const;
 

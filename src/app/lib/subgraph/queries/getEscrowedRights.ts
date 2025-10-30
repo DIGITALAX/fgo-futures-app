@@ -11,6 +11,7 @@ query($depositor: String!, $first: Int!, $skip: Int!) {
     childId
     orderId
     amount
+    estimatedDeliveryDuration
     child {
       uri
       metadata {
@@ -67,6 +68,7 @@ query($first: Int!, $skip: Int!) {
     childId
     orderId
     amount
+    estimatedDeliveryDuration
     blockNumber
     child {
       uri

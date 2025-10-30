@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Fulfiller } from "../types/layout.types";
 import { getFulfillers } from "@/app/lib/subgraph/queries/getFulfillers";
-import { dummyFulfillers } from "@/app/lib/dummy/testData";
 
 const useFulfillers = () => {
   const [fulfillersLoading, setFulfillersLoading] = useState<boolean>(false);
@@ -14,22 +13,22 @@ const useFulfillers = () => {
     try {
       const skipValue = reset ? 0 : fulfillersSkip;
       const data = await getFulfillers(20, skipValue);
-      
+
       let allFulfillers = data?.data?.fulfillers;
-      
+
       if (!allFulfillers || allFulfillers.length < 20) {
         setHasMoreFulfillers(false);
       }
-      
+
       if (reset) {
-        setFulfillers(allFulfillers?.length < 1 ? dummyFulfillers : allFulfillers);
+        setFulfillers(allFulfillers);
         setFulfillersSkip(20);
       } else {
-        setFulfillers(prev => [
+        setFulfillers((prev) => [
           ...prev,
-          ...(allFulfillers?.length < 1 ? [] : allFulfillers)
+          ...(allFulfillers?.length < 1 ? [] : allFulfillers),
         ]);
-        setFulfillersSkip(prev => prev + 20);
+        setFulfillersSkip((prev) => prev + 20);
       }
     } catch (err: any) {
       console.error(err.message);

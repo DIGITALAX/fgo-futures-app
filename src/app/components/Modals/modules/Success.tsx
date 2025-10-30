@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { AppContext } from "@/app/lib/providers/Providers";
 import { getCurrentNetwork } from "@/app/lib/constants";
 
-export const Success = ({ dict }: { dict: any }) => {
+export const Success = () => {
   const context = useContext(AppContext);
 
   if (!context?.successData) return null;

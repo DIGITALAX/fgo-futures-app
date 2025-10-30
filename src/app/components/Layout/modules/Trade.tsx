@@ -8,7 +8,6 @@ import Transfer from "./Transfer";
 import useEscrow from "./../hooks/useEscrow";
 import useTrade from "../hooks/useTrade";
 import usePhysicalRights from "../hooks/usePhysicalRights";
-import Fulfillers from "./Fulfillers";
 
 const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
   const {
@@ -18,8 +17,8 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
     escrowedRightsUser,
     handleDepositPhysicalRights,
     handleWithdrawPhysicalRights,
-    depositLoading,
-    withdrawLoading,
+    depositLoadingKey,
+    withdrawLoadingKey,
     hasMoreEscrowedRights,
     hasMoreEscrowedRightsUser,
     loadMoreEscrowedRights,
@@ -70,7 +69,7 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
           <Escrow
             dict={dict}
             handleDepositPhysicalRights={handleDepositPhysicalRights}
-            depositLoading={depositLoading}
+            depositLoadingKey={depositLoadingKey}
             physicalRightsEscrowed={physicalRightsEscrowed}
             physicalEscrowedLoading={physicalEscrowedLoading}
             physicalUserEscrowedLoading={physicalUserEscrowedLoading}
@@ -87,7 +86,7 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
             escrowedRights={escrowedRights}
             escrowedRightsUser={escrowedRightsUser}
             handleWithdrawPhysicalRights={handleWithdrawPhysicalRights}
-            withdrawLoading={withdrawLoading}
+            withdrawLoadingKey={withdrawLoadingKey}
             hasMoreEscrowedRights={hasMoreEscrowedRights}
             hasMoreEscrowedRightsUser={hasMoreEscrowedRightsUser}
             loadMoreEscrowedRights={loadMoreEscrowedRights}
@@ -101,7 +100,6 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
           handleCancelFuture={handleCancelFuture}
           futureCancelLoading={futureCancelLoading}
         />
-        <Fulfillers dict={dict} />
       </div>
     </div>
   );

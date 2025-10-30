@@ -33,26 +33,24 @@ export const getCurrentNetwork = (): NetworkConfig => {
 
 export const CORE_CONTRACT_ADDRESSES: Record<number, CoreContractAddresses> = {
   [NETWORKS.LENS_TESTNET.chainId]: {
-    futures: "0x",
-    escrow: "0x",
-    child: "0x",
-    dlta: "0x3D7f4Fc4E17Ead2ABBcf282A38F209D683e03835",
+    escrow: "0x0727bec4298c90d776cd1B6d833bd105234cB84f",
+    futures: "0xf9E98F4aC9ad7da87DFc4318968711E40279383f",
+    trading: "0xeEd2bB01CC6EB531d111Da4cBEA3515fc284848c",
+    settlement: "0xF49D1bd99F44F71f525f59C68947Ed32C37017b1",
+    futuresCoordination: "0xcaa14238B114d7E75afe20d613257090faC404A1",
+    ionic: "0x838615573ba0b218d48E1D29D89EFC3651394937",
     genesis: "0x838615573ba0b218d48E1D29D89EFC3651394937",
-    settlement: "0x",
-    trading: "0x",
     mona: "0x3D7f4Fc4E17Ead2ABBcf282A38F209D683e03835",
-    simChild: "0x7ef3b77a0f112768ac3a2253e8f617e3e83b5279",
   },
   [NETWORKS.LENS_MAINNET.chainId]: {
     futures: "0x",
     escrow: "0x",
-    child: "0x",
-    dlta: "0x",
+    futuresCoordination: "0x",
+    ionic: "0x",
     genesis: "0x",
     settlement: "0x",
     trading: "0x",
     mona: "0x",
-    simChild: "0x",
   },
 };
 

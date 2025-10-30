@@ -18,7 +18,7 @@ const useHeader = () => {
     if (!publicClient || !address) return;
     setStatsLoading(true);
     try {
-      const [monaBalance, dltaBalance, genesisBalance, currentBlock] =
+      const [monaBalance, ionicBalance, genesisBalance, currentBlock] =
         await Promise.all([
           publicClient.readContract({
             address: contracts.mona,
@@ -39,7 +39,7 @@ const useHeader = () => {
             args: [address],
           }),
           publicClient.readContract({
-            address: contracts.dlta,
+            address: contracts.ionic,
             abi: [
               {
                 type: "function",
@@ -76,9 +76,11 @@ const useHeader = () => {
           }),
           publicClient.getBlock(),
         ]);
+
+        console.log(monaBalance);
       context?.setStats({
         mona: Number(monaBalance) / 10 ** 18,
-        dlta: Number(dltaBalance),
+        ionic: Number(ionicBalance),
         genesis: Number(genesisBalance),
         blockTimestamp: Number(currentBlock.timestamp),
       });

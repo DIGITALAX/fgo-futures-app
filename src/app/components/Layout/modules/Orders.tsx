@@ -31,7 +31,7 @@ const Orders: FunctionComponent<OrderProps> = ({
   } = useOrders();
 
   return (
-    <div className="w-full flex flex-col border border-black h-[20rem]">
+    <div className="w-full flex h-[20rem] flex-col overflow-hidden border border-black">
       <div className="px-4 py-3 border-b border-black">
         <div className="text-lg">Active Orders</div>
         <div className="flex gap-2 mt-2">

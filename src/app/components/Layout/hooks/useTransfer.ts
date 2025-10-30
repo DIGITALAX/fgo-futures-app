@@ -12,22 +12,35 @@ const useTransfer = () => {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
-  const [transferLoading, setTransferLoading] = useState<boolean>(false);
+  const [activeTransferKey, setActiveTransferKey] = useState<string | null>(
+    null
+  );
 
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
 
-  const handleTransferRights = async (
-    childId: number,
-    orderId: number,
-    amount: number,
-    marketContract: string
-  ) => {
+  const handleTransferRights = async ({
+    childId,
+    orderId,
+    amount,
+    childContract,
+    marketContract,
+    key,
+  }: {
+    childId: number;
+    orderId: number;
+    amount: number;
+    childContract: string;
+    marketContract: string;
+    key: string;
+  }) => {
     if (!walletClient || !publicClient || !address) return;
-    setTransferLoading(true);
+
+    setActiveTransferKey(key);
+
     try {
       const hash = await walletClient.writeContract({
-        address: contracts.child,
+        address: childContract as `0x${string}`,
         abi: ABIS.FGOChild,
         functionName: "transferPhysicalRights",
         args: [childId, orderId, amount, contracts.escrow, marketContract],
@@ -36,16 +49,19 @@ const useTransfer = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Physical Rights Withdrawn!", hash);
+      context?.showSuccess("Physical Rights Transferred!", hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
     }
-    setTransferLoading(false);
+    setActiveTransferKey((currentKey) =>
+      currentKey === key ? null : currentKey
+    );
   };
 
   return {
-    transferLoading,
+    transferLoading: !!activeTransferKey,
+    transferLoadingKey: activeTransferKey,
     handleTransferRights,
   };
 };

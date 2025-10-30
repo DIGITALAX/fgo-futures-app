@@ -1,7 +1,7 @@
 import { AppContext } from "@/app/lib/providers/Providers";
 import { useContext } from "react";
 
-export const Error = ({ dict }: { dict: any }) => {
+export const Error = () => {
   const context = useContext(AppContext
   );
 

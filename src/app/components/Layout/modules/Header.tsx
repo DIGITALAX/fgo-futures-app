@@ -31,7 +31,7 @@ const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
           Genesis: {statsLoading ? "..." : context?.stats.genesis || "0"}
         </div>
         <div className="px-3 py-2 border border-black bg-white text-xs">
-          DLTA: {statsLoading ? "..." : context?.stats.dlta || "0"}
+          IONIC: {statsLoading ? "..." : context?.stats.ionic || "0"}
         </div>
         <div className="px-3 py-2 border border-black bg-white text-xs">
           Block: {context?.stats.blockTimestamp}
