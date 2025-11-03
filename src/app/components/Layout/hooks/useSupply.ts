@@ -179,7 +179,7 @@ const useSupply = (dict: any) => {
 
         await publicClient.waitForTransactionReceipt({ hash });
 
-        context?.showSuccess(dict.supplyApproveSuccess, hash);
+        context?.showSuccess(dict?.supplyApproveSuccess, hash);
         await checkAllowance(amount);
         return true;
       } catch (err: any) {
@@ -217,7 +217,7 @@ const useSupply = (dict: any) => {
     try {
       const approved = await checkAllowance(totalCost);
       if (!approved) {
-        context?.showError(dict.supplyApprovePrompt);
+        context?.showError(dict?.supplyApprovePrompt);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
@@ -232,7 +232,7 @@ const useSupply = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.supplyPurchaseSuccess, hash);
+      context?.showSuccess(dict?.supplyPurchaseSuccess, hash);
     } catch (err: any) {
       console.error(err);
       context?.showError(err.message);

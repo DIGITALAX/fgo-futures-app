@@ -90,9 +90,12 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
       <div className="px-4 py-3 border-b border-black flex-shrink-0">
         <div className="flex items-center justify-start">
           <div>
-            <div className="text-lg">Physical Rights Settlement</div>
+            <div className="text-lg">{dict?.settlementTitle}</div>
             <div className="text-xs text-gray-600">
-              {contractsSettled?.length} contracts settled
+              {dict?.settlementSubtitle?.replace(
+                "{count}",
+                String(contractsSettled?.length ?? 0)
+              )}
             </div>
           </div>
         </div>
@@ -103,7 +106,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
         id="settlement-scrollable"
       >
         {contractsLoading && contractsSettled?.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">Loading...</div>
+          <div className="p-4 text-center text-gray-500">{dict?.loading}</div>
         ) : (
           <InfiniteScroll
             dataLength={contractsSettled?.length || 0}
@@ -111,7 +114,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
             hasMore={hasMoreContracts}
             loader={
               <div className="text-center text-xs text-gray-500 py-2">
-                Loading more...
+                {dict?.loadingMore}
               </div>
             }
             scrollableTarget="settlement-scrollable"
@@ -140,7 +143,9 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-blue-600">SETTLEMENT</span>
+                      <span className="text-xs text-blue-600">
+                        {dict?.settlementBadge}
+                      </span>
                       <span
                         className={`text-xxs ${
                           settlement.settledContract?.emergency === "true"
@@ -149,8 +154,8 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         }`}
                       >
                         {settlement.settledContract?.emergency === "true"
-                          ? "emergency"
-                          : "normal"}
+                          ? dict?.settlementEmergencyLabel
+                          : dict?.settlementNormalLabel}
                       </span>
                     </div>
 
@@ -159,22 +164,24 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     </div>
 
                     <div className="flex justify-between text-xxs text-gray-500 mb-1">
-                      <span>Qty: {settlement.quantity}</span>
                       <span>
-                        Bot Reward:{" "}
+                        {dict?.quantityLabel} {settlement.quantity}
+                      </span>
+                      <span>
+                        {dict?.settlementBotRewardLabel}{" "}
                         {Number(settlement.settlementRewardBPS) / 100}%
                       </span>
                     </div>
 
                     <div className="flex justify-between text-xxs text-gray-500 mb-1">
                       <span>
-                        Reward:{" "}
+                        {dict?.rewardLabel}{" "}
                         {Number(settlement.settledContract?.reward || "0") /
                           10 ** 18}{" "}
                         $MONA
                       </span>
                       <span>
-                        Block:{" "}
+                        {dict?.blockLabel}{" "}
                         {settlement.settledContract?.blockNumber ||
                           settlement.blockNumber}
                       </span>
@@ -182,13 +189,17 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                     <div className="flex justify-between text-xxs text-gray-500 mb-1">
                       <span>
-                        Settler:{" "}
-                        {(settlement.settledContract?.settler || "N/A").slice(
+                        {dict?.settlerLabel}{" "}
+                        {(settlement.settledContract?.settler ||
+                          dict?.naLabel
+                        ).slice(
                           0,
                           6
                         )}
                         ...
-                        {(settlement.settledContract?.settler || "N/A").slice(
+                        {(settlement.settledContract?.settler ||
+                          dict?.naLabel
+                        ).slice(
                           -4
                         )}
                       </span>
@@ -212,7 +223,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 underline"
                       >
-                        Tx:{" "}
+                        {dict?.transactionLabel}{" "}
                         {(
                           settlement.settledContract?.transactionHash ||
                           settlement.transactionHash
@@ -233,28 +244,32 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         disabled={loadingKeys[`settle-${settlement.contractId}`]}
                         className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300"
                       >
-                        {loadingKeys[`settle-${settlement.contractId}`] ? "..." : "Emergency Settle"}
+                        {loadingKeys[`settle-${settlement.contractId}`]
+                          ? "..."
+                          : dict?.settlementEmergencyAction}
                       </button>
                     )}
 
-                    {canClaimChild(settlement) && (
-                      <button
-                        onClick={() =>
-                          claimChildSettlement(Number(settlement.contractId))
-                        }
-                        disabled={loadingKeys[`claim-${settlement.contractId}`]}
-                        className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300"
-                      >
-                        {loadingKeys[`claim-${settlement.contractId}`] ? "..." : "Claim Child"}
-                      </button>
-                    )}
+                   {canClaimChild(settlement) && (
+                     <button
+                       onClick={() =>
+                         claimChildSettlement(Number(settlement.contractId))
+                       }
+                       disabled={loadingKeys[`claim-${settlement.contractId}`]}
+                       className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300"
+                     >
+                        {loadingKeys[`claim-${settlement.contractId}`]
+                          ? "..."
+                          : dict?.settlementClaimAction}
+                     </button>
+                   )}
 
                     {shouldShowFulfillerLate(settlement) && (
                       <button
                         disabled
                         className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-gray-300 text-gray-600 cursor-not-allowed"
                       >
-                        Fulfiller Late
+                        {dict?.settlementFulfillerLate}
                       </button>
                     )}
                   </div>
@@ -265,7 +280,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
         )}
         {contractsSettled?.length === 0 && !contractsLoading && (
           <div className="p-4 text-center text-gray-500">
-            No settlements found
+            {dict?.settlementEmpty}
           </div>
         )}
       </div>
@@ -274,14 +289,13 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
         {settlementBot ? (
           <>
             <div className="text-xs text-gray-600 mb-2">
-              Current Stake: {Number(settlementBot.stakeAmount) / 10 ** 18}{" "}
-              $MONA
+              {dict?.settlementCurrentStakeLabel} {Number(settlementBot.stakeAmount) / 10 ** 18} $MONA
             </div>
             <input
               type="number"
               value={stakeAmount}
               onChange={(e) => setStakeAmount(Number(e.target.value))}
-              placeholder="Stake amount"
+              placeholder={dict?.stakeAmountPlaceholder ?? ""}
               className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
             />
 
@@ -311,10 +325,10 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 }`}
               >
                 {!isStakeApproved
-                  ? "Approve Stake"
+                  ? dict?.settlementApproveStakeAction
                   : approveLoading || stakeLoading
                   ? "..."
-                  : "Increase Stake"}
+                  : dict?.settlementIncreaseStakeAction}
               </button>
               <button
                 onClick={handleWithdrawStake}
@@ -325,14 +339,17 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     : "bg-white text-gray-400 cursor-not-allowed"
                 }`}
               >
-                {stakeLoading ? "..." : "Withdraw Stake"}
+                {stakeLoading ? "..." : dict?.settlementWithdrawStakeAction}
               </button>
             </div>
           </>
         ) : (
           <>
             <div className="text-xs text-gray-600 mb-2">
-              Min Stake: {context?.minValues?.stake} $MONA
+              {dict?.settlementMinStakeLabel?.replace?.(
+                "{amount}",
+                String(context?.minValues?.stake ?? 0)
+              ) ?? ""}
             </div>
 
             <input
@@ -340,7 +357,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
               value={stakeAmount}
               min={context?.minValues?.stake}
               onChange={(e) => setStakeAmount(Number(e.target.value))}
-              placeholder={String(context?.minValues?.stake!)}
+              placeholder={String(context?.minValues?.stake ?? "")}
               className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
             />
 
@@ -372,14 +389,14 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
               }`}
             >
               {registerSettlementLoading
-                ? "Registering..."
+                ? dict?.settlementRegisteringLabel
                 : approveLoading
-                ? "Approving..."
+                ? dict?.settlementApprovingLabel
                 : !isStakeApproved
-                ? "Approve Stake"
+                ? dict?.settlementApproveStakeAction
                 : isEligible
-                ? "Register Settlement Bot"
-                : "IONIC + Genesis Required"}
+                ? dict?.settlementRegisterAction
+                : dict?.settlementEligibilityError}
             </button>
           </>
         )}

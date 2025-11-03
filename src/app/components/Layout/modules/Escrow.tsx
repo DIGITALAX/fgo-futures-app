@@ -29,7 +29,9 @@ const Escrow: FunctionComponent<EscrowProps> = ({
   return (
     <div className="flex gradient h-[45rem] md:h-full flex-col overflow-hidden border border-black">
       <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
-        <div className="text-sm sm:text-base lg:text-lg">Escrow Rights</div>
+        <div className="text-sm sm:text-base lg:text-lg">
+          {dict?.escrowTitle}
+        </div>
         <div className="flex gap-1 sm:gap-2 mt-2">
           <button
             onClick={() => setActiveTab("all")}
@@ -39,7 +41,7 @@ const Escrow: FunctionComponent<EscrowProps> = ({
                 : "bg-white text-black hover:bg-gray-50"
             }`}
           >
-            All
+            {dict?.tabAll}
           </button>
           <button
             onClick={() => setActiveTab("my")}
@@ -49,7 +51,7 @@ const Escrow: FunctionComponent<EscrowProps> = ({
                 : "bg-white text-black hover:bg-gray-50"
             }`}
           >
-            My Transferred Rights
+            {dict?.escrowTabMy}
           </button>
         </div>
       </div>
@@ -65,7 +67,7 @@ const Escrow: FunctionComponent<EscrowProps> = ({
           : physicalRightsUserEscrowed
         )?.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-xs text-gray-500">Loading...</div>
+            <div className="text-xs text-gray-500">{dict?.loading}</div>
           </div>
         ) : (
           <InfiniteScroll
@@ -88,7 +90,7 @@ const Escrow: FunctionComponent<EscrowProps> = ({
             }
             loader={
               <div className="text-center text-xs text-gray-500 py-2">
-                Loading more...
+                {dict?.loadingMore}
               </div>
             }
             scrollableTarget={`escrow-scrollable-${activeTab}`}
@@ -138,7 +140,8 @@ const Escrow: FunctionComponent<EscrowProps> = ({
                         </span>
                       </div>
                       <div className="text-xs text-gray-700 mb-2">
-                        Qty: {right.guaranteedAmount} | Order: {right.orderId}
+                        {dict?.quantityLabel} {right.guaranteedAmount} |{" "}
+                        {dict?.orderLabel} {right.orderId}
                       </div>
                       {(() => {
                         const canDeposit =
@@ -188,7 +191,7 @@ const Escrow: FunctionComponent<EscrowProps> = ({
                               disabled={isDepositing}
                               className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                             >
-                              {isDepositing ? "..." : "Escrow"}
+                              {isDepositing ? dict?.loadingDots : dict?.escrowAction}
                             </button>
                           </div>
                         ) : null;
@@ -210,11 +213,9 @@ const Escrow: FunctionComponent<EscrowProps> = ({
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
                 <p className="text-sm pt-2">
-                  No{" "}
                   {activeTab === "all"
-                    ? "transferred rights"
-                    : "user transferred rights"}{" "}
-                  found
+                    ? dict?.escrowEmptyAll
+                    : dict?.escrowEmptyUser}
                 </p>
               </div>
             </div>

@@ -49,7 +49,7 @@ const useTransfer = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.transferSuccess, hash);
+      context?.showSuccess(dict?.transferSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);

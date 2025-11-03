@@ -22,7 +22,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
     addBot,
     removeBot,
     addCustomBot,
-  } = useOpenContract();
+  } = useOpenContract(dict);
   const existingContract = context?.openContract?.allContracts?.find(
     (cont) =>
       Number(cont?.pricePerUnit) / 10 ** 18 ==
@@ -58,7 +58,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
       <div className="bg-white border border-black max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
-            <div className="text-lg">Create Future Contract</div>
+            <div className="text-lg">{dict?.createFutureContractTitle}</div>
             <button
               onClick={() => context?.setOpenContract(undefined)}
               className="text-xl hover:bg-gray-100 px-2 py-1"
@@ -72,7 +72,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           {existingContract && (
             <div className="border border-gray-500 bg-gray-50 p-3 text-xs text-gray-800">
               <div className="font-semibold uppercase tracking-wide">
-                Existing contract detected
+                {dict?.existingContractDetected}
               </div>
               <p className="mt-1">
                 Price matches contract #{existingContract?.contractId}. Title,
@@ -81,10 +81,10 @@ export const OpenContract = ({ dict }: { dict: any }) => {
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <div className="px-2 py-1 bg-gray-100">
-                  Price: {existingPriceLabel} $MONA
+                  {dict?.priceLabel}: {existingPriceLabel} $MONA
                 </div>
                 <div className="px-2 py-1 bg-gray-100">
-                  Reward: {existingContract?.settlementRewardBPS} BPS
+                  {dict?.rewardBpsLabel}: {existingContract?.settlementRewardBPS} BPS
                 </div>
                 {existingContract?.metadata?.title && (
                   <div className="px-2 py-1 bg-gray-100">
@@ -96,7 +96,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs mb-1">Child ID</label>
+              <label className="block text-xs mb-1">{dict?.childIdLabel}</label>
               <input
                 type="text"
                 value={openContractForm.childId}
@@ -105,7 +105,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
               />
             </div>
             <div>
-              <label className="block text-xs mb-1">Order ID</label>
+              <label className="block text-xs mb-1">{dict?.orderIdLabel}</label>
               <input
                 type="text"
                 value={openContractForm.orderId}
@@ -117,7 +117,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
 
           <div>
             <label className="block text-xs mb-1">
-              Amount (Max: {context?.openContract?.maxAmount || 0})
+              {dict?.amountMaxLabel?.replace("{max}", context?.openContract?.maxAmount || 0)}
             </label>
             <input
               type="number"
@@ -140,7 +140,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs mb-1">Price Per Unit ($MONA)</label>
+            <label className="block text-xs mb-1">{dict?.pricePerUnitMonaLabel}</label>
             <input
               type="number"
               min="0"
@@ -187,7 +187,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs mb-1">Contract Title</label>
+            <label className="block text-xs mb-1">{dict?.contractTitleLabel}</label>
             <input
               type="text"
               value={openContractForm.title}
@@ -199,26 +199,26 @@ export const OpenContract = ({ dict }: { dict: any }) => {
               }
               disabled={Boolean(existingContract)}
               className="w-full px-2 py-1 text-xs border border-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              placeholder="Enter contract title"
+              placeholder={dict?.enterContractTitlePlaceholder}
             />
           </div>
 
           <div>
-            <label className="block text-xs mb-1">Contract Image</label>
+            <label className="block text-xs mb-1">{dict?.contractImageLabel}</label>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={Boolean(existingContract)}
                 className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Upload PNG
+                {dict?.uploadPngButton}
               </button>
               {openContractForm.image && (
-                <span className="text-xs text-green-600">Image uploaded</span>
+                <span className="text-xs text-green-600">{dict?.imageUploadedLabel}</span>
               )}
               {existingContract && (
                 <span className="text-xs text-gray-700">
-                  Existing metadata will be reused.
+                  {dict?.existingMetadataLabel}
                 </span>
               )}
             </div>
@@ -233,14 +233,14 @@ export const OpenContract = ({ dict }: { dict: any }) => {
           </div>
           <div>
             <label className="block text-xs mb-1">
-              Trusted Settlement Bots ({selectedBots.length}/5)
+              {dict?.trustedSettlementBotsLabel?.replace("{count}", selectedBots.length)}
             </label>
             <div className="mb-2">
               <input
                 type="text"
                 value={botSearch}
                 onChange={(e) => setBotSearch(e.target.value)}
-                placeholder="Search settlement bots..."
+                placeholder={dict?.searchBotsPlaceholder}
                 disabled={Boolean(existingContract)}
                 className="w-full px-2 py-1 text-xs border border-gray-300 mb-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
@@ -256,7 +256,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
                       onClick={() => addBot(bot.bot)}
                       className="px-2 py-1 text-xs hover:bg-gray-50 cursor-pointer border-b border-gray-200"
                     >
-                      {bot.bot} - {bot.totalSettlements} settlements
+                      {bot.bot} - {bot.totalSettlements} {dict?.settlementsLabel}
                     </div>
                   ))}
                 </div>
@@ -267,7 +267,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
                 type="text"
                 value={customBot}
                 onChange={(e) => setCustomBot(e.target.value)}
-                placeholder="0x... (custom bot address)"
+                placeholder={dict?.customBotPlaceholder}
                 disabled={Boolean(existingContract)}
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
@@ -280,7 +280,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
                 }
                 className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add
+                {dict?.addBotButton}
               </button>
             </div>
             <div className="space-y-1">
@@ -303,7 +303,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
             </div>
             {!existingContract && (
               <p className="text-xxs text-gray-500 mt-1">
-                Select at least three bots to proceed.
+                {dict?.selectThreeBotsLabel}
               </p>
             )}
           </div>
@@ -315,7 +315,7 @@ export const OpenContract = ({ dict }: { dict: any }) => {
               onClick={() => context?.setOpenContract(undefined)}
               className="px-4 py-2 text-xs border border-gray-300 bg-white text-black hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {dict?.cancelAction}
             </button>
             <button
               onClick={handleOpenContract}
@@ -324,11 +324,11 @@ export const OpenContract = ({ dict }: { dict: any }) => {
             >
               {openContractLoading
                 ? existingContract
-                  ? "Updating..."
-                  : "Creating..."
+                  ? dict?.updatingLabel
+                  : dict?.creatingContractLabel
                 : existingContract
-                ? "Update Contract"
-                : "Create Contract"}
+                ? dict?.updateContractButton
+                : dict?.createContractButton}
             </button>
           </div>
         </div>

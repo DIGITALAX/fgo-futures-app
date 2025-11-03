@@ -7,13 +7,13 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import Image from "next/image";
 import { INFURA_GATEWAY } from "@/app/lib/constants";
 
-const getCountdown = (deadline: string | number): string => {
+const getCountdown = (dict: any, deadline: string | number): string => {
   const deadlineMs = Number(deadline) * 1000;
   const now = Date.now();
   const remaining = deadlineMs - now;
 
   if (remaining <= 0) {
-    return "Expired";
+    return dict?.countdownExpired;
   }
 
   const seconds = Math.floor(remaining / 1000);
@@ -22,15 +22,19 @@ const getCountdown = (deadline: string | number): string => {
   const days = Math.floor(hours / 24);
 
   if (days > 0) {
-    return `${days}d ${hours % 24}h left`;
+    return dict?.countdownDaysLeft
+      ?.replace("{days}", String(days))
+      ?.replace("{hours}", String(hours % 24));
   }
   if (hours > 0) {
-    return `${hours}h ${minutes % 60}m left`;
+    return dict?.countdownHoursLeft
+     ?.replace("{hours}", String(hours))
+      ?.replace("{minutes}", String(minutes % 60));
   }
   if (minutes > 0) {
-    return `${minutes}m left`;
+    return dict?.countdownMinutesLeft?.replace("{minutes}", String(minutes));
   }
-  return `${seconds}s left`;
+  return dict?.countdownSecondsLeft?.replace("{seconds}", String(seconds));
 };
 
 const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
@@ -60,7 +64,7 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
         <div className="w-full flex gradient h-[45rem] flex-col overflow-hidden border border-black">
           <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
             <div className="text-sm sm:text-base lg:text-lg">
-              Supply Futures
+              {dict?.supplyTitle}
             </div>
             <div className="flex gap-1 sm:gap-2 mt-2">
               <button
@@ -71,7 +75,7 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     : "bg-white text-black hover:bg-gray-50"
                 }`}
               >
-                All
+                {dict?.tabAll}
               </button>
               <button
                 onClick={() => setActiveTab("my")}
@@ -81,7 +85,7 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     : "bg-white text-black hover:bg-gray-50"
                 }`}
               >
-                My Supply Futures
+                {dict?.supplyTabMy}
               </button>
             </div>
           </div>
@@ -92,7 +96,7 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
             {(activeTab === "all" ? supplyLoading : userSupplyLoading) &&
             (activeTab === "all" ? supply : userSupply)?.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-xs text-gray-500">Loading...</div>
+                <div className="text-xs text-gray-500">{dict?.loading}</div>
               </div>
             ) : (
               <InfiniteScroll
@@ -107,7 +111,7 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 }
                 loader={
                   <div className="text-center text-xs text-gray-500 py-2">
-                    Loading more...
+                    {dict?.loadingMore}
                   </div>
                 }
                 scrollableTarget={`transfer-scrollable-${activeTab}`}
@@ -154,30 +158,30 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                               </span>
                             </div>
                             <div className="text-xs text-gray-700 mb-1">
-                              Supplier: {future.supplier?.slice(0, 6)}...
+                              {dict?.supplierLabel} {future.supplier?.slice(0, 6)}...
                               {future.supplier?.slice(-4)}
                             </div>
                             <div className="text-xs text-gray-600 mb-2">
-                              Status:{" "}
+                              {dict?.statusLabel}{" "}
                               {future?.isSettled
-                                ? "Settled"
+                                ? dict?.statusSettled
                                 : isActive
-                                ? "Active"
-                                : "Closed"}
+                                ? dict?.statusActive
+                                : dict?.statusClosed}
                             </div>
                             <div className="flex items-center justify-between mb-1">
                               <div className="text-xs text-gray-700">
-                                Deadline:{" "}
+                                {dict?.deadlineLabel}{" "}
                                 {new Date(
                                   Number(future.deadline) * 1000
                                 ).toLocaleString()}
                               </div>
                               <span className="text-xs text-gray-500 font-semibold">
-                                {getCountdown(future.deadline)}
+                                {getCountdown(dict, future.deadline)}
                               </span>
                             </div>
                             <div className="text-xs text-gray-600 mb-2">
-                              Available:{" "}
+                              {dict?.createAvailableLabel}{" "}
                               {Number(future.totalAmount) -
                                 Number(future.soldAmount)}{" "}
                               / {Number(future.totalAmount)}
@@ -236,7 +240,7 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                     disabled={approveLoading}
                                     className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                                   >
-                                    {approveLoading ? "..." : "Approve"}
+                                    {approveLoading ? dict?.loadingDots : dict?.approveAction}
                                   </button>
                                 ) : null}
                                 <button
@@ -263,8 +267,8 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                   className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                                 >
                                   {loadingKeys[`buy-supply-${i}`]
-                                    ? "..."
-                                    : "Buy"}
+                                    ? dict?.loadingDots
+                                    : dict?.buyAction}
                                 </button>
                               </div>
                             ) : null}
@@ -281,11 +285,9 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 <div className="flex-1 flex items-center justify-center text-gray-500">
                   <div className="text-center">
                     <p className="text-sm pt-2">
-                      No{" "}
                       {activeTab === "all"
-                        ? "supply rights"
-                        : "user supply rights"}{" "}
-                      found
+                        ? dict?.supplyEmptyAll
+                        : dict?.supplyEmptyUser}
                     </p>
                   </div>
                 </div>

@@ -18,6 +18,7 @@ import {
 } from "@/app/components/Modals/types/models.types";
 import {
   GraphChild,
+  Language,
   SettlementBot,
 } from "@/app/components/Layout/types/layout.types";
 
@@ -55,6 +56,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [settlementBots, setSettlementBots] = useState<SettlementBot[]>([]);
   const [hasMoreSettlementBots, setHasMoreSettlementBots] =
     useState<boolean>(true);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>("en");
   const [openContract, setOpenContract] = useState<
     OpenContractModal | undefined
   >();
@@ -119,6 +121,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setStats,
     minValues,
     setMinValues,
+    selectedLanguage,
+    setSelectedLanguage,
   };
 
   return (

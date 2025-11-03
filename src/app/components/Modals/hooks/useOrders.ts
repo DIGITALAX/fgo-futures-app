@@ -114,7 +114,7 @@ const useOrders = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
       context?.setSellOrder(undefined);
-      context?.showSuccess(dict.ordersSellSuccess, hash);
+      context?.showSuccess(dict?.ordersSellSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -140,7 +140,7 @@ const useOrders = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
       context?.setSellOrder(undefined);
-      context?.showSuccess(dict.ordersSellSuccess, hash);
+      context?.showSuccess(dict?.ordersSellSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -163,7 +163,7 @@ const useOrders = (dict: any) => {
       await publicClient.waitForTransactionReceipt({ hash });
 
       context?.setFillOrder(undefined);
-      context?.showSuccess(dict.ordersFillSuccess, hash);
+      context?.showSuccess(dict?.ordersFillSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -186,7 +186,7 @@ const useOrders = (dict: any) => {
       await publicClient.waitForTransactionReceipt({ hash });
 
       context?.setFillOrder(undefined);
-      context?.showSuccess(dict.ordersFillSuccess, hash);
+      context?.showSuccess(dict?.ordersFillSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);

@@ -112,7 +112,7 @@ const useSettle = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.settleEmergencySuccess, hash);
+      context?.showSuccess(dict?.settleEmergencySuccess, hash);
       getContracts(true);
     } catch (err: any) {
       context?.showError(err.message);
@@ -137,7 +137,7 @@ const useSettle = (dict: any) => {
         !contract?.isSettled ||
         !contract?.isFulfilled
       ) {
-        context?.showError(dict.settleClaimUnavailable);
+        context?.showError(dict?.settleClaimUnavailable);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
@@ -152,7 +152,7 @@ const useSettle = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.settleClaimSuccess, hash);
+      context?.showSuccess(dict?.settleClaimSuccess, hash);
       getContracts(true);
     } catch (err: any) {
       context?.showError(err.message);

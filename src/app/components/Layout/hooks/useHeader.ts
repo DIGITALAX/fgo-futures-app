@@ -20,10 +20,7 @@ const useHeader = () => {
   const [statsLoading, setStatsLoading] = useState<boolean>(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] =
     useState<boolean>(false);
-
   const currentLang = (path.split("/")[1] || "en") as Language;
-  const [selectedLanguage, setSelectedLanguage] =
-    useState<Language>(currentLang);
 
   const languageOptions = [
     { code: "en" as Language, name: "Aussie" },
@@ -145,7 +142,7 @@ const useHeader = () => {
   const handleLanguageChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       const newLanguage = event.target.value as Language;
-      setSelectedLanguage(newLanguage);
+      context?.setSelectedLanguage(newLanguage);
 
       const segments = path.split("/");
       const hasLangSegment =
@@ -206,10 +203,15 @@ const useHeader = () => {
     return () => clearInterval(interval);
   }, [publicClient]);
 
+  useEffect(() => {
+    if (currentLang) {
+      context?.setSelectedLanguage(currentLang);
+    }
+  }, [currentLang]);
+
   return {
     statsLoading,
     handleLanguageChange,
-    selectedLanguage,
     languageOptions,
     isLanguageDropdownOpen,
     setIsLanguageDropdownOpen,

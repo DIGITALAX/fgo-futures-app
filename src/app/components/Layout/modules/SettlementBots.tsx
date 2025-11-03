@@ -29,12 +29,12 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
   return (
     <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
       <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
-        Settlement Bots Network
+        {dict?.settlementBotsTitle}
       </div>
 
       {settlementBotsLoading && context?.settlementBots?.length === 0 ? (
         <div className="text-center text-gray-500 py-4 sm:py-8">
-          Loading settlement bots...
+          {dict?.settlementBotsLoading}
         </div>
       ) : (
         <div className="h-fit overflow-y-auto" id="settlementbots-scrollable">
@@ -44,7 +44,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
             hasMore={hasMoreSettlementBots && !settlementBotsLoading}
             loader={
               <div className="text-center text-xs text-gray-500 py-2">
-                Loading more bots...
+                {dict?.settlementBotsLoadingMore}
               </div>
             }
             scrollableTarget="settlementbots-scrollable"
@@ -68,12 +68,12 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                           BOT #{index + 1}
                         </div>
                         <div className={`text-xs font-bold`}>
-                          {slashScore.toFixed(1)}% SUCCESS
+                          {slashScore.toFixed(1)}% {dict?.successText}
                         </div>
                       </div>
 
                       <div className="text-xs text-gray-600 mb-1">
-                        Bot Address:
+                        {dict?.botAddressLabel}
                       </div>
                       <a
                         href={`${network.blockExplorer}/address/${bot.bot}`}
@@ -86,7 +86,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-gray-600">Stake:</span>
+                          <span className="text-gray-600">{dict?.stakeLabel}</span>
                           <div className="font-medium">
                             {(
                               Number(bot.stakeAmount) /
@@ -96,7 +96,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                           </div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Settlements:</span>
+                          <span className="text-gray-600">{dict?.settlementsCountLabel}</span>
                           <div className="font-medium">
                             {bot.totalSettlements}
                           </div>
@@ -105,13 +105,13 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                       <div className="grid grid-cols-2 gap-2 text-xs mt-2">
                         <div>
-                          <span className="text-gray-600">Avg Delay:</span>
+                          <span className="text-gray-600">{dict?.avgDelayLabel}</span>
                           <div className="font-medium">
                             {bot.averageDelaySeconds}s
                           </div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Slashes:</span>
+                          <span className="text-gray-600">{dict?.slashesLabel}</span>
                           <div className="text-red-600">
                             {bot.totalSlashEvents}
                           </div>
@@ -120,7 +120,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                       {Number(bot.totalAmountSlashed) > 0 && (
                         <div className="mt-2 text-xs">
-                          <span className="text-gray-600">Amount Slashed:</span>
+                          <span className="text-gray-600">{dict?.amountSlashedLabel}</span>
                           <div className="text-red-600">
                             {(
                               Number(bot.totalAmountSlashed) /
@@ -138,7 +138,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                           rel="noopener noreferrer"
                           className="text-orange-600 hover:text-orange-800 underline"
                         >
-                          Registration Tx: {bot.transactionHash.slice(0, 8)}...
+                          {dict?.registrationTxLabel} {bot.transactionHash.slice(0, 8)}...
                           {bot.transactionHash.slice(-6)}
                         </a>
                       </div>
@@ -146,7 +146,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                     <div className="flex-1">
                       <div className="text-xs text-gray-700 mb-2">
-                        Recent Settlements ({bot.settledContracts?.length || 0})
+                        {dict?.recentSettlementsLabel} ({bot.settledContracts?.length || 0})
                       </div>
 
                       <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -177,9 +177,9 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-1 text-xxs text-gray-500 mt-1">
-                                  <span>Contract #{contract.contractId}</span>
+                                  <span>{dict?.contractNumberLabel} #{contract.contractId}</span>
                                   <span>
-                                    Reward:{" "}
+                                    {dict?.rewardContractLabel}{" "}
                                     {(
                                       Number(contract.reward) /
                                       10 ** 18
@@ -217,7 +217,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       {(!bot.settledContracts ||
                         bot.settledContracts.length === 0) && (
                         <div className="text-xs text-gray-400 text-center py-4">
-                          No settlements recorded yet
+                          {dict?.noSettlementsLabel}
                         </div>
                       )}
                     </div>
@@ -231,7 +231,7 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
       {context?.settlementBots?.length === 0 && !settlementBotsLoading && (
         <div className="text-center text-gray-500 py-8">
-          No settlement bots registered
+          {dict?.noBotsRegisteredLabel}
         </div>
       )}
     </div>

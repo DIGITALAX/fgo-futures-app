@@ -151,7 +151,7 @@ const useSettleSupply = (dict: any) => {
       );
 
       if (!futureContract) {
-        context?.showError(dict.settleSupplyContractNotFound);
+        context?.showError(dict?.settleSupplyContractNotFound);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
@@ -160,7 +160,7 @@ const useSettleSupply = (dict: any) => {
       const deadline = Number(futureContract?.deadline);
 
       if (deadline !== 0 && deadline > now) {
-        context?.showError(dict.settleSupplyDeadlinePending);
+        context?.showError(dict?.settleSupplyDeadlinePending);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
@@ -175,7 +175,7 @@ const useSettleSupply = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.settleSupplySettlementSuccess, hash);
+      context?.showSuccess(dict?.settleSupplySettlementSuccess, hash);
       getSupplyContracts(true);
     } catch (err: any) {
       context?.showError(err.message);
@@ -195,19 +195,19 @@ const useSettleSupply = (dict: any) => {
       );
 
       if (!futureContract) {
-        context?.showError(dict.settleSupplyContractNotFound);
+        context?.showError(dict?.settleSupplyContractNotFound);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
 
       if (!futureContract?.isSettled) {
-        context?.showError(dict.settleSupplyNotSettled);
+        context?.showError(dict?.settleSupplyNotSettled);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
 
       if (futureContract?.balanceOf === 0) {
-        context?.showError(dict.settleSupplyNoBalance);
+        context?.showError(dict?.settleSupplyNoBalance);
         setLoadingKeys((prev) => ({ ...prev, [key]: false }));
         return;
       }
@@ -227,7 +227,7 @@ const useSettleSupply = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.settleSupplyClaimSuccess, hash);
+      context?.showSuccess(dict?.settleSupplyClaimSuccess, hash);
       getSupplyContracts(true);
       getClaimedCredits(true);
     } catch (err: any) {

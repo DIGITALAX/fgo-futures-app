@@ -34,9 +34,7 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
         <div className="relative w-full h-fit border-y border-black py-3 font-fash flex flex-row">
           <Marquee gradient={false} speed={70} direction={"right"}>
             <span className="relative text-sm px-2 whitespace-nowrap w-fit h-fit flex">
-              {
-                "LIQUID FASHION FUTURES ------- BOT SETTLEMENT ------- AMM LP ------- ESCROW PHYSICAL RIGHTS ------- SPECTATE FULFILLMENT ------- HEDGE SUPPLY"
-              }
+              {dict?.marqueeText}
             </span>
           </Marquee>
         </div>
@@ -51,7 +49,7 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
             }`}
             onClick={() => contexto?.setType(1)}
           >
-            Supply Futures
+            {dict?.supplyFuturesTab}
           </div>
           <div
             className={`px-3 py-2 border cursor-pointer text-xs ${
@@ -61,7 +59,7 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
             }`}
             onClick={() => contexto?.setType(0)}
           >
-            Fulfillment Futures
+            {dict?.fulfillmentFuturesTab}
           </div>
         </div>
       </div>

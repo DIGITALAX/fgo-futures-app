@@ -32,7 +32,9 @@ const Transfer: FunctionComponent<TransferProps> = ({
   return (
     <div className="flex gradient h-[45rem] md:h-full flex-col overflow-hidden border border-black">
       <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
-        <div className="text-sm sm:text-base lg:text-lg">Transfer Rights</div>
+        <div className="text-sm sm:text-base lg:text-lg">
+          {dict?.transferTitle}
+        </div>
         <div className="flex gap-1 sm:gap-2 mt-2">
           <button
             onClick={() => setActiveTab("all")}
@@ -42,7 +44,7 @@ const Transfer: FunctionComponent<TransferProps> = ({
                 : "bg-white text-black hover:bg-gray-50"
             }`}
           >
-            All
+            {dict?.tabAll}
           </button>
           <button
             onClick={() => setActiveTab("my")}
@@ -52,7 +54,7 @@ const Transfer: FunctionComponent<TransferProps> = ({
                 : "bg-white text-black hover:bg-gray-50"
             }`}
           >
-            My Physical Rights
+            {dict?.transferTabMy}
           </button>
         </div>
       </div>
@@ -64,7 +66,7 @@ const Transfer: FunctionComponent<TransferProps> = ({
         (activeTab === "all" ? physicalRights : physicalRightsUser)?.length ===
           0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-xs text-gray-500">Loading...</div>
+            <div className="text-xs text-gray-500">{dict?.loading}</div>
           </div>
         ) : (
           <InfiniteScroll
@@ -84,7 +86,7 @@ const Transfer: FunctionComponent<TransferProps> = ({
             }
             loader={
               <div className="text-center text-xs text-gray-500 py-2">
-                Loading more...
+                {dict?.loadingMore}
               </div>
             }
             scrollableTarget={`transfer-scrollable-${activeTab}`}
@@ -147,10 +149,12 @@ const Transfer: FunctionComponent<TransferProps> = ({
                           </span>
                         </div>
                         <div className="text-xs text-gray-700 mb-1">
-                          Qty: {right.guaranteedAmount} | Order: {right.orderId}
+                          {dict?.quantityLabel} {right.guaranteedAmount} |{" "}
+                          {dict?.orderLabel} {right.orderId}
                         </div>
                         <div className="text-xs text-gray-600 mb-2">
-                          Est. Delivery: {formatDuration(remainingSeconds)}
+                          {dict?.estimatedDeliveryLabel}{" "}
+                          {formatDuration(remainingSeconds)}
                         </div>
                         {(() => {
                           const canTransfer =
@@ -205,7 +209,7 @@ const Transfer: FunctionComponent<TransferProps> = ({
                                 disabled={isTransferring}
                                 className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                               >
-                                {isTransferring ? "..." : "Transfer"}
+                                {isTransferring ? dict?.loadingDots : dict?.transferAction}
                               </button>
                             </div>
                           ) : null;
@@ -224,11 +228,9 @@ const Transfer: FunctionComponent<TransferProps> = ({
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
                 <p className="text-sm pt-2">
-                  No{" "}
                   {activeTab === "all"
-                    ? "physical rights"
-                    : "user physical rights"}{" "}
-                  found
+                    ? dict?.transferEmptyAll
+                    : dict?.transferEmptyUser}
                 </p>
               </div>
             </div>

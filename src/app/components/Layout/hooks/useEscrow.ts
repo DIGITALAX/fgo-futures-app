@@ -60,7 +60,7 @@ const useEscrow = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.escrowDepositSuccess, hash);
+      context?.showSuccess(dict?.escrowDepositSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -88,7 +88,7 @@ const useEscrow = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.escrowWithdrawSuccess, hash);
+      context?.showSuccess(dict?.escrowWithdrawSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);

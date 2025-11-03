@@ -39,7 +39,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
       <div className="bg-white border border-black max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
-            <div className="text-lg">Sell Order</div>
+            <div className="text-lg">{dict?.sellOrderTitle}</div>
             <button
               onClick={() => context?.setSellOrder(undefined)}
               className="text-xl hover:bg-gray-100 px-2 py-1"
@@ -77,7 +77,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
 
           <div>
             <label className="block text-xs mb-1">
-              Quantity (Max: {context.sellOrder.maxQuantity})
+              {dict?.quantityMaxLabel?.replace("{max}", context.sellOrder.maxQuantity)}
             </label>
             <input
               type="number"
@@ -98,7 +98,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs mb-1">Price Per Unit ($MONA)</label>
+            <label className="block text-xs mb-1">{dict?.pricePerUnitMona}</label>
             <input
               type="number"
               min="0"
@@ -116,14 +116,14 @@ export const SellOrder = ({ dict }: { dict: any }) => {
               onClick={() => context?.setSellOrder(undefined)}
               className="px-4 py-2 text-xs border border-gray-300 bg-white text-black hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {dict?.cancelAction}
             </button>
             <button
               onClick={handleSubmit}
               disabled={sellOrderLoading || !pricePerUnit || quantity <= 0}
               className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {sellOrderLoading ? "Creating..." : "Create Sell Order"}
+              {sellOrderLoading ? dict?.creatingLabel : dict?.createSellOrderLabel}
             </button>
           </div>
         </div>

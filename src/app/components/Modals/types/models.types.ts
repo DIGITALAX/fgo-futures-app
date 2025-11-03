@@ -1,5 +1,9 @@
 import { SetStateAction } from "react";
-import { FutureContract, SettlementBot } from "../../Layout/types/layout.types";
+import {
+  FutureContract,
+  Language,
+  SettlementBot,
+} from "../../Layout/types/layout.types";
 
 export interface SuccessData {
   message: string;
@@ -14,6 +18,8 @@ export interface AppContextType {
   showSuccess: (message: string, txHash?: string) => void;
   showError: (message: string) => void;
   hideSuccess: () => void;
+  selectedLanguage: Language;
+  setSelectedLanguage: (e: SetStateAction<Language>) => void;
   hideError: () => void;
   successData: SuccessData | null;
   errorData: ErrorData | null;

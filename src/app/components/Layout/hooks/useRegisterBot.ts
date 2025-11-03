@@ -192,7 +192,7 @@ const useRegisterBot = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.registerBotApproveSuccess, hash);
+      context?.showSuccess(dict?.registerBotApproveSuccess, hash);
       await checkAllowance();
       return true;
     } catch (err: any) {
@@ -220,13 +220,13 @@ const useRegisterBot = (dict: any) => {
       const valid = Number(context?.stats?.mona) >= stakeAmount;
       if (!valid) {
         setRegisterSettlementLoading(false);
-        context?.showError("Insufficient MONA balance.");
+        context?.showError(dict?.insufficientMonaError);
         return;
       }
 
       const approved = await checkAllowance();
       if (!approved) {
-        context?.showError("Please approve the stake amount first.");
+        context?.showError(dict?.approveStakeFirstError);
         setRegisterSettlementLoading(false);
         return;
       }
@@ -241,7 +241,7 @@ const useRegisterBot = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.registerBotSuccess, hash);
+      context?.showSuccess(dict?.registerBotSuccess, hash);
       await checkAllowance();
     } catch (err: any) {
       console.error(err.message);
@@ -257,13 +257,13 @@ const useRegisterBot = (dict: any) => {
       const valid = Number(context?.stats?.mona) >= stakeAmount;
       if (!valid) {
         setStakeLoading(false);
-        context?.showError("Insufficient MONA balance.");
+        context?.showError(dict?.insufficientMonaError);
         return;
       }
 
       const approved = await checkAllowance();
       if (!approved) {
-        context?.showError("Please approve the stake amount first.");
+        context?.showError(dict?.approveStakeFirstError);
         setStakeLoading(false);
         return;
       }
@@ -278,7 +278,7 @@ const useRegisterBot = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.registerBotStakeIncreaseSuccess, hash);
+      context?.showSuccess(dict?.registerBotStakeIncreaseSuccess, hash);
       await checkAllowance();
     } catch (err: any) {
       console.error(err.message);
@@ -300,7 +300,7 @@ const useRegisterBot = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.registerBotStakeWithdrawSuccess, hash);
+      context?.showSuccess(dict?.registerBotStakeWithdrawSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -322,7 +322,7 @@ const useRegisterBot = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.registerBotClaimSuccess, hash);
+      context?.showSuccess(dict?.registerBotClaimSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);

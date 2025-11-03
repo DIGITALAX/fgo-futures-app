@@ -33,7 +33,9 @@ const Create: FunctionComponent<CreateProps> = ({
   return (
     <div className="flex gradient h-[45rem] md:h-full flex-col overflow-hidden border border-black">
       <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
-        <div className="text-sm sm:text-base lg:text-lg">Create Futures</div>
+        <div className="text-sm sm:text-base lg:text-lg">
+          {dict?.createTitle}
+        </div>
         <div className="flex gap-1 sm:gap-2 mt-2">
           <button
             onClick={() => setActiveTab("all")}
@@ -43,7 +45,7 @@ const Create: FunctionComponent<CreateProps> = ({
                 : "bg-white text-black hover:bg-gray-50"
             }`}
           >
-            All
+            {dict?.tabAll}
           </button>
           <button
             onClick={() => setActiveTab("my")}
@@ -53,7 +55,7 @@ const Create: FunctionComponent<CreateProps> = ({
                 : "bg-white text-black hover:bg-gray-50"
             }`}
           >
-            My Escrowed Rights
+            {dict?.createTabMy}
           </button>
         </div>
       </div>
@@ -65,7 +67,7 @@ const Create: FunctionComponent<CreateProps> = ({
         (activeTab === "all" ? escrowedRights : escrowedRightsUser)?.length ===
           0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-xs text-gray-500">Loading...</div>
+            <div className="text-xs text-gray-500">{dict?.loading}</div>
           </div>
         ) : (
           <InfiniteScroll
@@ -85,7 +87,7 @@ const Create: FunctionComponent<CreateProps> = ({
             }
             loader={
               <div className="text-center text-xs text-gray-500 py-2">
-                Loading more...
+                {dict?.loadingMore}
               </div>
             }
             scrollableTarget={`create-scrollable-${activeTab}`}
@@ -123,24 +125,27 @@ const Create: FunctionComponent<CreateProps> = ({
                           {right.child?.metadata?.title}
                         </span>
                         <span className="text-xs text-gray-600 ml-2">
-                          Child: {right.childId}
+                          {dict?.childLabel} {right.childId}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs text-gray-600">
-                          Order: {right.orderId}
+                          {dict?.orderLabel} {right.orderId}
                         </span>
                       </div>
                       <div className="text-xs text-gray-700 mb-1">
-                        Available:{" "}
+                        {dict?.createAvailableLabel} {" "}
                         {Number(right.amount) -
                           Number(right.amountUsedForFutures)}
                       </div>
                       <div className="text-xs text-gray-700 mb-1">
-                        Used for Futures: {right.amountUsedForFutures}
+                        {dict?.createUsedLabel} {right.amountUsedForFutures}
                       </div>
                       <div className="text-xs text-gray-700 mb-2">
-                        Futures Created: {right.futuresCreated ? "Yes" : "No"}
+                        {dict?.createFuturesCreatedLabel} {" "}
+                        {right.futuresCreated
+                          ? dict?.booleanYes
+                          : dict?.booleanNo}
                       </div>
                       {(() => {
                         const canManageRights =
@@ -201,7 +206,7 @@ const Create: FunctionComponent<CreateProps> = ({
                                     disabled={isWithdrawing}
                                     className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                                   >
-                                    {isWithdrawing ? "..." : "Withdraw"}
+                                    {isWithdrawing ? dict?.loadingDots : dict?.createWithdrawAction}
                                   </button>
                                 </>
                               );
@@ -223,7 +228,7 @@ const Create: FunctionComponent<CreateProps> = ({
                                 }}
                                 className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors"
                               >
-                                Create Future
+                                {dict?.createFutureAction}
                               </button>
                             }
                           </div>
@@ -232,7 +237,7 @@ const Create: FunctionComponent<CreateProps> = ({
                       {right.contracts && right.contracts.length > 0 && (
                         <div className="mt-3 border-t border-gray-200 pt-3">
                           <div className="text-xs font-semibold text-gray-600 mb-2">
-                            Futures Contracts
+                            {dict?.createContractsTitle}
                           </div>
                           <div className="space-y-2">
                             {right.contracts.map((contract) => {
@@ -273,7 +278,7 @@ const Create: FunctionComponent<CreateProps> = ({
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between mb-0.5">
                                         <div className="truncate font-medium">
-                                          {contract.metadata?.title || "Unknown"}
+                                          {contract.metadata?.title || dict?.unknownLabel}
                                         </div>
                                         <span
                                           className={`text-xxs px-1.5 py-0.5 rounded ml-1 flex-shrink-0 ${
@@ -282,12 +287,14 @@ const Create: FunctionComponent<CreateProps> = ({
                                               : "bg-gray-100 text-gray-800"
                                           }`}
                                         >
-                                          {contract.isActive ? "Active" : "Inactive"}
+                                          {contract.isActive
+                                            ? dict?.statusActive
+                                            : dict?.statusInactive}
                                         </span>
                                       </div>
                                       <div className="text-gray-500 truncate text-xxs">
-                                        Qty: {contract.quantity} | Bal:{" "}
-                                        {contract.balanceOf ?? "0"} | Orders:{" "}
+                                        {dict?.quantityLabel} {contract.quantity} | {dict?.balanceLabel}{" "}
+                                        {contract.balanceOf ?? "0"} | {dict?.ordersLabel}{" "}
                                         {contract.orders?.length || 0}
                                       </div>
                                       <div className="text-gray-400 truncate text-xxs">
@@ -314,8 +321,8 @@ const Create: FunctionComponent<CreateProps> = ({
                                       {loadingKeys[
                                         `future-${contract.contractId}`
                                       ]
-                                        ? "..."
-                                        : "Cancel"}
+                                        ? dict?.loadingDots
+                                        : dict?.cancelAction}
                                     </button>
                                   )}
                                 </div>
@@ -337,11 +344,9 @@ const Create: FunctionComponent<CreateProps> = ({
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
                 <p className="text-sm pt-2">
-                  No{" "}
                   {activeTab === "all"
-                    ? "escrowed rights"
-                    : "user escrowed rights"}{" "}
-                  found
+                    ? dict?.createEmptyAll
+                    : dict?.createEmptyUser}
                 </p>
               </div>
             </div>

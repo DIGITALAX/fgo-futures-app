@@ -426,7 +426,7 @@ const useSupplyOrders = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.supplyOrderCancelSuccess, hash);
+      context?.showSuccess(dict?.supplyOrderCancelSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err?.message);

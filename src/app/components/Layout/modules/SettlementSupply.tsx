@@ -24,13 +24,6 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
   const isPerpetual = (deadline: string) => deadline === "0";
 
-  const getDeadlineStatus = (deadline: string) => {
-    if (isPerpetual(deadline)) return "PERPETUAL";
-    const deadlineTime = Number(deadline) * 1000;
-    const now = Date.now();
-    return now > deadlineTime ? "DEADLINE_PASSED" : "PENDING";
-  };
-
   const getUserCredits = (tokenId: string) => {
     return credits?.find(
       (credit) =>
@@ -44,9 +37,10 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
       <div className="px-4 py-3 border-b border-black flex-shrink-0">
         <div className="flex items-center justify-start">
           <div>
-            <div className="text-lg">Settlement Supply</div>
+            <div className="text-lg">{dict?.settlementSupplyTitle}</div>
             <div className="text-xs text-gray-600">
-              {contractsSettled?.length} futures
+              {dict?.settlementSupplySubtitle
+                ?.replace?.("{count}", String(contractsSettled?.length ?? 0))}
             </div>
           </div>
         </div>
@@ -57,7 +51,7 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
         id="settlement-scrollable"
       >
         {contractsLoading && contractsSettled?.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">Loading...</div>
+          <div className="p-4 text-center text-gray-500">{dict?.loading}</div>
         ) : (
           <InfiniteScroll
             dataLength={contractsSettled?.length || 0}
@@ -65,15 +59,23 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
             hasMore={hasMoreContracts}
             loader={
               <div className="text-center text-xs text-gray-500 py-2">
-                Loading more...
+                {dict?.loadingMore}
               </div>
             }
             scrollableTarget="settlement-scrollable"
           >
             {contractsSettled?.map((contract) => {
-              const deadlineStatus = getDeadlineStatus(contract.deadline);
-              const canSettle =
-                deadlineStatus === "DEADLINE_PASSED" && !contract.isSettled;
+              const isPerpetualDeadline = isPerpetual(contract.deadline);
+              const deadlineTime = Number(contract.deadline) * 1000;
+              const deadlinePassed =
+                !isPerpetualDeadline && Date.now() > deadlineTime;
+              const deadlineLabel = isPerpetualDeadline
+                ? dict?.settlementSupplyDeadlinePerpetual
+                : dict?.settlementSupplyDeadlineLabel?.replace?.(
+                    "{date}",
+                    new Date(deadlineTime).toLocaleDateString()
+                  );
+              const canSettle = deadlinePassed && !contract.isSettled;
               const canClaim =
                 contract.isSettled && (contract.balanceOf || 0) > 0;
               const userCredits = getUserCredits(contract.tokenId);
@@ -117,15 +119,11 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         {contract.child?.metadata?.title}
                       </div>
                       <div className="text-xs text-gray-600">
-                        Supplier: {contract.supplierProfile?.metadata?.title}
+                        {dict?.supplierLabel}{" "}
+                        {contract.supplierProfile?.metadata?.title ?? dict?.unknownLabel}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        Type:{" "}
-                        {isPerpetual(contract.deadline)
-                          ? "PERPETUAL"
-                          : `DEADLINE: ${new Date(
-                              Number(contract.deadline) * 1000
-                            ).toLocaleDateString()}`}
+                        {dict?.typeLabel} {deadlineLabel}
                       </div>
                     </div>
                   </div>
@@ -138,7 +136,9 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                           : "border-gray-400 bg-gray-50 text-gray-700"
                       }`}
                     >
-                      {contract.isSettled ? "SETTLED" : "NOT SETTLED"}
+                      {contract.isSettled
+                        ? dict?.statusSettledUpper
+                        : dict?.statusNotSettledUpper}
                     </span>
                   </div>
 
@@ -150,20 +150,29 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     >
                       {loadingKeys[`settle-${contract.tokenId}`]
                         ? "..."
-                        : "Settle"}
+                        : dict?.settlementSupplySettleAction}
                     </button>
                   )}
 
                   {canClaim && (
                     <div className="space-y-2 mb-3">
                       <div className="text-xs text-gray-600">
-                        My Balance: {contract.balanceOf} tokens
+                        {dict?.settlementSupplyBalanceLabel?.replace?.(
+                          "{amount}",
+                          String(contract.balanceOf ?? 0)
+                        )}
                       </div>
                       {userCredits && (
                         <div className="text-xs text-gray-600">
-                          My Credits: {Number(userCredits.credits) - Number(userCredits.consumed)}
+                          {dict?.settlementSupplyCreditsLabel?.replace?.(
+                            "{amount}",
+                            String(
+                              Number(userCredits.credits) -
+                                Number(userCredits.consumed)
+                            )
+                          )}
                           <span className="block text-gray-400 mt-1">
-                            (Use in factory to redeem)
+                            {dict?.settlementSupplyCreditsHelper}
                           </span>
                         </div>
                       )}
@@ -178,7 +187,7 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                             [contract.tokenId]: e.target.value,
                           }))
                         }
-                        placeholder="Amount to claim"
+                        placeholder={dict?.settlementSupplyClaimPlaceholder ?? ""}
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
                       />
                       <button
@@ -196,7 +205,7 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       >
                         {loadingKeys[`claim-${contract.tokenId}`]
                           ? "..."
-                          : "Claim Credits"}
+                          : dict?.settlementSupplyClaimAction}
                       </button>
                     </div>
                   )}
@@ -209,7 +218,7 @@ const SettlementSupply: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
       {contractsSettled?.length === 0 && !contractsLoading && (
         <div className="p-4 text-center text-gray-400 text-sm">
-          No futures to settle
+          {dict?.settlementSupplyEmpty}
         </div>
       )}
     </div>

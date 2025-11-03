@@ -55,7 +55,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
       <div className="bg-white border border-black max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
-            <div className="text-lg">Fill Order</div>
+            <div className="text-lg">{dict?.fillOrderTitle}</div>
             <button
               onClick={() => context?.setFillOrder(undefined)}
               className="text-xl hover:bg-gray-100 px-2 py-1"
@@ -90,7 +90,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div className="bg-gray-50 p-3 rounded border border-gray-200">
-            <div className="text-xs text-gray-600 mb-1">Price per unit</div>
+            <div className="text-xs text-gray-600 mb-1">{dict?.pricePerUnitLabel}</div>
             <div className="text-sm font-medium">
               {(context.fillOrder.pricePerUnit / 1e18).toFixed(4)} $MONA
             </div>
@@ -98,7 +98,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
 
           <div>
             <label className="block text-xs mb-1">
-              Quantity (Max: {context.fillOrder.maxQuantity})
+              {dict?.quantityMaxLabel?.replace("{max}", context.fillOrder.maxQuantity)}
             </label>
             <input
               type="number"
@@ -119,7 +119,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div className="bg-blue-50 p-3 rounded border border-blue-200">
-            <div className="text-xs text-blue-600 mb-1">Total Cost</div>
+            <div className="text-xs text-blue-600 mb-1">{dict?.totalCostLabel}</div>
             <div className="text-lg font-bold text-blue-800">
               {totalCost.toFixed(4)} $MONA
             </div>
@@ -132,7 +132,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
               onClick={() => context?.setFillOrder(undefined)}
               className="px-4 py-2 text-xs border border-gray-300 bg-white text-black hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              {dict?.cancelAction}
             </button>
             {!isApproved ? (
               <button
@@ -140,7 +140,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
                 disabled={approveLoading}
                 className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
               >
-                {approveLoading ? "Approving..." : "Approve"}
+                {approveLoading ? dict?.approvingLabel : dict?.approveAction}
               </button>
             ) : (
               <button
@@ -148,7 +148,7 @@ export const FillOrder = ({ dict }: { dict: any }) => {
                 disabled={orderFillLoading || quantity <= 0}
                 className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
               >
-                {orderFillLoading ? "Fulfilling..." : "Fill Order"}
+                {orderFillLoading ? dict?.fulfilling : dict?.fillOrderAction}
               </button>
             )}
           </div>

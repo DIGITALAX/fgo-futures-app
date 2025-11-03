@@ -8,7 +8,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { OpenContractForm } from "../../Layout/types/layout.types";
 
-const useOpenContract = () => {
+const useOpenContract = (dict: any) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -75,12 +75,12 @@ const useOpenContract = () => {
 
     
     if (openContractForm.trustedSettlementBots.length < 3) {
-      context?.showError("You must have at least 3 settlement bots.");
+      context?.showError(dict?.openContractBotsError);
       return;
     }
 
     if (!existingContract && !openContractForm.image) {
-      context?.showError("Please upload a contract image.");
+      context?.showError(dict?.openContractImageError);
       return;
     }
 
@@ -97,9 +97,7 @@ const useOpenContract = () => {
     const oneHour = 3600;
 
     if (timeUntilDelivery < oneHour) {
-      context?.showError(
-        "Cannot create future: Must have at least 1 hour between current time and estimated delivery."
-      );
+      context?.showError(dict?.openContractDeliveryError);
       return;
     }
 
@@ -110,7 +108,7 @@ const useOpenContract = () => {
       if (!existingContract) {
         const formData = new FormData();
         if (!openContractForm.image) {
-          context?.showError("Please upload a contract image.");
+          context?.showError(dict?.openContractImageError);
           setOpenContractLoading(false);
           return;
         }
@@ -138,7 +136,7 @@ const useOpenContract = () => {
       }
 
       if (!metadataUri) {
-        context?.showError("Failed to resolve contract metadata.");
+        context?.showError(dict?.openContractMetadataError);
         setOpenContractLoading(false);
         return;
       }
@@ -167,8 +165,8 @@ const useOpenContract = () => {
 
       context?.showSuccess(
         existingContract
-          ? "Futures Contract Updated!"
-          : "Futures Contract Opened!",
+          ? dict?.openContractUpdateSuccess
+          : dict?.openContractCreateSuccess,
         hash
       );
     } catch (err: any) {

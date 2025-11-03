@@ -25,10 +25,10 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
     return (
       <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
         <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
-          Trade with Suppliers
+          {dict?.tradeWithSuppliersTitle}
         </div>
         <div className="text-center text-gray-500 py-4 sm:py-8">
-          Loading suppliers...
+          {dict?.loadingSuppliersLabel}
         </div>
       </div>
     );
@@ -36,7 +36,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
   return (
     <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
       <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
-        Trade with Suppliers
+        {dict?.tradeWithSuppliersTitle}
       </div>
 
       <div className="h-fit overflow-y-auto" id="suppliers-scrollable">
@@ -46,7 +46,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
           hasMore={hasMoreSuppliers}
           loader={
             <div className="text-center text-xs text-gray-500 py-2">
-              Loading more suppliers...
+              {dict?.loadingMoreSuppliersLabel}
             </div>
           }
           scrollableTarget="suppliers-scrollable"
@@ -85,7 +85,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-gray-600">Address:</span>
+                          <span className="text-gray-600">{dict?.addressLabel}</span>
                           <div className="font-mono text-xs">
                             <a
                               href={`${network?.blockExplorer}/address/${supplier?.supplier}`}
@@ -100,7 +100,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         </div>
 
                         <div>
-                          <span className="text-gray-600">Infrastructure:</span>
+                          <span className="text-gray-600">{dict?.infrastructureLabel}</span>
                           <div className="font-medium">
                             {parseInt(supplier?.infraId, 16).toString()}
                           </div>
@@ -120,7 +120,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                             rel="noopener noreferrer"
                             className="text-xs text-orange-600 hover:text-orange-800 underline"
                           >
-                            Visit Website →
+                            {dict?.visitWebsiteLabel}
                           </a>
                         </div>
                       )}
@@ -135,7 +135,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       className="w-full flex items-center justify-between gap-2 p-2 hover:bg-gray-100 transition-colors border border-gray-200 rounded"
                     >
                       <div>
-                        Futures ({supplier?.futures?.length || 0})
+                        {dict?.futuresLabel} ({supplier?.futures?.length || 0})
                       </div>
                       <div className="text-black">
                         {expandedFutures[supplier?.supplierId] ? "⇊" : "⇉"}
@@ -167,10 +167,10 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-semibold text-gray-800 truncate">
-                                {future?.metadata?.title || "Unnamed Future"}
+                                {future?.metadata?.title || dict?.unnamedFutureLabel}
                               </div>
                               <div className="text-xxs text-gray-600 mt-1">
-                                Amount: {future?.futures?.totalAmount}
+                                {dict?.amountLabelSupplier} {future?.futures?.totalAmount}
                               </div>
                             </div>
                             <button
@@ -182,7 +182,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                               }
                               className="px-2 py-1 text-xs border border-black bg-white text-black hover:bg-gray-100 transition-colors whitespace-nowrap"
                             >
-                              View →
+                              {dict?.viewLabel}
                             </button>
                           </div>
                         ))}
@@ -198,7 +198,7 @@ const Suppliers: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
       {suppliers?.length === 0 && !suppliersLoading && (
         <div className="text-center text-gray-500 py-8">
-          No suppliers registered
+          {dict?.noSuppliersLabel}
         </div>
       )}
     </div>

@@ -7,14 +7,18 @@ import {
   useRef,
   useState,
   PointerEvent,
+  useContext,
 } from "react";
-import { DragState } from "../types/layout.types";
+import { DragState, Language } from "../types/layout.types";
+import { INFO } from "@/app/lib/constants";
+import { AppContext } from "@/app/lib/providers/Providers";
 
 export default function Drag({
   containerRef,
 }: {
   containerRef: RefObject<HTMLDivElement | null>;
 }) {
+  const context = useContext(AppContext);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const dragStateRef = useRef<DragState>({
@@ -123,39 +127,9 @@ export default function Drag({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      <div className="relative w-full h-full overflow-y-scroll whitespace-pre-line p-4">{`3:02 a.m. 
-
-Your eyes sting. Code still warm from the last compile. Eighteen-hour loops, muscle memory and caffeine. You promise yourself one more commit before collapse. Then the phone lights up. Other side of the world, someone still lives in daylight. You know the voice. Ex-TradFi, ex-everything.
-
-The ghost that once moved billions through the glass towers of Paris, New York, London. Whale of a trader. Pulling strings on a planet-sized marionette. Now they talk in chains and consensus. They escaped the vaults. They understand what decentralized actually feels like. No custodians, no masters. Just math humming in public.
-
-You’re both half awake, half legend. And you’re deep into explaining your code. About those fashion economies built on ERC-1155 physical rights. You talk about fatigue. About whether supplier futures are even worth it.
-
-You tell them the new idea: physical-rights futures. Not theory. You already built the first lines. Something different, something cooler.
-
-What if, you say, in that strange in-between, purchase and fulfillment, the rights were live, granted, guaranteed… but the 1155s stayed dormant until delivery. What if those waiting tokens carried weight. Buyers trading anticipation for anticipation’s sake. Swapping, speculating, predicting the future stitched into cotton and code.
-
-You describe garments as cross woven things: half cloth, half contract. Each piece threaded between order books and sewing tables. The 721 parent is what you wear, while the child supplies gain their own on-chain texture. Liquid, tradable, interoperable.
-
-And then you hit pause. “If I include fulfillment futures, maybe we need something on the supply side too?”
-
-There’s silence. Then laughter. A quiet… knowing.
-
-He says it like, “Ha”. You hear it like him leaning back, the old trader waking up. You wait, thoughts hovering like static.
-
-An exhale, slow, through the line.
-“You know, they just deciphered some Babylonian tablets”, he begins. “Four thousand years old. Do you know what they found?”
-
-More silence. More static.
-
-“It’s simple, really. They used eclipses to predict the death of kings, the collapse of harvests, the fate of empires… Four thousand years ago, civilization hedged against the sky.”
-
-And that’s all you need to hear.
-
-If the Babylonian map of the world included futures, so must we. Suppliers, too, need a hedge. They mint futures on FGO — perpetual or deadline.
-
-Only now it’s more open. Different. More diffuse. Spreading to every corner of the p2p map, between indie designers, suppliers, fulfillers, fashion collectors. A liquidity ground up, stitched for a kind of market predicted by no one ever before.
-`}</div>
+      <div className="relative w-full h-full overflow-y-scroll whitespace-pre-line p-4">
+        {INFO[context?.selectedLanguage! as Language]}
+      </div>
     </div>
   );
 }

@@ -46,28 +46,28 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
     const statusNum = Number(status);
     switch (statusNum) {
       case 0:
-        return "PAID";
+        return dict?.statusPaid;
       case 1:
-        return "CANCELLED";
+        return dict?.statusCancelled;
       case 2:
-        return "REFUNDED";
+        return dict?.statusRefunded;
       default:
-        return "DISPUTED";
+        return dict?.statusDisputed;
     }
   };
 
   const getStepStatusText = (isCompleted: boolean) => {
-    return isCompleted === true ? "COMPLETE" : "IN PROGRESS";
+    return isCompleted === true ? dict?.stepStatusComplete : dict?.stepStatusInProgress;
   };
 
   if (fulfillersLoading && fulfillers?.length === 0) {
     return (
       <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
         <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
-          Spectate Fulfillers
+          {dict?.spectateFulfillersTitle}
         </div>
         <div className="text-center text-gray-500 py-4 sm:py-8">
-          Loading fulfillers...
+          {dict?.loadingFulfillersLabel}
         </div>
       </div>
     );
@@ -76,7 +76,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
   return (
     <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
       <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
-        Spectate Fulfillers
+        {dict?.spectateFulfillersTitle}
       </div>
 
       <div className="h-fit overflow-y-auto" id="fulfillers-scrollable">
@@ -86,7 +86,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
           hasMore={hasMoreFulfillers}
           loader={
             <div className="text-center text-xs text-gray-500 py-2">
-              Loading more fulfillers...
+              {dict?.loadingMoreFulfillersLabel}
             </div>
           }
           scrollableTarget="fulfillers-scrollable"
@@ -145,7 +145,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
                         <div>
                           <span className="text-gray-600">
-                            Active Fulfillments:
+                            {dict?.activeFulfillmentsLabel}
                           </span>
                           <div className="font-medium">
                             {fulfiller?.fulfillments?.length || 0}
@@ -160,7 +160,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                           rel="noopener noreferrer"
                           className="text-xs text-orange-600 hover:text-orange-800 underline"
                         >
-                          Visit Website →
+                          {dict?.visitWebsiteLabel}
                         </a>
                       </div>
                     </div>
@@ -174,7 +174,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     }
                   >
                     <div>
-                      Fulfillments & Progress (
+                      {dict?.fulfillmentsProgressLabel} (
                       {fulfiller?.fulfillments?.length || 0})
                     </div>
                     <div className="text-black">
@@ -243,8 +243,8 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                             fulfillment?.fulfillmentOrderSteps
                                               ?.length - 1
                                           ]?.isCompleted
-                                            ? `Steps Completed`
-                                            : `Step ${
+                                            ? dict?.stepsCompletedLabel
+                                            : `${dict?.stepLabel} ${
                                                 Number(
                                                   fulfillment?.currentStep
                                                 ) + 1
@@ -285,9 +285,9 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                 <div className="border-t border-gray-200 p-4">
                                   <div className="text-sm text-gray-700 flex-row flex gap-1 mb-3">
                                     <div className="text-sm">
-                                      Workflow Step Details
+                                      {dict?.workflowStepDetailsLabel}
                                     </div>
-                                    <div className="text-xs">{`Est. Delivery ${formatDuration(
+                                    <div className="text-xs">{`${dict?.estDeliveryLabel} ${formatDuration(
                                       Number(
                                         fulfillment?.estimatedDeliveryDuration
                                       )
@@ -307,27 +307,27 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                           >
                                             <div>
                                               <div className="text-sm text-gray-700 mb-2">
-                                                Fulfiller Step Notes
+                                                {dict?.fulfillerStepNotesLabel}
                                               </div>
                                               <div className="bg-gray-50 p-3 border border-gray-200 text-sm">
                                                 {orderStep?.notes ??
-                                                  "No notes yet."}
+                                                  dict?.noNotesYetLabel}
                                               </div>
                                             </div>
                                             <div>
                                               <div>
                                                 <div className="text-sm text-gray-700 mb-2">
-                                                  Designer Instructions
+                                                  {dict?.designerInstructionsLabel}
                                                 </div>
                                                 <div className="bg-gray-50 p-3 border border-gray-200 text-sm">
                                                   {step?.instructions ??
-                                                    "No designer instructions."}
+                                                    dict?.noDesignerInstructionsLabel}
                                                 </div>
                                               </div>
 
                                               <div className="border border-black p-3">
                                                 <div className="text-sm text-gray-700 mb-2">
-                                                  Step Fulfiller
+                                                  {dict?.stepFulfillerLabel}
                                                 </div>
 
                                                 <div className="flex items-start gap-2">
@@ -382,10 +382,10 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                               {orderStep?.isCompleted && (
                                                 <div className="mt-3 border border-black p-3">
                                                   <div className="text-sm text-gray-700 mb-1">
-                                                    Step Completed
+                                                    {dict?.stepCompletedLabel}
                                                   </div>
                                                   <div className="text-xs text-gray-600">
-                                                    Completed:{" "}
+                                                    {dict?.completedAtLabel}{" "}
                                                     {new Date(
                                                       parseInt(
                                                         orderStep?.completedAt
@@ -409,7 +409,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       {(!fulfiller?.fulfillments ||
                         fulfiller?.fulfillments?.length === 0) && (
                         <div className="text-center text-gray-400 py-6">
-                          No active fulfillments for this fulfiller
+                          {dict?.noActiveFulfillmentsLabel}
                         </div>
                       )}
                     </div>
@@ -423,7 +423,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
 
       {fulfillers?.length === 0 && !fulfillersLoading && (
         <div className="text-center text-gray-500 py-8">
-          No fulfillers registered
+          {dict?.noFulfillersRegisteredLabel}
         </div>
       )}
     </div>

@@ -14,30 +14,10 @@ import { INFURA_GATEWAY, getCurrentNetwork } from "@/app/lib/constants";
 import useSupplyOrders from "../hooks/useSupplyOrders";
 import { AppContext } from "@/app/lib/providers/Providers";
 
-const formatAddress = (value?: string) => {
-  if (!value || value.length < 10) {
-    return value || "N/A";
-  }
-  return `${value.slice(0, 6)}...${value.slice(-4)}`;
-};
-
-const formatTimestamp = (timestamp?: string) => {
-  if (!timestamp) {
-    return "";
-  }
-
-  const ms = Number(timestamp) * 1000;
-  if (!Number.isFinite(ms) || Number.isNaN(ms)) {
-    return "";
-  }
-
-  return new Date(ms).toLocaleString();
-};
-
-const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
+const SupplyOrders: FunctionComponent<SupplyOrderProps> = ({ dict }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const { address } = useAccount();
-
+  const context = useContext(AppContext);
   const {
     orders,
     ordersLoading,
@@ -58,6 +38,26 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
     handleCancelOrder,
     loadingKeys,
   } = useSupplyOrders(dict);
+
+  const formatAddress = (value?: string) => {
+    if (!value || value.length < 10) {
+      return value || dict?.naLabel;
+    }
+    return `${value.slice(0, 6)}...${value.slice(-4)}`;
+  };
+
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) {
+      return "";
+    }
+
+    const ms = Number(timestamp) * 1000;
+    if (!Number.isFinite(ms) || Number.isNaN(ms)) {
+      return "";
+    }
+
+    return new Date(ms).toLocaleString();
+  };
 
   type BuyEntry = {
     filler: PurchaseRecord;
@@ -125,24 +125,23 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
   }, [userOrders, userFilledOrders]);
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "my", label: "My" },
-    { key: "allSells", label: "All Sells" },
-    { key: "allBuys", label: "All Buys" },
-    { key: "mySells", label: "My Sells" },
-    { key: "myBuys", label: "My Buys" },
+    { key: "all", label: dict?.tabAll },
+    { key: "my", label: dict?.tabMy },
+    { key: "allSells", label: dict?.supplyTabAllSells },
+    { key: "allBuys", label: dict?.supplyTabAllBuys },
+    { key: "mySells", label: dict?.supplyTabMySells },
+    { key: "myBuys", label: dict?.supplyTabMyBuys },
   ];
   const emptyMessages: Record<TabKey, string> = {
-    all: "No orders or fills found yet",
-    my: "No personal orders or fills found",
-    allSells: "No sell orders available",
-    allBuys: "No buy fills available",
-    mySells: "You have no sell orders",
-    myBuys: "You have no buy fills",
+    all: dict?.emptyOrdersAll,
+    my: dict?.emptyOrdersMy,
+    allSells: dict?.emptyOrdersAllSells,
+    allBuys: dict?.emptyOrdersAllBuys,
+    mySells: dict?.emptyOrdersMySells,
+    myBuys: dict?.emptyOrdersMyBuys,
   };
 
   const renderSellCard = (order: SellOrder) => {
-    const context = useContext(AppContext);
     const totalQuantity = Number(order?.amount || "0");
     const totalFilled = (order?.fillers || []).reduce(
       (sum, fill) => sum + Number(fill.amount || "0"),
@@ -191,15 +190,15 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {order?.isActive ? "Active" : "Inactive"}
+                {order?.isActive ? dict?.statusActive : dict?.statusInactive}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                {Number(order?.pricePerUnit) / 1e18} $MONA per unit
+                {Number(order?.pricePerUnit) / 1e18} $MONA {dict?.perUnitSuffix}
               </span>
               <span className="text-xs text-gray-600">
-                Deadline:{" "}
+                {dict?.deadlineLabel}{" "}
                 {new Date(
                   Number(order?.future?.deadline) * 1000
                 ).toLocaleString()}
@@ -207,20 +206,20 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                Qty: {order?.amount}
+                {dict?.quantityLabel} {order?.amount}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                Sold: {totalFilled} / {totalQuantity}
+                {dict?.soldLabel} {totalFilled} / {totalQuantity}
               </span>
               <span className="text-xs text-gray-600">
-                Total: {(Number(order?.pricePerUnit) * totalQuantity) / 1e18}{" "}
-                $MONA
+                {dict?.totalLabel}{" "}
+                {(Number(order?.pricePerUnit) * totalQuantity) / 1e18} $MONA
               </span>
             </div>
             <div className="text-xs text-gray-500">
-              Seller: {formatAddress(order?.seller)}
+              {dict?.sellerLabel} {formatAddress(order?.seller)}
             </div>
             {order?.transactionHash && (
               <a
@@ -231,13 +230,13 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                 rel="noopener noreferrer"
                 className="text-xxs text-blue-600 hover:text-blue-800 hover:underline"
               >
-                Tx: {formatAddress(order?.transactionHash)}
+                {dict?.transactionLabel} {formatAddress(order?.transactionHash)}
               </a>
             )}
             {(order?.fillers || []).length > 0 && (
               <div className="mt-2 border-t border-gray-200 pt-2">
                 <div className="text-xxs font-semibold text-gray-600 mb-1">
-                  Purchases
+                  {dict?.purchasesTitle}
                 </div>
                 <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
                   {(order?.fillers || []).map((fill) => {
@@ -276,7 +275,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                     >
                       {loadingKeys[`order-${order?.orderId}`]
                         ? "..."
-                        : "Cancel Order"}
+                        : dict?.cancelOrderAction}
                     </button>
                   )}
                 </div>
@@ -297,7 +296,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                       }}
                       className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                      Fill Order
+                      {dict?.fillOrderAction}
                     </button>
                   )}
                 </div>
@@ -310,8 +309,6 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
   };
 
   const renderBuyCard = (entry: BuyEntry) => {
-    const context = useContext(AppContext);
-
     const isDirectFutureBuy = !!entry?.filler?.future && !entry?.order;
     const future = isDirectFutureBuy
       ? entry?.filler?.future
@@ -334,7 +331,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
       `${entry?.order?.orderId ?? `direct-${entry?.filler?.buyer}`}-${
         entry?.filler?.buyer
       }-${entry?.filler?.blockTimestamp}-${entry?.filler?.amount}`;
-    const title = future?.child?.metadata?.title || "Unknown Contract";
+    const title = future?.child?.metadata?.title || dict?.unknownContractLabel;
     const imageHash = future?.child?.metadata?.image?.split("ipfs://")?.[1];
     const imageSrc = imageHash ? `${INFURA_GATEWAY}${imageHash}` : null;
     return (
@@ -367,19 +364,21 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {isActive ? "Active" : "Inactive"}
+                {isActive ? dict?.statusActive : dict?.statusInactive}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1 text-xs text-gray-600">
-              <span>Buyer: {formatAddress(entry?.filler?.buyer)}</span>
+              <span>
+                {dict?.buyerLabel} {formatAddress(entry?.filler?.buyer)}
+              </span>
               <span>
                 {Number(entry?.filler?.amount || "0")} @{" "}
-                {Number(pricePerUnit || "0") / 1e18} $MONA
+                {Number(pricePerUnit || "0") / 1e18} $MONA {dict?.perUnitSuffix}
               </span>
             </div>
             {supplier && (
               <div className="text-xxs text-gray-500 mb-1">
-                {isDirectFutureBuy ? "Supplier" : "Seller"}:{" "}
+                {isDirectFutureBuy ? dict?.supplierLabel : dict?.sellerLabel}{" "}
                 {formatAddress(supplier)}
               </div>
             )}
@@ -392,7 +391,8 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                 rel="noopener noreferrer"
                 className="text-xxs text-blue-600 hover:text-blue-800 hover:underline"
               >
-                Tx: {formatAddress(entry?.filler?.transactionHash)}
+                {dict?.transactionLabel}{" "}
+                {formatAddress(entry?.filler?.transactionHash)}
               </a>
             )}
             <div className="text-xxs text-gray-400">
@@ -400,7 +400,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
             </div>
             {isDirectFutureBuy && (
               <div className="text-xxs text-gray-400 mt-1">
-                Direct Future Purchase
+                {dict?.directFuturePurchaseLabel}
               </div>
             )}
             {canListSellSupply && future && (
@@ -420,7 +420,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
                   }
                   className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  Create Sell Order
+                  {dict?.createSellOrderAction}
                 </button>
               </div>
             )}
@@ -545,7 +545,9 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
   return (
     <div className="gradient w-full flex h-[calc(42rem-1rem)] sm:h-[calc(42rem-2rem)] flex-col overflow-hidden border border-black">
       <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
-        <div className="text-sm sm:text-base lg:text-lg">Orders & Fills</div>
+        <div className="text-sm sm:text-base lg:text-lg">
+          {dict?.ordersTitle}
+        </div>
         <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
           {tabs.map((tab) => (
             <button
@@ -568,7 +570,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
       >
         {tabConfig.loader && tabConfig.dataLength === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-xs text-gray-500">Loading...</div>
+            <div className="text-xs text-gray-500">{dict?.loading}</div>
           </div>
         ) : (
           <>
@@ -578,7 +580,7 @@ const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
               hasMore={tabConfig.hasMore}
               loader={
                 <div className="text-center text-xs text-gray-500 py-2">
-                  Loading more...
+                  {dict?.loadingMore}
                 </div>
               }
               scrollableTarget={`orders-scrollable-${activeTab}`}

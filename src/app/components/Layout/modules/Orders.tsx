@@ -15,26 +15,6 @@ import Image from "next/image";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { INFURA_GATEWAY, getCurrentNetwork } from "@/app/lib/constants";
 
-const formatAddress = (value?: string) => {
-  if (!value || value.length < 10) {
-    return value || "N/A";
-  }
-  return `${value.slice(0, 6)}...${value.slice(-4)}`;
-};
-
-const formatTimestamp = (timestamp?: string) => {
-  if (!timestamp) {
-    return "";
-  }
-
-  const ms = Number(timestamp) * 1000;
-  if (!Number.isFinite(ms) || Number.isNaN(ms)) {
-    return "";
-  }
-
-  return new Date(ms).toLocaleString();
-};
-
 const Orders: FunctionComponent<OrderProps> = ({
   loadingKeys,
   handleCancelOrder,
@@ -67,6 +47,26 @@ const Orders: FunctionComponent<OrderProps> = ({
   type CombinedItem =
     | { kind: "sell"; order: Order }
     | { kind: "buy"; entry: BuyEntry };
+
+  const formatAddress = (value?: string) => {
+    if (!value || value.length < 10) {
+      return value || dict?.naLabel;
+    }
+    return `${value.slice(0, 6)}...${value.slice(-4)}`;
+  };
+
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) {
+      return "";
+    }
+
+    const ms = Number(timestamp) * 1000;
+    if (!Number.isFinite(ms) || Number.isNaN(ms)) {
+      return "";
+    }
+
+    return new Date(ms).toLocaleString();
+  };
 
   const allBuyOrders = useMemo<BuyEntry[]>(
     () =>
@@ -109,20 +109,20 @@ const Orders: FunctionComponent<OrderProps> = ({
   }, [userOrders, userFilledOrders]);
 
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "my", label: "My" },
-    { key: "allSells", label: "All Sells" },
-    { key: "allBuys", label: "All Buys" },
-    { key: "mySells", label: "My Sells" },
-    { key: "myBuys", label: "My Buys" },
+    { key: "all", label: dict?.tabAll },
+    { key: "my", label: dict?.tabMy },
+    { key: "allSells", label: dict?.ordersTabAllSells },
+    { key: "allBuys", label: dict?.ordersTabAllBuys },
+    { key: "mySells", label: dict?.ordersTabMySells },
+    { key: "myBuys", label: dict?.ordersTabMyBuys },
   ];
   const emptyMessages: Record<TabKey, string> = {
-    all: "No orders or fills found yet",
-    my: "No personal orders or fills found",
-    allSells: "No sell orders available",
-    allBuys: "No buy fills available",
-    mySells: "You have no sell orders",
-    myBuys: "You have no buy fills",
+    all: dict?.emptyOrdersAll ?? "",
+    my: dict?.emptyOrdersMy ?? "",
+    allSells: dict?.emptyOrdersAllSells ?? "",
+    allBuys: dict?.emptyOrdersAllBuys ?? "",
+    mySells: dict?.emptyOrdersMySells ?? "",
+    myBuys: dict?.emptyOrdersMyBuys ?? "",
   };
 
   const renderSellCard = (order: Order) => {
@@ -179,28 +179,28 @@ const Orders: FunctionComponent<OrderProps> = ({
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {order.isActive ? "Active" : "Inactive"}
+                {order.isActive ? dict?.statusActive : dict?.statusInactive}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                {Number(order.pricePerUnit) / 1e18} $MONA per unit
+                {Number(order.pricePerUnit) / 1e18} $MONA {dict?.perUnitSuffix}
               </span>
               <span className="text-xs text-gray-600">
-                Qty: {order.quantity}
+                {dict?.quantityLabel} {order.quantity}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                Filled: {totalFilled} / {totalQuantity}
+                {dict?.filledLabel} {totalFilled} / {totalQuantity}
               </span>
               <span className="text-xs text-gray-600">
-                Total: {(Number(order.pricePerUnit) * totalQuantity) / 1e18}{" "}
+                {dict?.totalLabel} {(Number(order.pricePerUnit) * totalQuantity) / 1e18}{" "}
                 $MONA
               </span>
             </div>
             <div className="text-xs text-gray-500">
-              Seller: {formatAddress(order.seller)}
+              {dict?.sellerLabel} {formatAddress(order.seller)}
             </div>
             {order.transactionHash && (
               <a
@@ -211,13 +211,13 @@ const Orders: FunctionComponent<OrderProps> = ({
                 rel="noopener noreferrer"
                 className="text-xxs text-blue-600 hover:text-blue-800 hover:underline"
               >
-                Tx: {formatAddress(order.transactionHash)}
+                {dict?.transactionLabel} {formatAddress(order.transactionHash)}
               </a>
             )}
             {(order.fillers || []).length > 0 && (
               <div className="mt-2 border-t border-gray-200 pt-2">
                 <div className="text-xxs font-semibold text-gray-600 mb-1">
-                  Fills
+                  {dict?.fillsTitle}
                 </div>
                 <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
                   {(order.fillers || []).map((fill) => {
@@ -231,7 +231,7 @@ const Orders: FunctionComponent<OrderProps> = ({
                       >
                         <span>{formatAddress(fill.filler)}</span>
                         <span>
-                          {Number(fill.quantity || "0")} @{" "}
+                          {Number(fill.quantity || "0")} {"@ "}
                           {Number(fill.price || "0") / 1e18} $MONA
                         </span>
                       </div>
@@ -251,7 +251,7 @@ const Orders: FunctionComponent<OrderProps> = ({
                     >
                       {loadingKeys[`order-${order.orderId}`]
                         ? "..."
-                        : "Cancel Order"}
+                        : dict?.cancelOrderAction}
                     </button>
                   )}
                 </div>
@@ -269,7 +269,7 @@ const Orders: FunctionComponent<OrderProps> = ({
                       }}
                       className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                      Fill Order
+                      {dict?.fillOrderAction}
                     </button>
                   )}
                 </div>
@@ -328,19 +328,21 @@ const Orders: FunctionComponent<OrderProps> = ({
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {order?.isActive ? "Active" : "Inactive"}
+                {order?.isActive ? dict?.statusActive : dict?.statusInactive}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1 text-xs text-gray-600">
-              <span>Buyer: {formatAddress(filler.filler)}</span>
+              <span>
+                {dict?.buyerLabel} {formatAddress(filler.filler)}
+              </span>
               <span>
                 {Number(filler.quantity || "0")} @{" "}
-                {Number(filler.price || "0") / 1e18} $MONA
+                {Number(filler.price || "0") / 1e18} $MONA {dict?.perUnitSuffix}
               </span>
             </div>
             {order?.seller && (
               <div className="text-xxs text-gray-500 mb-1">
-                Seller: {formatAddress(order.seller)}
+                {dict?.sellerLabel} {formatAddress(order.seller)}
               </div>
             )}
             {filler.transactionHash && (
@@ -352,7 +354,7 @@ const Orders: FunctionComponent<OrderProps> = ({
                 rel="noopener noreferrer"
                 className="text-xxs text-blue-600 hover:text-blue-800 hover:underline"
               >
-                Tx: {formatAddress(filler.transactionHash)}
+                {dict?.transactionLabel} {formatAddress(filler.transactionHash)}
               </a>
             )}
             <div className="text-xxs text-gray-400">
@@ -487,7 +489,9 @@ const Orders: FunctionComponent<OrderProps> = ({
   return (
     <div className="gradient w-full flex h-[calc(42rem-1rem)] sm:h-[calc(42rem-2rem)] flex-col overflow-hidden border border-black">
       <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
-        <div className="text-sm sm:text-base lg:text-lg">Orders & Fills</div>
+        <div className="text-sm sm:text-base lg:text-lg">
+          {dict?.ordersTitle}
+        </div>
         <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
           {tabs.map((tab) => (
             <button
@@ -510,7 +514,7 @@ const Orders: FunctionComponent<OrderProps> = ({
       >
         {tabConfig.loader && tabConfig.dataLength === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-xs text-gray-500">Loading...</div>
+            <div className="text-xs text-gray-500">{dict?.loading}</div>
           </div>
         ) : (
           <>
@@ -520,7 +524,7 @@ const Orders: FunctionComponent<OrderProps> = ({
               hasMore={tabConfig.hasMore}
               loader={
                 <div className="text-center text-xs text-gray-500 py-2">
-                  Loading more...
+                  {dict?.loadingMore}
                 </div>
               }
               scrollableTarget={`orders-scrollable-${activeTab}`}

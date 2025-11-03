@@ -33,7 +33,7 @@ const useTrade = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.tradeOrderCancelSuccess, hash);
+      context?.showSuccess(dict?.tradeOrderCancelSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err?.message);
@@ -56,7 +56,7 @@ const useTrade = (dict: any) => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess(dict.tradeFutureCancelSuccess, hash);
+      context?.showSuccess(dict?.tradeFutureCancelSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
