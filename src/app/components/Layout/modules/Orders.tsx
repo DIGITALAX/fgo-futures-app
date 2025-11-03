@@ -37,7 +37,7 @@ const Orders: FunctionComponent<OrderProps> = ({
     loadMoreOrders,
     loadMoreUserOrders,
     loadMoreUserFilledOrders,
-  } = useOrders(dict);
+  } = useOrders();
 
   type BuyEntry = {
     filler: Filler;

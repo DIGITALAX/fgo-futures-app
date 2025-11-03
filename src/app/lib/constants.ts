@@ -62,6 +62,8 @@ export const FLASH_PATTERNS: string[] = [
   "flash-long",
   "flash-pulse",
   "flash-burst",
+  "flash-glow",
+  "flash-fade",
 ];
 
 export const getCoreContractAddresses = (
