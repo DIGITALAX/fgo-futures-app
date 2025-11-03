@@ -12,7 +12,7 @@ import {
   getSettlementBotsUser,
 } from "@/app/lib/subgraph/queries/getSettlement";
 
-const useRegisterBot = () => {
+const useRegisterBot = (dict: any) => {
   const context = useContext(AppContext);
   const [registerSettlementLoading, setRegisterSettlementLoading] =
     useState<boolean>(false);
@@ -22,15 +22,15 @@ const useRegisterBot = () => {
   >();
   const [claimLoading, setClaimLoading] = useState<boolean>(false);
   const [stakeAmount, setStakeAmount] = useState<number>(
-    context?.minStake ?? 0
+    context?.minValues?.stake ?? 0
   );
   const [approveLoading, setApproveLoading] = useState<boolean>(false);
   const [isStakeApproved, setIsStakeApproved] = useState<boolean>(false);
   const [settlementBotsLoading, setSettlementBotsLoading] =
     useState<boolean>(false);
   const [settlementBotsSkip, setSettlementBotsSkip] = useState<number>(0);
-  const [hasMoreSettlementBots, setHasMoreSettlementBots] =
-    useState<boolean>(true);
+  const hasMoreSettlementBots =
+    context?.hasMoreSettlementBots ?? true;
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -108,6 +108,9 @@ const useRegisterBot = () => {
       lastRequestTime.current = now;
 
       try {
+        if (reset) {
+          context?.setHasMoreSettlementBots(true);
+        }
         const skipValue = reset ? 0 : settlementBotsSkip;
         const cacheKey = `settlement-bots-${skipValue}`;
 
@@ -119,6 +122,9 @@ const useRegisterBot = () => {
           ];
           setSettlementBotsSkip((prev) => prev + 20);
           context?.setSettlementBots(newBots);
+          if (!cachedData || cachedData.length < 20) {
+            context?.setHasMoreSettlementBots(false);
+          }
           setSettlementBotsLoading(false);
           return;
         }
@@ -127,7 +133,7 @@ const useRegisterBot = () => {
         let allBots = data?.data?.settlementBots;
 
         if (!allBots || allBots.length < 20) {
-          setHasMoreSettlementBots(false);
+          context?.setHasMoreSettlementBots(false);
         }
 
         requestCache.current[cacheKey] = allBots;
@@ -135,6 +141,7 @@ const useRegisterBot = () => {
         if (reset) {
           setSettlementBotsSkip(20);
           context?.setSettlementBots(allBots || []);
+          context?.setHasMoreSettlementBots((allBots?.length || 0) >= 20);
         } else {
           const newBots = [
             ...(context?.settlementBots || []),
@@ -185,7 +192,7 @@ const useRegisterBot = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Stake allowance approved!", hash);
+      context?.showSuccess(dict.registerBotApproveSuccess, hash);
       await checkAllowance();
       return true;
     } catch (err: any) {
@@ -234,7 +241,7 @@ const useRegisterBot = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Settlement Bot Registered!", hash);
+      context?.showSuccess(dict.registerBotSuccess, hash);
       await checkAllowance();
     } catch (err: any) {
       console.error(err.message);
@@ -271,29 +278,13 @@ const useRegisterBot = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Settlement Bot Stake Increased!", hash);
+      context?.showSuccess(dict.registerBotStakeIncreaseSuccess, hash);
       await checkAllowance();
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
     }
     setStakeLoading(false);
-  };
-
-  const handleMinStake = async () => {
-    if (!publicClient) return;
-    try {
-      const res = await publicClient.readContract({
-        address: contracts.settlement,
-        abi: ABIS.FGOFuturesSettlement,
-        functionName: "getMinStakeAmount",
-        args: [],
-      });
-      context?.setMinStake(Number(res) / 10 ** 18);
-      setStakeAmount(Number(res) / 10 ** 18);
-    } catch (err: any) {
-      console.error(err.message);
-    }
   };
 
   const handleWithdrawStake = async () => {
@@ -309,7 +300,7 @@ const useRegisterBot = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Settlement Bot Stake Decreased!", hash);
+      context?.showSuccess(dict.registerBotStakeWithdrawSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -331,7 +322,7 @@ const useRegisterBot = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Child Rights Claimed!", hash);
+      context?.showSuccess(dict.registerBotClaimSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -346,12 +337,6 @@ const useRegisterBot = () => {
   }, [address]);
 
   useEffect(() => {
-    if ((!context?.minStake || context.minStake == 0) && publicClient) {
-      handleMinStake();
-    }
-  }, [publicClient]);
-
-  useEffect(() => {
     checkAllowance();
   }, [checkAllowance]);
 
@@ -359,11 +344,7 @@ const useRegisterBot = () => {
     if (Number(context?.settlementBots?.length) < 1 && !settlementBotsLoading) {
       getAllSettlementBots(true);
     }
-  }, [
-    getAllSettlementBots,
-    context?.settlementBots?.length,
-    settlementBotsLoading,
-  ]);
+  }, []);
 
   const loadMoreSettlementBots = useCallback(() => {
     if (!settlementBotsLoading && hasMoreSettlementBots) {

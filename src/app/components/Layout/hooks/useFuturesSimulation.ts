@@ -1,23 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useContext } from "react";
 import {
   FuturesSimulationElement,
+  GraphChild,
   GridDimensions,
 } from "../types/layout.types";
 import { FLASH_PATTERNS, INFURA_GATEWAY } from "@/app/lib/constants";
 import { getAllChildren } from "@/app/lib/subgraph/queries/getAllChildren";
-
-type GraphChild = {
-  childId: string;
-  physicalPrice: string;
-  metadata?: {
-    title?: string;
-    image?: string;
-  } | null;
-  uri?: string | null;
-  [key: string]: any;
-};
+import { SimulationContext } from "@/app/lib/providers/Providers";
 
 const useFuturesSimulation = () => {
+  const context = useContext(SimulationContext);
   const [gridDimensions, setGridDimensions] = useState<GridDimensions>({
     cols: 14,
     rows: 8,
@@ -31,10 +23,15 @@ const useFuturesSimulation = () => {
   );
   const [futureElementsLoading, setFutureElementsLoading] =
     useState<boolean>(false);
-  const [rawChildren, setRawChildren] = useState<GraphChild[]>([]);
+  const [displayChildrenIndices, setDisplayChildrenIndices] = useState<number[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const shouldSkipPosition = useCallback(
-    (row: number, col: number, dims: GridDimensions = gridDimensions): boolean => {
+    (
+      row: number,
+      col: number,
+      dims: GridDimensions = gridDimensions
+    ): boolean => {
       if (row === 0 && col > 0 && col < dims.cols - 1) return true;
       if (row === 1 && col > 1 && col < Math.floor(dims.cols * 0.67))
         return true;
@@ -49,8 +46,23 @@ const useFuturesSimulation = () => {
     [gridDimensions]
   );
 
+  const getGridCapacity = useCallback(
+    (dims: GridDimensions): number => {
+      let capacity = 0;
+      for (let row = 0; row < dims.rows; row++) {
+        for (let col = 0; col < dims.cols; col++) {
+          if (!shouldSkipPosition(row, col, dims)) {
+            capacity++;
+          }
+        }
+      }
+      return capacity;
+    },
+    [shouldSkipPosition]
+  );
+
   const placeChildrenOnGrid = useCallback(
-    (children: GraphChild[], dims: GridDimensions) => {
+    (children: GraphChild[], dims: GridDimensions, indices: number[] = []) => {
       const placedElements: FuturesSimulationElement[] = [];
       const seenChildIds = new Set<string>();
       const filteredChildren = children.filter((child) => {
@@ -60,43 +72,50 @@ const useFuturesSimulation = () => {
         return true;
       });
 
-      let childIndex = 0;
+      const selectedChildren = indices.length > 0
+        ? indices.map(idx => filteredChildren[idx % filteredChildren.length])
+        : filteredChildren;
 
+      const availablePositions: { row: number; col: number }[] = [];
       for (let row = 0; row < dims.rows; row++) {
         for (let col = 0; col < dims.cols; col++) {
-          if (shouldSkipPosition(row, col, dims)) {
-            continue;
+          if (!shouldSkipPosition(row, col, dims)) {
+            availablePositions.push({ row, col });
           }
-
-          const child = filteredChildren[childIndex];
-          if (!child) {
-            return placedElements;
-          }
-
-          const metadata = child.metadata ?? { title: "", image: "" };
-          const metadataTitle =
-            (metadata?.title as string | undefined) ??
-            (metadata as any)?.name ??
-            "";
-          const metadataImage =
-            (metadata?.image as string | undefined) ??
-            (metadata as any)?.image_url ??
-            (metadata as any)?.imageUrl ??
-            "";
-
-          placedElements.push({
-            childId: child.childId,
-            physicalPrice: Number(child.physicalPrice ?? 0),
-            metadata: {
-              title: metadataTitle,
-              image: metadataImage,
-            },
-            position: { row, col },
-          });
-
-          childIndex++;
         }
       }
+
+      const shuffledPositions = [...availablePositions].sort(
+        () => Math.random() - 0.5
+      );
+
+      selectedChildren.forEach((child, idx) => {
+        if (!child || !shuffledPositions[idx]) return;
+
+        const metadata = child?.metadata ?? { title: "", image: "" };
+        const metadataTitle =
+          (metadata?.title as string | undefined) ??
+          (metadata as any)?.name ??
+          "";
+        const metadataImage =
+          (metadata?.image as string | undefined) ??
+          (metadata as any)?.image_url ??
+          (metadata as any)?.imageUrl ??
+          "";
+
+        const position = shuffledPositions[idx];
+        placedElements.push({
+          childId: child.childId,
+          childContract: child.childContract,
+          futures: child.futures,
+          physicalPrice: Number(child.physicalPrice ?? 0),
+          metadata: {
+            title: metadataTitle,
+            image: metadataImage,
+          },
+          position: { row: position.row, col: position.col },
+        });
+      });
 
       return placedElements;
     },
@@ -112,7 +131,7 @@ const useFuturesSimulation = () => {
       const withMetadata = await Promise.all(
         children.map(async (child) => {
           if (!child) return child;
-          if (child.metadata?.image && child.metadata?.title) {
+          if (child?.metadata?.image && child?.metadata?.title) {
             return child;
           }
           if (!child.uri) return child;
@@ -140,7 +159,7 @@ const useFuturesSimulation = () => {
         })
       );
 
-      setRawChildren(withMetadata);
+      context?.setRawChildren(withMetadata);
     } catch (err: any) {
       console.error(err?.message || err);
     } finally {
@@ -173,18 +192,29 @@ const useFuturesSimulation = () => {
   }, []);
 
   useEffect(() => {
-    getFutureElements();
-  }, [getFutureElements]);
-
-  useEffect(() => {
-    if (!rawChildren.length) {
+    if (!context?.rawChildren.length) {
       setElements([]);
       return;
     }
 
-    const positioned = placeChildrenOnGrid(rawChildren, gridDimensions);
+    const positioned = placeChildrenOnGrid(
+      context?.rawChildren,
+      gridDimensions,
+      displayChildrenIndices
+    );
     setElements(positioned);
-  }, [rawChildren, gridDimensions, placeChildrenOnGrid]);
+
+    if (positioned.length > 0 && gridDimensions.cols > 0) {
+      const maxRow = Math.max(...positioned.map((el) => el.position.row));
+      const requiredRows = maxRow + 1;
+      const minRows = Math.ceil(positioned.length / gridDimensions.cols) + 1;
+      const newRows = Math.max(requiredRows, minRows, 7);
+
+      if (newRows !== gridDimensions.rows) {
+        setGridDimensions((prev) => ({ ...prev, rows: newRows }));
+      }
+    }
+  }, [context?.rawChildren, gridDimensions.cols, displayChildrenIndices, placeChildrenOnGrid]);
 
   const getRandomBgColor = () => {
     const colors = ["bg-white", "bg-blue-50", "bg-amber-50", "bg-orange-50"];
@@ -243,10 +273,53 @@ const useFuturesSimulation = () => {
   }, [elements, simulateTrade]);
 
   useEffect(() => {
-    if (elements?.length < 1 && !futureElementsLoading) {
+    if (Number(context?.rawChildren?.length) < 1 && !futureElementsLoading) {
       getFutureElements();
     }
   }, []);
+
+  const getUniqueRandomIndices = useCallback(
+    (count: number): number[] => {
+      if (!context?.rawChildren.length) return [];
+      const availableCount = Math.min(count, context.rawChildren.length);
+      const indices = new Set<number>();
+
+      while (indices.size < availableCount) {
+        indices.add(Math.floor(Math.random() * context.rawChildren.length));
+      }
+
+      return Array.from(indices);
+    },
+    [context?.rawChildren]
+  );
+
+  useEffect(() => {
+    if (!context?.rawChildren.length) return;
+
+    const capacity = getGridCapacity(gridDimensions);
+
+    const patterns = [
+      () => {
+        const randomIndices = getUniqueRandomIndices(5);
+        setDisplayChildrenIndices(randomIndices);
+      },
+      () => {
+        const randomIndices = getUniqueRandomIndices(10);
+        setDisplayChildrenIndices(randomIndices);
+      },
+      () => {
+        const randomIndices = getUniqueRandomIndices(capacity);
+        setDisplayChildrenIndices(randomIndices);
+      },
+    ];
+
+    const interval = setInterval(() => {
+      const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+      pattern();
+    }, 800);
+
+    return () => clearInterval(interval);
+  }, [context?.rawChildren, gridDimensions, getGridCapacity, getUniqueRandomIndices]);
 
   useEffect(() => {
     const columns = new Set<number>();
@@ -268,19 +341,28 @@ const useFuturesSimulation = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
 
+      let cols = 14;
       if (width < 640) {
-        setGridDimensions({ cols: 8, rows: 6 });
+        cols = 6;
       } else if (width < 1024) {
-        setGridDimensions({ cols: 12, rows: 7 });
-      } else {
-        const rows = height > 900 ? 9 : height > 700 ? 8 : 7;
-        setGridDimensions({ cols: 14, rows });
+        cols = 10;
       }
+
+      const rows = height > 900 ? 9 : height > 700 ? 8 : 7;
+      setGridDimensions({ cols, rows });
     };
 
     updateGridSize();
     window.addEventListener("resize", updateGridSize);
     return () => window.removeEventListener("resize", updateGridSize);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   return {

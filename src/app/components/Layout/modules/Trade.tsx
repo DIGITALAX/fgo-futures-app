@@ -23,14 +23,13 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
     hasMoreEscrowedRightsUser,
     loadMoreEscrowedRights,
     loadMoreEscrowedRightsUser,
-  } = useEscrow();
+  } = useEscrow(dict);
 
   const {
-    orderCancelLoading,
+    loadingKeys,
     handleCancelOrder,
     handleCancelFuture,
-    futureCancelLoading,
-  } = useTrade();
+  } = useTrade(dict);
 
   const {
     physicalRights,
@@ -52,9 +51,9 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
   } = usePhysicalRights();
 
   return (
-    <div className="w-full p-6 flex items-center justify-center">
-      <div className="w-full flex flex-col items-center justify-center gap-6">
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6 h-[45rem]">
+    <div className="w-full p-2 sm:p-4 lg:p-6 flex items-center justify-center">
+      <div className="w-full flex flex-col items-center justify-center gap-3 sm:gap-4 lg:gap-6">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 h-fit md:h-[45rem]">
           <Transfer
             dict={dict}
             physicalRights={physicalRights}
@@ -75,9 +74,13 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
             physicalUserEscrowedLoading={physicalUserEscrowedLoading}
             physicalRightsUserEscrowed={physicalRightsUserEscrowed}
             hasMorePhysicalRightsEscrowed={hasMorePhysicalRightsEscrowed}
-            hasMorePhysicalRightsUserEscrowed={hasMorePhysicalRightsUserEscrowed}
+            hasMorePhysicalRightsUserEscrowed={
+              hasMorePhysicalRightsUserEscrowed
+            }
             loadMorePhysicalRightsEscrowed={loadMorePhysicalRightsEscrowed}
-            loadMorePhysicalRightsUserEscrowed={loadMorePhysicalRightsUserEscrowed}
+            loadMorePhysicalRightsUserEscrowed={
+              loadMorePhysicalRightsUserEscrowed
+            }
           />
           <Create
             dict={dict}
@@ -91,14 +94,14 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
             hasMoreEscrowedRightsUser={hasMoreEscrowedRightsUser}
             loadMoreEscrowedRights={loadMoreEscrowedRights}
             loadMoreEscrowedRightsUser={loadMoreEscrowedRightsUser}
+            handleCancelFuture={handleCancelFuture}
+            loadingKeys={loadingKeys}
           />
         </div>
         <Orders
           dict={dict}
-          orderCancelLoading={orderCancelLoading}
+          loadingKeys={loadingKeys}
           handleCancelOrder={handleCancelOrder}
-          handleCancelFuture={handleCancelFuture}
-          futureCancelLoading={futureCancelLoading}
         />
       </div>
     </div>

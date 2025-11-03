@@ -5,6 +5,8 @@ export interface FuturesSimulationElement {
   };
   physicalPrice: number;
   childId: string;
+  childContract: string;
+  futures?: { pricePerUnit: string };
   position: {
     row: number;
     col: number;
@@ -19,7 +21,6 @@ export interface GridDimensions {
 }
 
 export interface Fulfiller {
-  fulfillerId: string;
   fulfiller: string;
   infraId: string;
   uri: string;
@@ -28,7 +29,70 @@ export interface Fulfiller {
     title: string;
     link: string;
   };
-  childOrders: ChildOrder[];
+  fulfillments: Fulfillment[];
+}
+
+export interface Fulfillment {
+  orderId: string;
+  contract: string;
+  parent: Parent;
+  currentStep: string;
+  createdAt: string;
+  lastUpdated: string;
+  isPhysical: boolean;
+  order: {
+    fulfillmentData: string;
+    orderStatus: string;
+    transactionHash: string;
+    totalPayments: string;
+    parentAmount: string;
+  };
+  estimatedDeliveryDuration: string;
+  fulfillmentOrderSteps: FulfillmentOrderStep[];
+  physicalSteps: PhysicalStep[];
+}
+
+export interface PhysicalStep {
+  fulfiller: {
+    fulfiller: string;
+    uri: string;
+    metadata: {
+      image: string;
+      title: string;
+    };
+  };
+  instructions: string;
+  subPerformers: SubPerformer[];
+}
+
+export interface Parent {
+  parentContract: string;
+  designId: string;
+  infraCurrency: string;
+  uri: string;
+  metadata: {
+    title: string;
+    image: string;
+  };
+}
+
+export interface FulfillmentOrderStep {
+  notes: string;
+  completedAt: string;
+  isCompleted: boolean;
+  stepIndex: string;
+}
+
+export interface SubPerformer {
+  splitBasisPoints: number;
+  performer: string;
+}
+
+export interface FulfillmentStep {
+  primaryPerformer: string;
+  instructions: string;
+  subPerformers: SubPerformer[];
+  fulfiller?: Fulfiller;
 }
 
 export interface PhysicalRight {
@@ -54,33 +118,38 @@ export interface PhysicalRight {
 
 export interface Order {
   orderId: string;
-  tokenId: string;
-  balanceOf: number;
   quantity: string;
   pricePerUnit: string;
   seller: string;
   blockNumber: string;
   blockTimestamp: string;
-  filledPrice: string;
   contract: {
     originalHolder: string;
+    contractId: string;
     isSettled: boolean;
     uri: string;
+    tokenId: string;
     metadata: {
       image: string;
       title: string;
     };
-    escrowed: {
-      amountUsedInFutures: string;
-    };
   };
-  filledQuantity: string;
   transactionHash: string;
   isActive: boolean;
   filled: boolean;
-  filler: string;
+  fillers: Filler[];
   protocolFee: string;
   lpFee: string;
+}
+
+export interface Filler {
+  price: string;
+  quantity: string;
+  filler: string;
+  order: Order;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
 }
 
 export interface SettlementBot {
@@ -90,6 +159,7 @@ export interface SettlementBot {
   averageDelaySeconds: string;
   totalSlashEvents: string;
   totalAmountSlashed: string;
+  totalRewardSlashed: string;
   blockNumber: string;
   blockTimestamp: string;
   transactionHash: string;
@@ -113,11 +183,15 @@ export interface SettlementBot {
   }[];
 }
 
+export type Language = "en" | "es" | "fr" | "gd" | "pt" | "yi";
+
 export interface ContractSettled {
   contractId: string;
   childId: string;
-  orderId: string;
+  tokenId: string;
+  isFulfilled: boolean;
   quantity: string;
+  balanceOf?: number;
   uri: string;
   metadata: {
     image: string;
@@ -147,7 +221,7 @@ export interface ContractSettled {
     averageDelaySeconds: string;
     totalSlashEvents: string;
     totalAmountSlashed: string;
-  };
+  }[];
   child: {
     uri: string;
     physicalPrice: string;
@@ -188,6 +262,7 @@ export interface EscrowedRight {
   transactionHash: string;
   depositedAt: string;
   futuresCreated: boolean;
+  contracts: FutureContract[];
   estimatedDeliveryDuration: string;
   child: {
     uri: string;
@@ -208,6 +283,14 @@ export interface CoreContractAddresses {
   mona: `0x${string}`;
   settlement: `0x${string}`;
 }
+
+export type TabKey =
+  | "all"
+  | "my"
+  | "allSells"
+  | "allBuys"
+  | "mySells"
+  | "myBuys";
 
 export type TransferProps = {
   physicalRights: PhysicalRight[];
@@ -242,6 +325,37 @@ export type EscrowProps = {
   loadMorePhysicalRightsUserEscrowed: () => void;
 };
 
+export interface Supplier {
+  supplier: string;
+  infraId: string;
+  supplierId: string;
+  uri: string;
+  futures: {
+    childId: string;
+    childContract: string;
+    uri: string;
+    transactionHash: string;
+    futures: {
+      totalAmount: string;
+    };
+    metadata: {
+      title: string;
+      image: string;
+    };
+  }[];
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+  isActive: boolean;
+  version: string;
+  metadata: {
+    title: string;
+    image: string;
+    description: string;
+    link: string;
+  };
+}
+
 export type CreateProps = {
   handleWithdrawPhysicalRights: (chosenRights: {
     childId: number;
@@ -261,20 +375,62 @@ export type CreateProps = {
   hasMoreEscrowedRightsUser: boolean;
   loadMoreEscrowedRights: () => void;
   loadMoreEscrowedRightsUser: () => void;
+  handleCancelFuture: (contractId: number) => Promise<void>;
+  loadingKeys: { [key: string]: boolean };
+};
+
+export type RightsAction = {
+  childId: number;
+  orderId: number;
+  amount: number;
+  originalMarket: string;
+  childContract: string;
+  key: string;
+};
+
+export type GraphChild = {
+  childId: string;
+  childContract: string;
+  physicalPrice: string;
+  futures: {
+    pricePerUnit: string;
+  };
+  metadata?: {
+    title?: string;
+    image?: string;
+  } | null;
+  uri?: string | null;
+  [key: string]: any;
 };
 
 export type OrderProps = {
-  dict: any;
-  orderCancelLoading: boolean;
-  handleCancelFuture: (contractId: number) => Promise<void>;
-  futureCancelLoading: boolean;
+  loadingKeys: { [key: string]: boolean };
   handleCancelOrder: (orderId: number) => Promise<void>;
+  dict: any;
+};
+
+export type DragState = {
+  pointerId: number | null;
+  offsetX: number;
+  offsetY: number;
+  frameWidth: number;
+  frameHeight: number;
+  containerLeft: number;
+  containerTop: number;
+  containerWidth: number;
+  containerHeight: number;
+};
+
+export type SupplyOrderProps = {
+  dict: any;
 };
 
 export interface FutureContract {
   contractId: string;
+  balanceOf?: number;
+  tokenId: string;
   childId: string;
-  orderId: string;
+  marketOrderId: string;
   quantity: string;
   uri: string;
   metadata: {
@@ -292,6 +448,7 @@ export interface FutureContract {
   transactionHash: string;
   createdAt: string;
   settledAt: string;
+  orders: Order[];
   settlementRewardBPS: string;
   isActive: boolean;
   isSettled: boolean;
@@ -302,7 +459,7 @@ export interface FutureContract {
     averageDelaySeconds: string;
     totalSlashEvents: string;
     totalAmountSlashed: string;
-  };
+  }[];
   child: {
     uri: string;
     physicalPrice: string;
@@ -336,8 +493,8 @@ export interface ChildOrder {
       notes: string;
       completedAt: string;
       stepIndex: string;
-      isCompleted: string;
-    };
+      isCompleted: boolean;
+    }[];
   };
   parent: {
     designId: string;
@@ -352,11 +509,101 @@ export interface ChildOrder {
           splitBasisPoints: string;
         };
         fulfiller: Fulfiller;
-      };
+      }[];
     };
     metadata: {
       title: string;
       image: string;
     };
   };
+}
+
+export interface FutureCredit {
+  childContract: string;
+  childId: string;
+  child: GraphChild;
+  tokenId: string;
+  buyer: string;
+  credits: string;
+  consumed: string;
+  position: SupplyFuture;
+}
+
+export interface SupplyFuture {
+  supplier: string;
+  tokenId: string;
+  supplierProfile?: {
+    metadata?: {
+      title?: string;
+    };
+  };
+  pricePerUnit: string;
+  deadline: string;
+  isSettled: boolean;
+  totalAmount: string;
+  soldAmount: string;
+  isActive: boolean;
+  settlementRewardBPS: string;
+  child: {
+    childId: string;
+    childContract: string;
+    infraCurrency: string;
+    metadata?: {
+      title?: string;
+      image?: string;
+    };
+  };
+  blockTimestamp: string;
+  isClosed: boolean;
+  closed: boolean;
+  closedBlockNumber: string;
+  closedBlockTimestamp: string;
+  closedTransactionHash: string;
+  settler: string;
+  settlementReward: string;
+  settlementBlockNumber: string;
+  settlementBlockTimestamp: string;
+  settlementTransactionHash: string;
+  purchases: PurchaseRecord[];
+  sellOrders: SellOrder[];
+  settlements: Settlement[];
+  balanceOf?: number;
+  reservedAmount?: number;
+}
+
+export interface Settlement {
+  future: SupplyFuture;
+  buyer: string;
+  credits: string;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface PurchaseRecord {
+  amount: string;
+  totalCost: string;
+  buyer: string;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+  future: SupplyFuture;
+  order: SellOrder;
+}
+
+export interface SellOrder {
+  future: SupplyFuture;
+  seller: string;
+  amount: string;
+  pricePerUnit: string;
+  orderId: string;
+  isActive: boolean;
+  isClosed: boolean;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+  protocolFee: string;
+  lpFee: string;
+  fillers: PurchaseRecord[];
+  filled: boolean;
 }

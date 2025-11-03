@@ -84,13 +84,15 @@ const usePhysicalRights = () => {
             ...(cachedData?.length < 1 ? [] : cachedData),
           ]);
           setPhysicalRightsSkip((prev) => prev + 20);
+          if (!cachedData || cachedData.length < 20) {
+            setHasMorePhysicalRights(false);
+          }
           setPhysicalLoading(false);
           return;
         }
 
         const data = await getPhysicalRightsAll(20, skipValue);
 
-        console.log({data})
 
         let allRights = data?.data?.physicalRights_collection;
 

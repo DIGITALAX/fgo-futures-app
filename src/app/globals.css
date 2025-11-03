@@ -20,7 +20,6 @@
   src: url("/fonts/FashionWacks.otf");
 }
 
-
 @layer utils {
   .font-mond {
     font-family: "PPMond";
@@ -182,4 +181,8 @@ button:disabled {
     border-color: rgb(229 231 235);
     transform: scale(1);
   }
+}
+
+.gradient {
+  background: linear-gradient(90deg, #e6fdf8, #fbeefa, #f3eefb);
 }

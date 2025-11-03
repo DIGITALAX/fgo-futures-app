@@ -1,27 +1,54 @@
 import { AppContext } from "@/app/lib/providers/Providers";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import Image from "next/image";
 import useOrders from "../hooks/useOrders";
+import { INFURA_GATEWAY } from "@/app/lib/constants";
 
 export const FillOrder = ({ dict }: { dict: any }) => {
   const context = useContext(AppContext);
   const [quantity, setQuantity] = useState<number>(1);
-  const { handleFillOrder, orderFillLoading } = useOrders();
-  
+  const [isApproved, setIsApproved] = useState<boolean>(false);
+  const {
+    handleFillOrder,
+    handleFillOrderSupply,
+    orderFillLoading,
+    checkAllowance,
+    handleApprove,
+    approveLoading,
+  } = useOrders(dict);
+
   if (!context?.fillOrder) return null;
+
+  const totalCost = (context.fillOrder.pricePerUnit * quantity) / 1e18;
+  const totalCostBigInt = BigInt(
+    Math.floor(context.fillOrder.pricePerUnit * quantity)
+  );
+
+  useEffect(() => {
+    const checkApprovalStatus = async () => {
+      await checkAllowance();
+    };
+    checkApprovalStatus();
+  }, [quantity, checkAllowance, totalCostBigInt]);
+
+  const handleApproveClick = async () => {
+    const success = await handleApprove(totalCostBigInt);
+    if (success) {
+      setIsApproved(true);
+    }
+  };
 
   const handleSubmit = async () => {
     if (quantity <= 0) return;
-    
-    await handleFillOrder(
-      context.fillOrder?.orderId!,
-      quantity
-    );
-    
-    context?.setFillOrder(undefined);
+    if (   Number(context?.fillOrder?.supply) > 0) {
+      await handleFillOrderSupply(
+        context.fillOrder?.orderId!,
+        quantity
+      );
+    } else {
+      await handleFillOrder(context.fillOrder?.orderId!, quantity);
+    }
   };
-
-  const totalCost = (context.fillOrder.pricePerUnit * quantity) / 1e18;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -45,7 +72,9 @@ export const FillOrder = ({ dict }: { dict: any }) => {
                 draggable={false}
                 fill
                 style={{ objectFit: "cover" }}
-                src={context.fillOrder.contractImage}
+                src={`${INFURA_GATEWAY}${
+                  context.fillOrder.contractImage?.split("ipfs://")?.[1]
+                }`}
                 alt={context.fillOrder.contractTitle}
                 className="border border-gray-300"
               />
@@ -73,13 +102,15 @@ export const FillOrder = ({ dict }: { dict: any }) => {
             </label>
             <input
               type="number"
+              step="1"
               min="1"
               max={context.fillOrder.maxQuantity}
               value={quantity}
               onChange={(e) => {
+                const inputValue = Math.floor(Number(e.target.value));
                 const value = Math.max(
                   1,
-                  Math.min(context.fillOrder!.maxQuantity, Number(e.target.value))
+                  Math.min(context.fillOrder!.maxQuantity, inputValue)
                 );
                 setQuantity(value);
               }}
@@ -103,13 +134,23 @@ export const FillOrder = ({ dict }: { dict: any }) => {
             >
               Cancel
             </button>
-            <button
-              onClick={handleSubmit}
-              disabled={orderFillLoading || quantity <= 0}
-              className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              {orderFillLoading ? "Fulfilling..." : "Fill Order"}
-            </button>
+            {!isApproved ? (
+              <button
+                onClick={handleApproveClick}
+                disabled={approveLoading}
+                className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+              >
+                {approveLoading ? "Approving..." : "Approve"}
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={orderFillLoading || quantity <= 0}
+                className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+              >
+                {orderFillLoading ? "Fulfilling..." : "Fill Order"}
+              </button>
+            )}
           </div>
         </div>
       </div>

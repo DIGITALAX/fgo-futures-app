@@ -9,7 +9,7 @@ import {
 } from "@/app/lib/constants";
 import { ABIS } from "@/abis";
 
-const useSettle = () => {
+const useSettle = (dict: any) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -20,7 +20,7 @@ const useSettle = () => {
     []
   );
   const [contractsLoading, setContractsLoading] = useState<boolean>(false);
-  const [settleLoading, setSettleLoading] = useState<boolean>(false);
+  const [loadingKeys, setLoadingKeys] = useState<{ [key: string]: boolean }>({});
   const [contractsSkip, setContractsSkip] = useState<number>(0);
   const [hasMoreContracts, setHasMoreContracts] = useState<boolean>(true);
 
@@ -35,6 +35,51 @@ const useSettle = () => {
       if (!allContracts || allContracts.length < 20) {
         setHasMoreContracts(false);
       }
+
+      allContracts = await Promise.all(
+        allContracts.map(async (con: any) => {
+          let balanceOf = 0;
+
+          if (publicClient && address && con?.tokenId) {
+            const res = await publicClient.readContract({
+              address: contracts.futures,
+              abi: [
+                {
+                  type: "function",
+                  name: "balanceOf",
+                  inputs: [
+                    {
+                      name: "account",
+                      type: "address",
+                      internalType: "address",
+                    },
+                    {
+                      name: "id",
+                      type: "uint256",
+                      internalType: "uint256",
+                    },
+                  ],
+                  outputs: [
+                    {
+                      name: "",
+                      type: "uint256",
+                      internalType: "uint256",
+                    },
+                  ],
+                  stateMutability: "view",
+                },
+              ],
+              functionName: "balanceOf",
+              args: [address, BigInt(con?.tokenId)],
+            });
+            balanceOf = Number(res);
+          }
+          return {
+            ...con,
+            balanceOf,
+          };
+        })
+      );
 
       if (reset) {
         setContractsSettled(allContracts);
@@ -54,7 +99,8 @@ const useSettle = () => {
 
   const handleEmergencySettle = async (contractId: number) => {
     if (!walletClient || !publicClient || !address) return;
-    setSettleLoading(true);
+    const key = `settle-${contractId}`;
+    setLoadingKeys((prev) => ({ ...prev, [key]: true }));
     try {
       const hash = await walletClient.writeContract({
         address: contracts.settlement,
@@ -66,19 +112,60 @@ const useSettle = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Emergency Settlement Success!", hash);
+      context?.showSuccess(dict.settleEmergencySuccess, hash);
+      getContracts(true);
     } catch (err: any) {
-      console.error(err.message);
       context?.showError(err.message);
+    } finally {
+      setLoadingKeys((prev) => ({ ...prev, [key]: false }));
     }
-    setSettleLoading(false);
+  };
+
+  const claimChildSettlement = async (contractId: number) => {
+    if (!walletClient || !publicClient || !address) return;
+    const key = `claim-${contractId}`;
+    setLoadingKeys((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const contract = contractsSettled?.find(
+        (c) => Number(c.contractId) === contractId
+      );
+
+      if (
+        !contract ||
+        Number(contract?.balanceOf) < 1 ||
+        !contract?.isSettled ||
+        !contract?.isFulfilled
+      ) {
+        context?.showError(dict.settleClaimUnavailable);
+        setLoadingKeys((prev) => ({ ...prev, [key]: false }));
+        return;
+      }
+
+      const hash = await walletClient.writeContract({
+        address: contracts.escrow,
+        abi: ABIS.FGOFuturesEscrow,
+        functionName: "claimChildAfterSettlement",
+        args: [BigInt(contractId)],
+        account: address,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      context?.showSuccess(dict.settleClaimSuccess, hash);
+      getContracts(true);
+    } catch (err: any) {
+      context?.showError(err.message);
+    } finally {
+      setLoadingKeys((prev) => ({ ...prev, [key]: false }));
+    }
   };
 
   useEffect(() => {
     if (contractsSettled?.length < 1) {
       getContracts(true);
     }
-  }, []);
+  }, [address]);
 
   const loadMoreContracts = () => {
     if (!contractsLoading && hasMoreContracts) {
@@ -90,7 +177,8 @@ const useSettle = () => {
     contractsSettled,
     contractsLoading,
     handleEmergencySettle,
-    settleLoading,
+    claimChildSettlement,
+    loadingKeys,
     hasMoreContracts,
     loadMoreContracts,
   };

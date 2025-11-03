@@ -4,7 +4,7 @@ import { FunctionComponent, useState } from "react";
 import useFulfillers from "../hooks/useFulfillers";
 import { getCurrentNetwork, INFURA_GATEWAY } from "@/app/lib/constants";
 import Image from "next/image";
-import { ChildOrder } from "../types/layout.types";
+import { Fulfillment } from "../types/layout.types";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { formatDuration } from "@/app/lib/utils";
 
@@ -16,42 +16,57 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
     loadMoreFulfillers,
   } = useFulfillers();
   const network = getCurrentNetwork();
-  const [expandedOrders, setExpandedOrders] = useState<{
+  const [expandedFulfillments, setExpandedFulfillments] = useState<{
     [key: string]: boolean;
   }>({});
+  const [expandedFulfillmentsSections, setExpandedFulfillmentsSections] =
+    useState<{
+      [key: string]: boolean;
+    }>({});
 
-  const toggleOrderExpanded = (fulfillerId: string, orderIndex: number) => {
-    const key = `${fulfillerId}-${orderIndex}`;
-    setExpandedOrders((prev) => ({
+  const toggleFulfillmentExpanded = (
+    fulfillerAddress: string,
+    fulfillmentIndex: number
+  ) => {
+    const key = `${fulfillerAddress}-${fulfillmentIndex}`;
+    setExpandedFulfillments((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
   };
 
+  const toggleFulfillmentsSection = (fulfillerAddress: string) => {
+    setExpandedFulfillmentsSections((prev) => ({
+      ...prev,
+      [fulfillerAddress]: !prev[fulfillerAddress],
+    }));
+  };
+
   const getStatusText = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "COMPLETED";
-      case "in_progress":
-        return "IN PROGRESS";
-      case "pending":
-        return "PENDING";
+    const statusNum = Number(status);
+    switch (statusNum) {
+      case 0:
+        return "PAID";
+      case 1:
+        return "CANCELLED";
+      case 2:
+        return "REFUNDED";
       default:
-        return status?.toUpperCase();
+        return "DISPUTED";
     }
   };
 
-  const getStepStatusText = (isCompleted: string) => {
-    return isCompleted === "true" ? "COMPLETE" : "IN PROGRESS";
+  const getStepStatusText = (isCompleted: boolean) => {
+    return isCompleted === true ? "COMPLETE" : "IN PROGRESS";
   };
 
   if (fulfillersLoading && fulfillers?.length === 0) {
     return (
-      <div className="w-full flex flex-col p-6">
-        <div className="text-2xl font-bold mb-6 text-left">
+      <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
+        <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
           Spectate Fulfillers
         </div>
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-500 py-4 sm:py-8">
           Loading fulfillers...
         </div>
       </div>
@@ -59,8 +74,8 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
   }
 
   return (
-    <div className="w-full flex flex-col p-6">
-      <div className="text-2xl font-bold mb-6 text-left">
+    <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
+      <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
         Spectate Fulfillers
       </div>
 
@@ -76,21 +91,22 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
           }
           scrollableTarget="fulfillers-scrollable"
         >
-          <div className="space-y-8">
+          <div className="space-y-3 sm:space-y-4 lg:space-y-8">
             {fulfillers?.map((fulfiller) => (
               <div
-                key={fulfiller?.fulfillerId}
-                className="border border-black p-4 relative w-full h-fit flex flex-col"
+                key={fulfiller?.fulfiller}
+                className="border border-black p-2 gradient sm:p-3 lg:p-4 relative w-full h-fit flex flex-col"
               >
-                <div className="border-b border-gray-300 pb-4 mb-4 w-full h-fit flex">
-                  <div className="flex items-start gap-4">
-                    <div className="w-40 h-40 flex-shrink-0 relative">
+                <div className="border-b border-gray-300 pb-2 sm:pb-3 lg:pb-4 mb-2 sm:mb-3 lg:mb-4 w-full h-fit flex">
+                  <div className="flex items-start gap-2 sm:gap-3 lg:gap-4">
+                    <div className="w-20 sm:w-32 lg:w-40 h-20 sm:h-32 lg:h-40 flex-shrink-0 relative">
                       <Image
                         draggable={false}
                         fill
                         style={{ objectFit: "cover" }}
                         src={`${INFURA_GATEWAY}${
-                          fulfiller?.metadata?.image?.split("ipfs://")?.[1]
+                          fulfiller?.metadata?.image?.split("ipfs://")?.[1] ??
+                          "QmR3iFiECTvj3SZTgm1ZDMaxPhERV6Hk1JYQZHitH732a9"
                         }`}
                         alt={fulfiller?.metadata?.title}
                         className="border border-gray-300"
@@ -102,9 +118,6 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         <div className="text-lg font-bold text-gray-800">
                           {fulfiller?.metadata?.title}
                         </div>
-                        <div className="text-xs text-gray-600 font-medium">
-                          FULFILLER #{fulfiller?.fulfillerId}
-                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -115,7 +128,7 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                               href={`${network?.blockExplorer}/address/${fulfiller?.fulfiller}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-orange-600 hover:text-orange-800 underline"
+                              className="text-orange-600 break-all hover:text-orange-800 underline"
                             >
                               {fulfiller?.fulfiller?.slice(0, 8)}...
                               {fulfiller?.fulfiller?.slice(-6)}
@@ -131,9 +144,11 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         </div>
 
                         <div>
-                          <span className="text-gray-600">Active Orders:</span>
+                          <span className="text-gray-600">
+                            Active Fulfillments:
+                          </span>
                           <div className="font-medium">
-                            {fulfiller?.childOrders?.length || 0}
+                            {fulfiller?.fulfillments?.length || 0}
                           </div>
                         </div>
                       </div>
@@ -152,300 +167,251 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
                   </div>
                 </div>
                 <div>
-                  <div className="text-md text-gray-700 mb-3">
-                    Orders & Fulfillment Progress (
-                    {fulfiller?.childOrders?.length || 0})
+                  <div
+                    className="text-md text-gray-700 mb-3 flex items-center justify-between cursor-pointer"
+                    onClick={() =>
+                      toggleFulfillmentsSection(fulfiller?.fulfiller)
+                    }
+                  >
+                    <div>
+                      Fulfillments & Progress (
+                      {fulfiller?.fulfillments?.length || 0})
+                    </div>
+                    <div className="text-black">
+                      {expandedFulfillmentsSections[fulfiller?.fulfiller]
+                        ? "⇊"
+                        : "⇉"}
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    {fulfiller?.childOrders?.map(
-                      (order: ChildOrder, orderIndex: number) => {
-                        const isExpanded =
-                          expandedOrders[
-                            `${fulfiller?.fulfillerId}-${orderIndex}`
-                          ];
+                  {expandedFulfillmentsSections[fulfiller?.fulfiller] && (
+                    <div className="space-y-3">
+                      {fulfiller?.fulfillments?.map(
+                        (
+                          fulfillment: Fulfillment,
+                          fulfillmentIndex: number
+                        ) => {
+                          const isExpanded =
+                            expandedFulfillments[
+                              `${fulfiller?.fulfiller}-${fulfillmentIndex}`
+                            ];
 
-                        return (
-                          <div
-                            key={orderIndex}
-                            className="border border-black bg-white"
-                          >
+                          return (
                             <div
-                              className="p-3 cursor-pointer hover:bg-gray-100 transition-colors"
-                              onClick={() =>
-                                toggleOrderExpanded(
-                                  fulfiller?.fulfillerId,
-                                  orderIndex
-                                )
-                              }
+                              key={fulfillmentIndex}
+                              className="border border-black gradient"
                             >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-12 h-12 flex-shrink-0 relative">
-                                    <Image
-                                      draggable={false}
-                                      fill
-                                      style={{ objectFit: "cover" }}
-                                      src={`${INFURA_GATEWAY}${
-                                        order?.parent?.metadata?.image?.split(
-                                          "ipfs://"
-                                        )?.[1]
-                                      }`}
-                                      alt={order?.parent?.metadata?.title}
-                                      className="border border-gray-200"
-                                    />
+                              <div className="p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className="w-12 h-12 cursor-pointer flex-shrink-0 relative"
+                                      onClick={() =>
+                                        window.open(
+                                          `https://fgo.themanufactory.xyz/library/parent/${fulfillment?.parent?.parentContract}/${fulfillment?.parent?.designId}/`
+                                        )
+                                      }
+                                    >
+                                      <Image
+                                        draggable={false}
+                                        fill
+                                        style={{ objectFit: "cover" }}
+                                        src={`${INFURA_GATEWAY}${
+                                          fulfillment?.parent?.metadata?.image?.split(
+                                            "ipfs://"
+                                          )?.[1]
+                                        }`}
+                                        alt={
+                                          fulfillment?.parent?.metadata?.title
+                                        }
+                                        className="border border-gray-200"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <div className="text-gray-800 mb-1">
+                                        {fulfillment?.parent?.metadata?.title}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs px-2 py-1 border border-black">
+                                          {getStatusText(
+                                            fulfillment?.order?.orderStatus
+                                          )}
+                                        </span>
+                                        <span className="text-xs text-gray-600">
+                                          {fulfillment?.fulfillmentOrderSteps?.[
+                                            fulfillment?.fulfillmentOrderSteps
+                                              ?.length - 1
+                                          ]?.isCompleted
+                                            ? `Steps Completed`
+                                            : `Step ${
+                                                Number(
+                                                  fulfillment?.currentStep
+                                                ) + 1
+                                              }`}
+                                          {}
+                                        </span>
+                                        <span className="text-xs text-gray-600">
+                                          {getStepStatusText(
+                                            fulfillment
+                                              ?.fulfillmentOrderSteps?.[
+                                              fulfillment?.fulfillmentOrderSteps
+                                                ?.length - 1
+                                            ]?.isCompleted ??
+                                              fulfillment
+                                                ?.fulfillmentOrderSteps?.[
+                                                Number(fulfillment?.currentStep)
+                                              ]?.isCompleted
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
                                   </div>
 
-                                  <div>
-                                    <div className="text-gray-800 mb-1">
-                                      {order?.parent?.metadata?.title}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs px-2 py-1 border border-black bg-white">
-                                        {getStatusText(order?.orderStatus)}
-                                      </span>
-                                      <span className="text-xs text-gray-600">
-                                        Step {order?.fulfillment?.currentStep}
-                                      </span>
-                                      <span className="text-xs text-gray-600">
-                                        {getStepStatusText(
-                                          order?.fulfillment
-                                            ?.fulfillmentOrderSteps?.isCompleted
-                                        )}
-                                      </span>
-                                    </div>
+                                  <div
+                                    className="text-black cursor-pointer"
+                                    onClick={() =>
+                                      toggleFulfillmentExpanded(
+                                        fulfiller?.fulfiller,
+                                        fulfillmentIndex
+                                      )
+                                    }
+                                  >
+                                    {isExpanded ? "⇊" : "⇉"}
                                   </div>
-                                </div>
-
-                                <div className="text-gray-400">
-                                  {isExpanded ? "▼" : "▶"}
                                 </div>
                               </div>
-                            </div>
-                            {isExpanded && (
-                              <div className="border-t border-gray-200 p-4 bg-white">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                  <div>
-                                    <div className="text-sm text-gray-700 mb-3">
-                                      Order Information
-                                    </div>
-
-                                    <div className="space-y-2 text-sm">
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <span className="text-gray-600">
-                                          Design ID:
-                                        </span>
-                                        <span className="font-mono text-xs">
-                                          {order?.parent?.designId}
-                                        </span>
-                                      </div>
-
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <span className="text-gray-600">
-                                          Contract:
-                                        </span>
-                                        <div className="font-mono text-xs">
-                                          <a
-                                            href={`${network?.blockExplorer}/address/${order?.parent?.parentContract}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-orange-600 hover:text-orange-800 underline"
-                                          >
-                                            {order?.parent?.parentContract?.slice(
-                                              0,
-                                              8
-                                            )}
-                                            ...
-                                            {order?.parent?.parentContract?.slice(
-                                              -6
-                                            )}
-                                          </a>
-                                        </div>
-                                      </div>
-
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <span className="text-gray-600">
-                                          Created:
-                                        </span>
-                                        <span>
-                                          {new Date(
-                                            parseInt(
-                                              order?.fulfillment?.createdAt
-                                            )
-                                          )?.toLocaleDateString()}
-                                        </span>
-                                      </div>
-
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <span className="text-gray-600">
-                                          Last Updated:
-                                        </span>
-                                        <span>
-                                          {new Date(
-                                            parseInt(
-                                              order?.fulfillment?.lastUpdated
-                                            )
-                                          )?.toLocaleDateString()}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="mt-4">
-                                      <div className="text-sm text-gray-700 mb-2">
-                                        Current Step Notes
-                                      </div>
-                                      <div className="bg-gray-50 p-3 border border-gray-200 text-sm">
-                                        {
-                                          order?.fulfillment
-                                            ?.fulfillmentOrderSteps?.notes
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-sm text-gray-700 mb-3">
+                              {isExpanded && (
+                                <div className="border-t border-gray-200 p-4">
+                                  <div className="text-sm text-gray-700 flex-row flex gap-1 mb-3">
+                                    <div className="text-sm">
                                       Workflow Step Details
                                     </div>
-
-                                    <div className="bg-white border border-black p-3 mb-3">
-                                      <div className="text-sm text-gray-700 mb-2">
-                                        Estimated Delivery Duration
-                                      </div>
-                                      <div className="text-sm text-gray-600 font-medium">
-                                        {formatDuration(
-                                          Number(
-                                            order?.parent?.workflow
-                                              ?.estimatedDeliveryDuration
-                                          )
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="bg-white border border-black p-3 mb-3">
-                                      <div className="text-sm text-gray-700 mb-2">
-                                        Instructions
-                                      </div>
-                                      <div className="text-sm text-gray-600">
-                                        {
-                                          order?.parent?.workflow?.physicalSteps
-                                            ?.instructions
-                                        }
-                                      </div>
-                                    </div>
-                                    <div className="border border-black bg-white p-3">
-                                      <div className="text-sm text-gray-700 mb-2">
-                                        Step Fulfiller (Specialist)
-                                      </div>
-
-                                      <div className="flex items-start gap-2">
-                                        <div className="w-10 h-10 flex-shrink-0 relative">
-                                          <Image
-                                            draggable={false}
-                                            fill
-                                            style={{ objectFit: "cover" }}
-                                            src={`${INFURA_GATEWAY}${
-                                              order?.parent?.workflow?.physicalSteps?.fulfiller?.metadata?.image?.split(
-                                                "ipfs://"
-                                              )?.[1]
-                                            }`}
-                                            alt={
-                                              order?.parent?.workflow
-                                                ?.physicalSteps?.fulfiller
-                                                ?.metadata?.title
-                                            }
-                                            className="border border-gray-200"
-                                          />
-                                        </div>
-
-                                        <div className="flex-1">
-                                          <div className="text-gray-700 text-sm">
-                                            {
-                                              order?.parent?.workflow
-                                                ?.physicalSteps?.fulfiller
-                                                ?.metadata?.title
-                                            }
-                                          </div>
-                                          <div className="text-xs text-gray-600 font-mono">
-                                            <a
-                                              href={`${network?.blockExplorer}/address/${order?.parent?.workflow?.physicalSteps?.fulfiller?.fulfiller}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-orange-600 hover:text-orange-800 underline"
-                                            >
-                                              {order?.parent?.workflow?.physicalSteps?.fulfiller?.fulfiller?.slice(
-                                                0,
-                                                8
-                                              )}
-                                              ...
-                                              {order?.parent?.workflow?.physicalSteps?.fulfiller?.fulfiller?.slice(
-                                                -6
-                                              )}
-                                            </a>
-                                          </div>
-                                          <div className="text-xs text-gray-600 mt-1">
-                                            Infrastructure:{" "}
-                                            {
-                                              order?.parent?.workflow
-                                                ?.physicalSteps?.fulfiller
-                                                ?.infraId
-                                            }
-                                          </div>
-                                          <a
-                                            href={
-                                              order?.parent?.workflow
-                                                ?.physicalSteps?.fulfiller
-                                                ?.metadata?.link
-                                            }
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-xs text-orange-600 hover:text-orange-800 underline"
+                                    <div className="text-xs">{`Est. Delivery ${formatDuration(
+                                      Number(
+                                        fulfillment?.estimatedDeliveryDuration
+                                      )
+                                    )}`}</div>
+                                  </div>
+                                  <div className="relative w-full h-fit flex flex-col gap-4">
+                                    {fulfillment?.physicalSteps?.map(
+                                      (step, i) => {
+                                        const orderStep =
+                                          fulfillment?.fulfillmentOrderSteps?.[
+                                            i
+                                          ];
+                                        return (
+                                          <div
+                                            key={i}
+                                            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                                           >
-                                            Visit Website →
-                                          </a>
-                                        </div>
-                                      </div>
+                                            <div>
+                                              <div className="text-sm text-gray-700 mb-2">
+                                                Fulfiller Step Notes
+                                              </div>
+                                              <div className="bg-gray-50 p-3 border border-gray-200 text-sm">
+                                                {orderStep?.notes ??
+                                                  "No notes yet."}
+                                              </div>
+                                            </div>
+                                            <div>
+                                              <div>
+                                                <div className="text-sm text-gray-700 mb-2">
+                                                  Designer Instructions
+                                                </div>
+                                                <div className="bg-gray-50 p-3 border border-gray-200 text-sm">
+                                                  {step?.instructions ??
+                                                    "No designer instructions."}
+                                                </div>
+                                              </div>
 
-                                      <div className="mt-2 text-xs text-gray-600">
-                                        <span className="font-medium">
-                                          Revenue Split:
-                                        </span>{" "}
-                                        {Number(
-                                          order?.parent?.workflow?.physicalSteps
-                                            ?.subPerformers?.splitBasisPoints
-                                        ) / 100}
-                                        %
-                                      </div>
-                                    </div>
-                                    {order?.fulfillment?.fulfillmentOrderSteps
-                                      ?.isCompleted === "true" && (
-                                      <div className="mt-3 bg-white border border-black p-3">
-                                        <div className="text-sm text-gray-700 mb-1">
-                                          Step Completed
-                                        </div>
-                                        <div className="text-xs text-gray-600">
-                                          Completed:{" "}
-                                          {new Date(
-                                            parseInt(
-                                              order?.fulfillment
-                                                ?.fulfillmentOrderSteps
-                                                ?.completedAt
-                                            )
-                                          )?.toLocaleDateString()}
-                                        </div>
-                                      </div>
+                                              <div className="border border-black p-3">
+                                                <div className="text-sm text-gray-700 mb-2">
+                                                  Step Fulfiller
+                                                </div>
+
+                                                <div className="flex items-start gap-2">
+                                                  <div className="w-10 h-10 flex-shrink-0 relative">
+                                                    <Image
+                                                      draggable={false}
+                                                      fill
+                                                      style={{
+                                                        objectFit: "cover",
+                                                      }}
+                                                      src={`${INFURA_GATEWAY}${
+                                                        step?.fulfiller?.metadata?.image?.split(
+                                                          "ipfs://"
+                                                        )?.[1] ??
+                                                        "QmXZTsREXd1PRYjC63jySAKMrA49bChJK9SJhrxiNdbvMY"
+                                                      }`}
+                                                      alt={
+                                                        step?.fulfiller
+                                                          ?.metadata?.title
+                                                      }
+                                                      className="border border-gray-200"
+                                                    />
+                                                  </div>
+
+                                                  <div className="flex-1">
+                                                    <div className="text-gray-700 text-sm">
+                                                      {
+                                                        step?.fulfiller
+                                                          ?.metadata?.title
+                                                      }
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 font-mono">
+                                                      <a
+                                                        href={`${network?.blockExplorer}/address/${step?.fulfiller?.fulfiller}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-orange-600 hover:text-orange-800 underline break-all"
+                                                      >
+                                                        {step?.fulfiller?.fulfiller?.slice(
+                                                          0,
+                                                          8
+                                                        )}
+                                                        ...
+                                                        {step?.fulfiller?.fulfiller?.slice(
+                                                          -6
+                                                        )}
+                                                      </a>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              {orderStep?.isCompleted && (
+                                                <div className="mt-3 border border-black p-3">
+                                                  <div className="text-sm text-gray-700 mb-1">
+                                                    Step Completed
+                                                  </div>
+                                                  <div className="text-xs text-gray-600">
+                                                    Completed:{" "}
+                                                    {new Date(
+                                                      parseInt(
+                                                        orderStep?.completedAt
+                                                      )
+                                                    )?.toLocaleDateString()}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
                                     )}
                                   </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-                    )}
-                  </div>
-
-                  {(!fulfiller?.childOrders ||
-                    fulfiller?.childOrders?.length === 0) && (
-                    <div className="text-center text-gray-400 py-6">
-                      No active orders for this fulfiller
+                              )}
+                            </div>
+                          );
+                        }
+                      )}
+                      {(!fulfiller?.fulfillments ||
+                        fulfiller?.fulfillments?.length === 0) && (
+                        <div className="text-center text-gray-400 py-6">
+                          No active fulfillments for this fulfiller
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

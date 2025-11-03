@@ -2,17 +2,19 @@ import { AppContext } from "@/app/lib/providers/Providers";
 import { useContext } from "react";
 import Image from "next/image";
 import useOrders from "../hooks/useOrders";
+import { INFURA_GATEWAY } from "@/app/lib/constants";
 
 export const SellOrder = ({ dict }: { dict: any }) => {
   const context = useContext(AppContext);
   const {
     handleSellOrder,
+    handleSellOrderSupply,
     sellOrderLoading,
     pricePerUnit,
     setPricePerUnit,
     quantity,
     setQuantity,
-  } = useOrders();
+  } = useOrders(dict);
 
   if (!context?.sellOrder) return null;
 
@@ -21,9 +23,15 @@ export const SellOrder = ({ dict }: { dict: any }) => {
 
     const priceInWei = Math.floor(pricePerUnit * 1e18);
 
-    await handleSellOrder(context.sellOrder?.orderId!, quantity, priceInWei);
-
-    context?.setSellOrder(undefined);
+    if (context?.sellOrder?.supply) {
+      await handleSellOrderSupply(
+        context.sellOrder?.tokenId,
+        quantity,
+        priceInWei
+      );
+    } else {
+      await handleSellOrder(context.sellOrder?.tokenId!, quantity, priceInWei);
+    }
   };
 
   return (
@@ -48,7 +56,9 @@ export const SellOrder = ({ dict }: { dict: any }) => {
                 draggable={false}
                 fill
                 style={{ objectFit: "cover" }}
-                src={context.sellOrder.contractImage}
+                src={`${INFURA_GATEWAY}${
+                  context.sellOrder.contractImage?.split("ipfs://")?.[1]
+                }`}
                 alt={context.sellOrder.contractTitle}
                 className="border border-gray-300"
               />
@@ -58,7 +68,9 @@ export const SellOrder = ({ dict }: { dict: any }) => {
                 {context.sellOrder.contractTitle}
               </div>
               <div className="text-xs text-gray-600">
-                Order ID: {context.sellOrder.orderId}
+                {context.sellOrder.orderId > 0
+                  ? `Order ID: ${context.sellOrder.orderId}`
+                  : `Token ID: ${context?.sellOrder?.tokenId}`}
               </div>
             </div>
           </div>
@@ -69,16 +81,15 @@ export const SellOrder = ({ dict }: { dict: any }) => {
             </label>
             <input
               type="number"
+              step="1"
               min="1"
               max={context.sellOrder.maxQuantity}
               value={quantity}
               onChange={(e) => {
+                const inputValue = Math.floor(Number(e.target.value));
                 const value = Math.max(
                   1,
-                  Math.min(
-                    context.sellOrder!.maxQuantity,
-                    Number(e.target.value)
-                  )
+                  Math.min(context.sellOrder!.maxQuantity, inputValue)
                 );
                 setQuantity(value);
               }}
@@ -87,9 +98,7 @@ export const SellOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs mb-1">
-              Price Per Unit ($MONA)
-            </label>
+            <label className="block text-xs mb-1">Price Per Unit ($MONA)</label>
             <input
               type="number"
               min="0"

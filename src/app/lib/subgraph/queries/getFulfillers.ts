@@ -1,62 +1,65 @@
 import { gql } from "@apollo/client";
-import { graphFGOFuturesClient } from "../clients/graphql";
+import { graphFGOClient } from "../clients/graphql";
 
 const FULFILLERS = `
 query($first: Int!, $skip: Int!) {
-  fulfillers(first: $first, skip: $skip) {
-    fulfillerId
-    infraId
-    fulfiller
-    uri
-    metadata {
+  fulfillers(first: $first, skip: $skip, orderBy: blockTimestamp, orderDirection: desc) {
+    fulfiller 
+        uri
+        infraId
+        metadata {
+          image
+          title
+          link
+  }
+  fulfillments {
+   orderId
+   contract
+    order {
+      fulfillmentData
+      orderStatus
+      transactionHash
+      totalPayments
+      parentAmount
+    }
+    parent {
+      parentContract
+      designId
+      infraCurrency
+      uri
+      metadata {
         title
         image
-        link
-    }
-    childOrders {
-      orderStatus
-      fulfillment {
-        currentStep
-        createdAt
-        lastUpdated
-        fulfillmentOrderSteps {
-          notes
-          completedAt
-          stepIndex
-          isCompleted
-        }
       }
-      parent {
-        designId
-        parentContract
+    }
+    currentStep
+    createdAt
+    lastUpdated
+    isPhysical
+    estimatedDeliveryDuration
+    fulfillmentOrderSteps {
+      notes
+      completedAt
+      isCompleted
+    }
+    physicalSteps {
+      fulfiller {
+        fulfiller 
         uri
-        workflow {
-          estimatedDeliveryDuration
-          physicalSteps {
-            instructions
-            subPerformers {
-              performer
-              splitBasisPoints
-            }
-            fulfiller {
-              fulfillerId
-              fulfiller
-              infraId
-              uri
-              metadata {
-                image
-                title
-                link
-              }
-            }
-          }
-        }
         metadata {
-          title
           image
+          title
         }
       }
+      instructions
+      subPerformers {
+        step
+        performer
+        splitBasisPoints
+      }
     }
+  }
+   
   }
 }
 `;
@@ -65,7 +68,7 @@ export const getFulfillers = async (
   first: number,
   skip: number
 ): Promise<any> => {
-  const queryPromise = graphFGOFuturesClient.query({
+  const queryPromise = graphFGOClient.query({
     query: gql(FULFILLERS),
     variables: {
       first,

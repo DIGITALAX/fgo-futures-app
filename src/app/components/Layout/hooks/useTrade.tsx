@@ -7,20 +7,21 @@ import { AppContext } from "@/app/lib/providers/Providers";
 import { useContext, useState } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
-const useTrade = () => {
+const useTrade = (dict: any) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
-  const [orderCancelLoading, setOrderCancelLoading] = useState<boolean>(false);
-  const [futureCancelLoading, setFutureCancelLoading] =
-    useState<boolean>(false);
+  const [loadingKeys, setLoadingKeys] = useState<{
+    [key: string]: boolean;
+  }>({});
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
 
   const handleCancelOrder = async (orderId: number) => {
     if (!walletClient || !publicClient || !address) return;
-    setOrderCancelLoading(true);
+    const key = `order-${orderId}`;
+    setLoadingKeys((prev) => ({ ...prev, [key]: true }));
     try {
       const hash = await walletClient.writeContract({
         address: contracts.trading,
@@ -32,17 +33,18 @@ const useTrade = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Order Cancelled!", hash);
+      context?.showSuccess(dict.tradeOrderCancelSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err?.message);
     }
-    setOrderCancelLoading(false);
+    setLoadingKeys((prev) => ({ ...prev, [key]: false }));
   };
 
   const handleCancelFuture = async (contractId: number) => {
     if (!walletClient || !publicClient || !address) return;
-    setFutureCancelLoading(true);
+    const key = `future-${contractId}`;
+    setLoadingKeys((prev) => ({ ...prev, [key]: true }));
     try {
       const hash = await walletClient.writeContract({
         address: contracts.futures,
@@ -54,19 +56,18 @@ const useTrade = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Future Contract Cancelled!", hash);
+      context?.showSuccess(dict.tradeFutureCancelSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
     }
-    setFutureCancelLoading(false);
+    setLoadingKeys((prev) => ({ ...prev, [key]: false }));
   };
 
   return {
-    orderCancelLoading,
+    loadingKeys,
     handleCancelOrder,
     handleCancelFuture,
-    futureCancelLoading,
   };
 };
 

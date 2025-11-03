@@ -131,7 +131,9 @@ query($first: Int!, $skip: Int!) {
     contractId
     childId
     orderId
+    tokenId
     quantity
+    isFulfilled
     pricePerUnit
     childContract
     originalHolder

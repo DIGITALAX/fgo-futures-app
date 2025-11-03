@@ -1,37 +1,52 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Filler, Order } from "../types/layout.types";
+import { useEffect, useState, useCallback, useRef, useContext } from "react";
+import { PurchaseRecord, SellOrder } from "../types/layout.types";
 import {
-  getOrdersAll,
-  getOrdersUser,
-  getOrdersUserFilled,
+  getOrdersSupplyAll,
+  getOrdersSupplyUser,
+  getUserPurchaseRecords,
+  getPurchaseRecords,
 } from "@/app/lib/subgraph/queries/getOrders";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import {
   getCoreContractAddresses,
   getCurrentNetwork,
 } from "@/app/lib/constants";
 import { ensureMetadata } from "@/app/lib/utils";
+import { ABIS } from "@/abis";
+import { AppContext } from "@/app/lib/providers/Providers";
 
-const useOrders = () => {
+const useSupplyOrders = (dict: any) => {
   const { address } = useAccount();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const publicClient = usePublicClient();
+  const context = useContext(AppContext);
+  const { data: walletClient } = useWalletClient();
+  const [orders, setOrders] = useState<SellOrder[]>([]);
+  const [userOrders, setUserOrders] = useState<SellOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
   const [userOrdersLoading, setUserOrdersLoading] = useState<boolean>(false);
-  const [userFilledOrders, setUserFilledOrders] = useState<Filler[]>([]);
+  const [userFilledOrders, setUserFilledOrders] = useState<PurchaseRecord[]>(
+    []
+  );
   const [userFilledLoading, setUserFilledLoading] = useState<boolean>(false);
+  const [allFilledOrders, setAllFilledOrders] = useState<PurchaseRecord[]>([]);
+  const [allFilledLoading, setAllFilledLoading] = useState<boolean>(false);
   const [ordersSkip, setOrdersSkip] = useState<number>(0);
   const [userOrdersSkip, setUserOrdersSkip] = useState<number>(0);
   const [userFilledSkip, setUserFilledSkip] = useState<number>(0);
+  const [allFilledSkip, setAllFilledSkip] = useState<number>(0);
   const [hasMoreOrders, setHasMoreOrders] = useState<boolean>(true);
   const [hasMoreUserOrders, setHasMoreUserOrders] = useState<boolean>(true);
   const [hasMoreUserFilled, setHasMoreUserFilled] = useState<boolean>(true);
+  const [hasMoreAllFilled, setHasMoreAllFilled] = useState<boolean>(true);
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
-
+  const [loadingKeys, setLoadingKeys] = useState<{
+    [key: string]: boolean;
+  }>({});
   const lastOrdersRequestTime = useRef<number>(0);
   const lastUserOrdersRequestTime = useRef<number>(0);
   const lastUserFilledRequestTime = useRef<number>(0);
+  const lastAllFilledRequestTime = useRef<number>(0);
   const ordersCache = useRef<{ [key: string]: any }>({});
 
   const getOrders = useCallback(
@@ -71,19 +86,21 @@ const useOrders = () => {
           return;
         }
 
-        const data = await getOrdersAll(20, skipValue);
-
-        let allOrders = data?.data?.orders;
+        const data = await getOrdersSupplyAll(20, skipValue);
+        let allOrders = data?.data?.sellOrders;
 
         if (!allOrders || allOrders.length < 20) {
           setHasMoreOrders(false);
         }
 
         allOrders = await Promise.all(
-          allOrders.map(async (item: Order) => {
+          allOrders.map(async (item: SellOrder) => {
             return {
               ...item,
-              contract: await ensureMetadata(item.contract),
+              future: {
+                ...item.future,
+                child: await ensureMetadata(item?.future?.child),
+              },
             };
           })
         );
@@ -148,19 +165,21 @@ const useOrders = () => {
           return;
         }
 
-        const data = await getOrdersUser(address, 20, skipValue);
+        const data = await getOrdersSupplyUser(address, 20, skipValue);
 
-        let allOrders = data?.data?.orders;
-
+        let allOrders = data?.data?.sellOrders;
         if (!allOrders || allOrders.length < 20) {
           setHasMoreUserOrders(false);
         }
 
         allOrders = await Promise.all(
-          allOrders.map(async (item: Order) => {
+          allOrders.map(async (item: SellOrder) => {
             return {
               ...item,
-              contract: await ensureMetadata(item?.contract),
+              future: {
+                ...item.future,
+                child: await ensureMetadata(item?.future?.child),
+              },
             };
           })
         );
@@ -226,9 +245,8 @@ const useOrders = () => {
           return;
         }
 
-        const data = await getOrdersUserFilled(address, 20, skipValue);
-
-        let allFillers: Filler[] = data?.data?.fillers || [];
+        const data = await getUserPurchaseRecords(address, 20, skipValue);
+        let allFillers: PurchaseRecord[] = data?.data?.purchaseRecords || [];
 
         if (!allFillers || allFillers.length < 20) {
           setHasMoreUserFilled(false);
@@ -236,15 +254,18 @@ const useOrders = () => {
 
         allFillers = await Promise.all(
           allFillers.map(async (item) => {
-            if (!item.order || !item.order.contract) {
+            if (!item.future) {
               return item;
             }
 
             return {
               ...item,
-              order: {
-                ...item.order,
-                contract: await ensureMetadata(item.order.contract),
+              future: {
+                ...item.future,
+                future: {
+                  ...item.future,
+                  child: await ensureMetadata(item?.future?.child),
+                },
               },
             };
           })
@@ -270,6 +291,89 @@ const useOrders = () => {
     [address, userFilledSkip, userFilledLoading]
   );
 
+  const getAllFilledOrders = useCallback(
+    async (reset: boolean = false) => {
+      const now = Date.now();
+      const timeSinceLastRequest = now - lastAllFilledRequestTime.current;
+
+      if (timeSinceLastRequest < 1000) {
+        return;
+      }
+
+      if (allFilledLoading) {
+        return;
+      }
+
+      setAllFilledLoading(true);
+      lastAllFilledRequestTime.current = now;
+
+      try {
+        if (reset) {
+          setHasMoreAllFilled(true);
+        }
+        const skipValue = reset ? 0 : allFilledSkip;
+        const cacheKey = `all-filled-${skipValue}`;
+
+        if (ordersCache.current[cacheKey] && !reset) {
+          const cachedData = ordersCache.current[cacheKey];
+          setAllFilledOrders((prev) => [
+            ...prev,
+            ...(cachedData?.length < 1 ? [] : cachedData),
+          ]);
+          setAllFilledSkip((prev) => prev + 20);
+          if (!cachedData || cachedData.length < 20) {
+            setHasMoreAllFilled(false);
+          }
+          setAllFilledLoading(false);
+          return;
+        }
+
+        const data = await getPurchaseRecords(20, skipValue);
+        let allFillers: PurchaseRecord[] = data?.data?.purchaseRecords || [];
+
+        if (!allFillers || allFillers.length < 20) {
+          setHasMoreAllFilled(false);
+        }
+
+        allFillers = await Promise.all(
+          allFillers.map(async (item) => {
+            if (!item.future) {
+              return item;
+            }
+
+            return {
+              ...item,
+              future: {
+                ...item.future,
+                future: {
+                  ...item.future,
+                  child: await ensureMetadata(item?.future?.child),
+                },
+              },
+            };
+          })
+        );
+
+        ordersCache.current[cacheKey] = allFillers;
+
+        if (reset) {
+          setAllFilledOrders(allFillers);
+          setAllFilledSkip(20);
+        } else {
+          setAllFilledOrders((prev) => [
+            ...prev,
+            ...(allFillers?.length < 1 ? [] : allFillers),
+          ]);
+          setAllFilledSkip((prev) => prev + 20);
+        }
+      } catch (err: any) {
+        console.error(err.message);
+      }
+      setAllFilledLoading(false);
+    },
+    [allFilledSkip, allFilledLoading]
+  );
+
   useEffect(() => {
     if (orders?.length < 1 && !ordersLoading) {
       getOrders(true);
@@ -293,6 +397,43 @@ const useOrders = () => {
     userFilledLoading,
   ]);
 
+  useEffect(() => {
+    if (allFilledOrders?.length < 1 && !allFilledLoading) {
+      getAllFilledOrders(true);
+    }
+  }, [getAllFilledOrders, allFilledOrders?.length, allFilledLoading]);
+
+  const handleCancelOrder = async (
+    orderId: number,
+    tokenId: number,
+  ) => {
+    const key = `order-${orderId}`;
+    setLoadingKeys((prev) => ({ ...prev, [key]: true }));
+
+    if (!walletClient || !publicClient || !address) {
+      setLoadingKeys((prev) => ({ ...prev, [key]: false }));
+      return;
+    }
+
+    try {
+      const hash = await walletClient.writeContract({
+        address: contracts.futuresCoordination,
+        abi: ABIS.FGOFuturesCoordination,
+        functionName: "cancelSellOrder",
+        args: [BigInt(tokenId).toString(), BigInt(orderId)],
+        account: address,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      context?.showSuccess(dict.supplyOrderCancelSuccess, hash);
+    } catch (err: any) {
+      console.error(err.message);
+      context?.showError(err?.message);
+    }
+    setLoadingKeys((prev) => ({ ...prev, [key]: false }));
+  };
+
   const loadMoreOrders = useCallback(() => {
     if (!ordersLoading && hasMoreOrders) {
       getOrders(false);
@@ -311,6 +452,12 @@ const useOrders = () => {
     }
   }, [getUserFilledOrders, userFilledLoading, hasMoreUserFilled]);
 
+  const loadMoreAllFilledOrders = useCallback(() => {
+    if (!allFilledLoading && hasMoreAllFilled) {
+      getAllFilledOrders(false);
+    }
+  }, [getAllFilledOrders, allFilledLoading, hasMoreAllFilled]);
+
   return {
     orders,
     ordersLoading,
@@ -318,13 +465,19 @@ const useOrders = () => {
     userOrdersLoading,
     userFilledOrders,
     userFilledLoading,
+    allFilledOrders,
+    allFilledLoading,
     hasMoreOrders,
     hasMoreUserOrders,
     hasMoreUserFilled,
+    hasMoreAllFilled,
     loadMoreOrders,
     loadMoreUserOrders,
     loadMoreUserFilledOrders,
+    loadMoreAllFilledOrders,
+    handleCancelOrder,
+    loadingKeys,
   };
 };
 
-export default useOrders;
+export default useSupplyOrders;

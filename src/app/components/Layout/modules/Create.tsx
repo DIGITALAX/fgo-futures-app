@@ -20,6 +20,8 @@ const Create: FunctionComponent<CreateProps> = ({
   hasMoreEscrowedRightsUser,
   loadMoreEscrowedRights,
   loadMoreEscrowedRightsUser,
+  handleCancelFuture,
+  loadingKeys,
 }) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
@@ -29,13 +31,13 @@ const Create: FunctionComponent<CreateProps> = ({
   }>({});
 
   return (
-    <div className="flex h-full flex-col overflow-hidden border border-black">
-      <div className="px-4 py-3 border-b border-black">
-        <div className="text-lg">Create Futures</div>
-        <div className="flex gap-2 mt-2">
+    <div className="flex gradient h-[45rem] md:h-full flex-col overflow-hidden border border-black">
+      <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
+        <div className="text-sm sm:text-base lg:text-lg">Create Futures</div>
+        <div className="flex gap-1 sm:gap-2 mt-2">
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-2 py-1 text-xs border border-black transition-colors ${
+            className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs border border-black transition-colors ${
               activeTab === "all"
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-gray-50"
@@ -45,7 +47,7 @@ const Create: FunctionComponent<CreateProps> = ({
           </button>
           <button
             onClick={() => setActiveTab("my")}
-            className={`px-2 py-1 text-xs border border-black transition-colors ${
+            className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs border border-black transition-colors ${
               activeTab === "my"
                 ? "bg-black text-white"
                 : "bg-white text-black hover:bg-gray-50"
@@ -95,8 +97,15 @@ const Create: FunctionComponent<CreateProps> = ({
                   key={`${right.childId}-${right.orderId}-${right.rightsKey}`}
                   className="border-b border-gray-300 p-3 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 flex-shrink-0 relative">
+                  <div className="flex items-start gap-3 flex-wrap">
+                    <div
+                      onClick={() =>
+                        window.open(
+                          `https://fgo.themanufactory.xyz/market/future/${right.childContract}/${right.childId}`
+                        )
+                      }
+                      className="w-10 h-10 cursor-pointer flex-shrink-0 relative"
+                    >
                       <Image
                         draggable={false}
                         fill
@@ -123,7 +132,9 @@ const Create: FunctionComponent<CreateProps> = ({
                         </span>
                       </div>
                       <div className="text-xs text-gray-700 mb-1">
-                        Available: {right.amount}
+                        Available:{" "}
+                        {Number(right.amount) -
+                          Number(right.amountUsedForFutures)}
                       </div>
                       <div className="text-xs text-gray-700 mb-1">
                         Used for Futures: {right.amountUsedForFutures}
@@ -141,63 +152,61 @@ const Create: FunctionComponent<CreateProps> = ({
                         const availableAmount =
                           Number(right.amount) -
                           Number(right.amountUsedForFutures);
-                        const canCreateFuture =
+                        const canCreateWithdraw =
                           canManageRights && availableAmount > 0;
 
-                        return canCreateFuture || canManageRights ? (
-                          <div className="flex items-center gap-2">
-                            {canManageRights &&
-                              (() => {
-                                const withdrawKey = right.rightsKey;
-                                const isWithdrawing =
-                                  withdrawLoadingKey === withdrawKey;
+                        return canCreateWithdraw ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(() => {
+                              const withdrawKey = right.rightsKey;
+                              const isWithdrawing =
+                                withdrawLoadingKey === withdrawKey;
 
-                                return (
-                                  <>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      max={availableAmount}
-                                      value={
-                                        withdrawQuantities[withdrawKey] || 1
-                                      }
-                                      onChange={(e) => {
-                                        const value = Math.max(
-                                          1,
-                                          Math.min(
-                                            availableAmount,
-                                            Number(e.target.value)
-                                          )
-                                        );
-                                        setWithdrawQuantities((prev) => ({
-                                          ...prev,
-                                          [withdrawKey]: value,
-                                        }));
-                                      }}
-                                      className="w-16 px-2 py-1 text-xs border border-gray-300 text-center"
-                                    />
-                                    <button
-                                      onClick={() =>
-                                        handleWithdrawPhysicalRights({
-                                          childId: Number(right.childId),
-                                          orderId: Number(right.orderId),
-                                          amount:
-                                            withdrawQuantities[withdrawKey] ||
-                                            1,
-                                          originalMarket: right.originalMarket,
-                                          childContract: right.childContract,
-                                          key: withdrawKey,
-                                        })
-                                      }
-                                      disabled={isWithdrawing}
-                                      className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
-                                    >
-                                      {isWithdrawing ? "..." : "Withdraw"}
-                                    </button>
-                                  </>
-                                );
-                              })()}
-                            {canCreateFuture && (
+                              return (
+                                <>
+                                  <input
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    max={availableAmount}
+                                    value={withdrawQuantities[withdrawKey] || 1}
+                                    onChange={(e) => {
+                                      const inputValue = Math.floor(
+                                        Number(e.target.value)
+                                      );
+                                      const value = Math.max(
+                                        1,
+                                        Math.min(availableAmount, inputValue)
+                                      );
+                                      setWithdrawQuantities((prev) => ({
+                                        ...prev,
+                                        [withdrawKey]: value,
+                                      }));
+                                    }}
+                                    className="w-16 px-2 py-1 text-xs border border-gray-300 text-center"
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      handleWithdrawPhysicalRights({
+                                        childId: Number(right.childId),
+                                        orderId: Number(right.orderId),
+                                        amount:
+                                          withdrawQuantities[withdrawKey] ||
+                                          availableAmount,
+                                        originalMarket: right.originalMarket,
+                                        childContract: right.childContract,
+                                        key: withdrawKey,
+                                      })
+                                    }
+                                    disabled={isWithdrawing}
+                                    className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                  >
+                                    {isWithdrawing ? "..." : "Withdraw"}
+                                  </button>
+                                </>
+                              );
+                            })()}
+                            {
                               <button
                                 onClick={() => {
                                   context?.setOpenContract({
@@ -209,16 +218,112 @@ const Create: FunctionComponent<CreateProps> = ({
                                     estimatedDeliveryDuration: Number(
                                       right.estimatedDeliveryDuration
                                     ),
+                                    allContracts: right.contracts
                                   });
                                 }}
                                 className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors"
                               >
                                 Create Future
                               </button>
-                            )}
+                            }
                           </div>
                         ) : null;
                       })()}
+                      {right.contracts && right.contracts.length > 0 && (
+                        <div className="mt-3 border-t border-gray-200 pt-3">
+                          <div className="text-xs font-semibold text-gray-600 mb-2">
+                            Futures Contracts
+                          </div>
+                          <div className="space-y-2">
+                            {right.contracts.map((contract) => {
+                              const contractKey = contract.contractId;
+                              const isCreator =
+                                address &&
+                                contract.originalHolder?.toLowerCase() ===
+                                  address.toLowerCase();
+                              const canCancelFutures =
+                                isCreator &&
+                                Number(contract.balanceOf) ===
+                                  Number(contract.quantity) &&
+                                contract.isActive &&
+                                !contract.isSettled;
+
+                              return (
+                                <div
+                                  key={contractKey}
+                                  className="flex items-center justify-between gap-2 flex-wrap bg-gray-50 p-2 rounded text-xs"
+                                >
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    {contract.metadata?.image && (
+                                      <div className="w-6 h-6 flex-shrink-0 relative">
+                                        <Image
+                                          draggable={false}
+                                          fill
+                                          objectFit="cover"
+                                          src={`${INFURA_GATEWAY}${
+                                            contract.metadata.image.split(
+                                              "ipfs://"
+                                            )?.[1]
+                                          }`}
+                                          alt={contract.metadata.title}
+                                          className="border border-gray-200"
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between mb-0.5">
+                                        <div className="truncate font-medium">
+                                          {contract.metadata?.title || "Unknown"}
+                                        </div>
+                                        <span
+                                          className={`text-xxs px-1.5 py-0.5 rounded ml-1 flex-shrink-0 ${
+                                            contract.isActive
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-gray-100 text-gray-800"
+                                          }`}
+                                        >
+                                          {contract.isActive ? "Active" : "Inactive"}
+                                        </span>
+                                      </div>
+                                      <div className="text-gray-500 truncate text-xxs">
+                                        Qty: {contract.quantity} | Bal:{" "}
+                                        {contract.balanceOf ?? "0"} | Orders:{" "}
+                                        {contract.orders?.length || 0}
+                                      </div>
+                                      <div className="text-gray-400 truncate text-xxs">
+                                        {new Date(
+                                          Number(contract.blockTimestamp) * 1000
+                                        ).toLocaleString()}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {canCancelFutures && (
+                                    <button
+                                      onClick={() =>
+                                        handleCancelFuture(
+                                          Number(contract.contractId)
+                                        )
+                                      }
+                                      disabled={
+                                        loadingKeys[
+                                          `future-${contract.contractId}`
+                                        ]
+                                      }
+                                      className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                    >
+                                      {loadingKeys[
+                                        `future-${contract.contractId}`
+                                      ]
+                                        ? "..."
+                                        : "Cancel"}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

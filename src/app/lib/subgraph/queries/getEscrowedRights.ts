@@ -11,6 +11,29 @@ query($depositor: String!, $first: Int!, $skip: Int!) {
     childId
     orderId
     amount
+    contracts {
+      uri
+      originalHolder
+      tokenId
+      blockNumber
+      isSettled
+      isActive
+      orders {
+        orderId
+      }
+      trustedSettlementBots {
+        bot
+      }
+      blockTimestamp
+      transactionHash
+      pricePerUnit
+      contractId
+      quantity
+      metadata {
+        image
+        title
+      }
+    }
     estimatedDeliveryDuration
     child {
       uri
@@ -68,6 +91,29 @@ query($first: Int!, $skip: Int!) {
     childId
     orderId
     amount
+    contracts {
+      uri
+      originalHolder
+      blockNumber
+      blockTimestamp
+      transactionHash
+      pricePerUnit
+      orders {
+        orderId
+      }
+      trustedSettlementBots {
+        bot
+      }
+      isSettled
+      isActive
+      contractId
+      quantity
+      tokenId
+      metadata {
+        image
+        title
+      }
+    }
     estimatedDeliveryDuration
     blockNumber
     child {

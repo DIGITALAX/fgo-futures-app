@@ -4,7 +4,7 @@ import {
   getCurrentNetwork,
 } from "@/app/lib/constants";
 import { AppContext } from "@/app/lib/providers/Providers";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { OpenContractForm } from "../../Layout/types/layout.types";
 
@@ -15,69 +15,162 @@ const useOpenContract = () => {
   const { data: walletClient } = useWalletClient();
   const [openContractLoading, setOpenContractLoading] =
     useState<boolean>(false);
+  const [selectedBots, setSelectedBots] = useState<string[]>([]);
+  const [botSearch, setBotSearch] = useState<string>("");
+  const [customBot, setCustomBot] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
-  const [openContractForm, setOpenContractForm] = useState<OpenContractForm>({
-    childId: context?.openContract?.childId || 0,
-    orderId: context?.openContract?.orderId || 0,
-    amount: 0,
-    pricePerUnit: 0,
-    settlementRewardBPS: 0,
-    childContract: context?.openContract?.childContract || "",
-    originalMarket: context?.openContract?.originalMarket || "",
-    trustedSettlementBots: [],
-    title: "",
-  });
+  const [openContractForm, setOpenContractForm] = useState<OpenContractForm>(
+    () => ({
+      childId: context?.openContract?.childId || 0,
+      orderId: context?.openContract?.orderId || 0,
+      amount: 0,
+      pricePerUnit: 0,
+      settlementRewardBPS: Number(context?.minValues?.bpsMin ?? 0),
+      childContract: context?.openContract?.childContract || "",
+      originalMarket: context?.openContract?.originalMarket || "",
+      trustedSettlementBots: [],
+      title: "",
+    })
+  );
+
+  useEffect(() => {
+    if (!context?.openContract) {
+      return;
+    }
+    const existingContract = context?.openContract?.allContracts?.find(
+      (cont) =>
+        Number(cont?.pricePerUnit) / 10 ** 18 ==
+        Number(openContractForm?.pricePerUnit)
+    );
+
+    if (existingContract) {
+      setSelectedBots(
+        existingContract?.trustedSettlementBots?.map((bot) => bot?.bot) || []
+      );
+      setOpenContractForm((prev) => ({
+        ...prev,
+        settlementRewardBPS: Number(context?.minValues?.bpsMin ?? 0),
+        childId: context?.openContract?.childId || 0,
+        orderId: context?.openContract?.orderId || 0,
+        pricePerUnit: Number(openContractForm?.pricePerUnit),
+        childContract: context?.openContract?.childContract || "",
+        originalMarket: context?.openContract?.originalMarket || "",
+        trustedSettlementBots:
+          existingContract?.trustedSettlementBots?.map((bot) => bot?.bot) || [],
+        title: existingContract?.metadata?.title,
+      }));
+    }
+  }, [openContractForm.pricePerUnit, context?.openContract]);
 
   const handleOpenContract = async () => {
-    if (!walletClient || !publicClient || !address || !openContractForm.image!)
-      return;
+    if (!walletClient || !publicClient || !address) return;
 
-    const estimatedDeliveryDuration = context?.openContract?.estimatedDeliveryDuration || 0;
+    const existingContract = context?.openContract?.allContracts?.find(
+      (cont) =>
+        Number(cont?.pricePerUnit) / 10 ** 18 ==
+        Number(openContractForm?.pricePerUnit)
+    );
+
+    
+    if (openContractForm.trustedSettlementBots.length < 3) {
+      context?.showError("You must have at least 3 settlement bots.");
+      return;
+    }
+
+    if (!existingContract && !openContractForm.image) {
+      context?.showError("Please upload a contract image.");
+      return;
+    }
+
+    const estimatedDeliveryDuration =
+      context?.openContract?.estimatedDeliveryDuration || 0;
     const currentTime = Math.floor(Date.now() / 1000);
-    const timeUntilDelivery = estimatedDeliveryDuration - currentTime;
+
+    const estimatedDeliveryTime =
+      estimatedDeliveryDuration > currentTime
+        ? estimatedDeliveryDuration
+        : currentTime + estimatedDeliveryDuration;
+
+    const timeUntilDelivery = estimatedDeliveryTime - currentTime;
     const oneHour = 3600;
 
     if (timeUntilDelivery < oneHour) {
-      context?.showError("Cannot create future: Must have at least 1 hour between current time and estimated delivery duration to allow for trading.");
+      context?.showError(
+        "Cannot create future: Must have at least 1 hour between current time and estimated delivery."
+      );
       return;
     }
 
     setOpenContractLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", openContractForm.image);
+      let metadataUri = existingContract?.uri;
 
-      const responseImage = await fetch("/api/ipfs", {
-        method: "POST",
-        body: formData,
-      });
+      if (!existingContract) {
+        const formData = new FormData();
+        if (!openContractForm.image) {
+          context?.showError("Please upload a contract image.");
+          setOpenContractLoading(false);
+          return;
+        }
+        formData.append("file", openContractForm.image);
 
-      const resImage = await responseImage.json();
-      const response = await fetch("/api/ipfs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: openContractForm.title,
-          image: "ipfs://" + resImage.hash,
-        }),
-      });
+        const responseImage = await fetch("/api/ipfs", {
+          method: "POST",
+          body: formData,
+        });
 
-      const result = await response.json();
+        const resImage = await responseImage.json();
+        const response = await fetch("/api/ipfs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: openContractForm.title,
+            image: "ipfs://" + resImage.hash,
+          }),
+        });
 
+        const result = await response.json();
+        metadataUri = "ipfs://" + result.hash;
+      }
+
+      if (!metadataUri) {
+        context?.showError("Failed to resolve contract metadata.");
+        setOpenContractLoading(false);
+        return;
+      }
+
+     
       const hash = await walletClient.writeContract({
-        address: contracts.escrow,
+        address: contracts.futures,
         abi: ABIS.FGOFuturesContract,
         functionName: "openFuturesContract",
-        args: [...Object.values(openContractForm), "ipfs://" + result.hash],
+        args: [
+          openContractForm.childId,
+          openContractForm.orderId,
+          openContractForm.amount,
+          openContractForm.pricePerUnit * 10 ** 18,
+          openContractForm.settlementRewardBPS,
+          openContractForm.childContract,
+          openContractForm.originalMarket,
+          openContractForm.trustedSettlementBots,
+          metadataUri,
+        ],
         account: address,
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
+      context?.setOpenContract(undefined);
 
-      context?.showSuccess("Futures Contract Opened!", hash);
+      context?.showSuccess(
+        existingContract
+          ? "Futures Contract Updated!"
+          : "Futures Contract Opened!",
+        hash
+      );
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -85,11 +178,94 @@ const useOpenContract = () => {
     setOpenContractLoading(false);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (
+      context?.openContract?.allContracts?.find(
+        (cont) =>
+          Number(cont?.pricePerUnit) / 10 ** 18 ==
+          Number(openContractForm?.pricePerUnit)
+      )
+    )
+      return;
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setOpenContractForm((prev) => ({
+        ...prev,
+        image: file,
+      }));
+    }
+  };
+
+  const addBot = (botAddress: string) => {
+    if (
+      context?.openContract?.allContracts?.find(
+        (cont) =>
+          Number(cont?.pricePerUnit) / 10 ** 18 ==
+          Number(openContractForm?.pricePerUnit)
+      )
+    )
+      return;
+    if (selectedBots.length < 5 && !selectedBots.includes(botAddress)) {
+      const newBots = [...selectedBots, botAddress];
+      setSelectedBots(newBots);
+      setOpenContractForm((prev) => ({
+        ...prev,
+        trustedSettlementBots: newBots,
+      }));
+    }
+  };
+
+  const removeBot = (botAddress: string) => {
+    if (
+      context?.openContract?.allContracts?.find(
+        (cont) =>
+          Number(cont?.pricePerUnit) / 10 ** 18 ==
+          Number(openContractForm?.pricePerUnit)
+      )
+    )
+      return;
+    const newBots = selectedBots.filter((bot) => bot !== botAddress);
+    setSelectedBots(newBots);
+    setOpenContractForm((prev) => ({
+      ...prev,
+      trustedSettlementBots: newBots,
+    }));
+  };
+
+  const addCustomBot = () => {
+    if (
+      context?.openContract?.allContracts?.find(
+        (cont) =>
+          Number(cont?.pricePerUnit) / 10 ** 18 ==
+          Number(openContractForm?.pricePerUnit)
+      )
+    )
+      return;
+    if (
+      customBot.trim() &&
+      customBot.startsWith("0x") &&
+      customBot.length === 42
+    ) {
+      addBot(customBot.trim());
+      setCustomBot("");
+    }
+  };
+
   return {
     handleOpenContract,
     openContractLoading,
     openContractForm,
     setOpenContractForm,
+    selectedBots,
+    botSearch,
+    setBotSearch,
+    customBot,
+    setCustomBot,
+    fileInputRef,
+    handleImageUpload,
+    addBot,
+    removeBot,
+    addCustomBot,
   };
 };
 

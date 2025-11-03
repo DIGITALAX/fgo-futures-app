@@ -15,14 +15,21 @@ const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
   };
 
   const handleInfoClick = () => {
-    router.push("/info");
+    context?.setDragBox((prev) => !prev);
   };
 
-  const { statsLoading } = useHeader();
+  const {
+    handleLanguageChange,
+    selectedLanguage,
+    languageOptions,
+    statsLoading,
+    isLanguageDropdownOpen,
+    setIsLanguageDropdownOpen,
+  } = useHeader();
 
   return (
-    <div className="w-full h-fit flex px-4 items-center justify-between relative">
-      <div className="relative w-fit h-fit flex gap-2 z-10">
+    <div className="w-full h-fit flex px-4 flex-wrap items-center justify-between relative gap-3">
+      <div className="relative w-fit h-fit flex gap-2 z-10 flex-wrap">
         <div className="px-3 py-2 border border-black bg-white text-xs">
           $MONA:{" "}
           {statsLoading ? "..." : context?.stats.mona.toFixed(2) || "0.00"}
@@ -37,7 +44,41 @@ const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
           Block: {context?.stats.blockTimestamp}
         </div>
       </div>
-      <div className="relative w-fit h-fit flex gap-2 z-10">
+      <div className="relative w-fit h-fit flex gap-2 z-10 flex-wrap">
+        <div className="relative w-fit h-fit">
+          <div
+            onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+            className="px-3 py-2 border border-black bg-white text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            {languageOptions.find((opt) => opt.code === selectedLanguage)
+              ?.name ?? "Aussie"}
+          </div>
+          {isLanguageDropdownOpen && (
+            <div className="absolute text-xs z-20 w-full mt-1 border border-black bg-white cursor-pointer">
+              {languageOptions.map(({ code, name }) => (
+                <div
+                  key={code}
+                  onClick={() => {
+                    handleLanguageChange({
+                      target: { value: code },
+                    } as any);
+                    setIsLanguageDropdownOpen(false);
+                  }}
+                  className="px-1 py-2 text-center hover:bg-gray-50 transition-colors"
+                >
+                  {name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div
+          onClick={handleFGOClick}
+          className="px-3 py-2 border border-black bg-white text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+        >
+          FGO V3
+        </div>
         <div
           onClick={handleFGOClick}
           className="px-3 py-2 border border-black bg-white text-xs cursor-pointer hover:bg-gray-50 transition-colors"

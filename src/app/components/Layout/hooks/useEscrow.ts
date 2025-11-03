@@ -4,15 +4,16 @@ import {
   getEscrowedRightsBuyer,
 } from "@/app/lib/subgraph/queries/getEscrowedRights";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
-import { EscrowedRight } from "../types/layout.types";
+import { EscrowedRight, RightsAction } from "../types/layout.types";
 import { AppContext } from "@/app/lib/providers/Providers";
 import { ABIS } from "@/abis";
 import {
   getCoreContractAddresses,
   getCurrentNetwork,
 } from "@/app/lib/constants";
+import { ensureMetadata } from "@/app/lib/utils";
 
-const useEscrow = () => {
+const useEscrow = (dict: any) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -41,26 +42,11 @@ const useEscrow = () => {
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
 
-  type RightsAction = {
-    childId: number;
-    orderId: number;
-    amount: number;
-    originalMarket: string;
-    childContract: string;
-    key: string;
-  };
-
   const handleDepositPhysicalRights = async (chosenRights: RightsAction) => {
     if (!walletClient || !publicClient || !address || !chosenRights) return;
 
-    const {
-      childId,
-      orderId,
-      amount,
-      originalMarket,
-      childContract,
-      key,
-    } = chosenRights;
+    const { childId, orderId, amount, originalMarket, childContract, key } =
+      chosenRights;
 
     setDepositLoadingKey(key);
     try {
@@ -74,7 +60,7 @@ const useEscrow = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Physical Rights Deposited!", hash);
+      context?.showSuccess(dict.escrowDepositSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -87,14 +73,8 @@ const useEscrow = () => {
   const handleWithdrawPhysicalRights = async (chosenRights: RightsAction) => {
     if (!walletClient || !publicClient || !address || !chosenRights) return;
 
-    const {
-      childId,
-      orderId,
-      amount,
-      originalMarket,
-      childContract,
-      key,
-    } = chosenRights;
+    const { childId, orderId, amount, originalMarket, childContract, key } =
+      chosenRights;
 
     setWithdrawLoadingKey(key);
     try {
@@ -108,7 +88,7 @@ const useEscrow = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Physical Rights Withdrawn!", hash);
+      context?.showSuccess(dict.escrowWithdrawSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);
@@ -123,12 +103,64 @@ const useEscrow = () => {
     try {
       const skipValue = reset ? 0 : escrowedRightsSkip;
       const res = await getEscrowedRightsAll(20, skipValue);
-console.log({res})
       let allRights = res?.data?.escrowedRights;
-
       if (!allRights || allRights.length < 20) {
         setHasMoreEscrowedRights(false);
       }
+
+      allRights = await Promise.all(
+        allRights.map(async (right: EscrowedRight) => {
+          const contractsData = await Promise.all(
+            (right?.contracts || []).map(async (item) => {
+              let balanceOf = 0;
+
+              if (publicClient && address && item.tokenId) {
+                const res = await publicClient.readContract({
+                  address: contracts.trading,
+                  abi: [
+                    {
+                      type: "function",
+                      name: "balanceOf",
+                      inputs: [
+                        {
+                          name: "account",
+                          type: "address",
+                          internalType: "address",
+                        },
+                        {
+                          name: "id",
+                          type: "uint256",
+                          internalType: "uint256",
+                        },
+                      ],
+                      outputs: [
+                        {
+                          name: "",
+                          type: "uint256",
+                          internalType: "uint256",
+                        },
+                      ],
+                      stateMutability: "view",
+                    },
+                  ],
+                  functionName: "balanceOf",
+                  args: [address, BigInt(item.tokenId)],
+                });
+                balanceOf += Number(res);
+              }
+              return {
+                ...(await ensureMetadata(item)),
+                balanceOf,
+              };
+            })
+          );
+
+          return {
+            ...right,
+            contracts: contractsData,
+          };
+        })
+      );
 
       if (reset) {
         setEscrowedRights(allRights);
@@ -147,19 +179,73 @@ console.log({res})
   };
 
   const getEscrowUser = async (reset: boolean = false) => {
-    if (!address) {
+    if (!address || !publicClient) {
       return;
     }
     setEscrowUserLoading(true);
     try {
       const skipValue = reset ? 0 : escrowedRightsUserSkip;
       const res = await getEscrowedRightsBuyer(address, 20, skipValue);
-
       let allRights = res?.data?.escrowedRights;
 
       if (!allRights || allRights.length < 20) {
         setHasMoreEscrowedRightsUser(false);
       }
+
+      allRights = await Promise.all(
+        allRights.map(async (right: EscrowedRight) => {
+          const contractsData = await Promise.all(
+            (right?.contracts || []).map(async (item) => {
+              let balanceOf = 0;
+
+              if (publicClient && address && item.tokenId) {
+                const res = await publicClient.readContract({
+                  address: contracts.trading,
+                  abi: [
+                    {
+                      type: "function",
+                      name: "balanceOf",
+                      inputs: [
+                        {
+                          name: "account",
+                          type: "address",
+                          internalType: "address",
+                        },
+                        {
+                          name: "id",
+                          type: "uint256",
+                          internalType: "uint256",
+                        },
+                      ],
+                      outputs: [
+                        {
+                          name: "",
+                          type: "uint256",
+                          internalType: "uint256",
+                        },
+                      ],
+                      stateMutability: "view",
+                    },
+                  ],
+                  functionName: "balanceOf",
+                  args: [address, BigInt(item.tokenId)],
+                });
+                balanceOf += Number(res);
+              }
+              return {
+                ...(await ensureMetadata(item)),
+                balanceOf,
+              };
+            })
+          );
+
+          return {
+            ...right,
+            contracts: contractsData,
+          };
+        })
+      );
+
 
       if (reset) {
         setEscrowedRightsUser(allRights);
@@ -178,16 +264,16 @@ console.log({res})
   };
 
   useEffect(() => {
-    if (escrowedRights?.length < 1) {
+    if (escrowedRights?.length < 1 && publicClient) {
       getEscrowAll(true);
     }
-  }, [context?.hideSuccess]);
+  }, [context?.hideSuccess, publicClient]);
 
   useEffect(() => {
-    if (escrowedRightsUser?.length < 1 && address) {
+    if (escrowedRightsUser?.length < 1 && address && publicClient) {
       getEscrowUser(true);
     }
-  }, [address, context?.hideSuccess]);
+  }, [address, context?.hideSuccess, publicClient]);
 
   const loadMoreEscrowedRights = () => {
     if (!escrowLoading && hasMoreEscrowedRights) {

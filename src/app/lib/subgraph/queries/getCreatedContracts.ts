@@ -6,6 +6,7 @@ query($buyer: String!, $first: Int!, $skip: Int!) {
   futuresContracts(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip, where: { buyer: $buyer }) {
     contractId
     childId
+    tokenId
     orderId
     quantity
     pricePerUnit
@@ -80,6 +81,7 @@ query($first: Int!, $skip: Int!) {
     contractId
     childId
     orderId
+    tokenId
     quantity
     uri
     metadata {

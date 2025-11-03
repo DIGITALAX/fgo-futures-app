@@ -1,19 +1,18 @@
 "use client";
 
+import { FunctionComponent, useMemo, useState, JSX, useContext } from "react";
 import {
-  FunctionComponent,
-  useContext,
-  useMemo,
-  useState,
-  type JSX,
-} from "react";
-import { OrderProps, Order, Filler, TabKey } from "../types/layout.types";
-import useOrders from "../hooks/useOrders";
+  SupplyOrderProps,
+  SellOrder,
+  PurchaseRecord,
+  TabKey,
+} from "../types/layout.types";
 import { useAccount } from "wagmi";
-import { AppContext } from "@/app/lib/providers/Providers";
 import Image from "next/image";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { INFURA_GATEWAY, getCurrentNetwork } from "@/app/lib/constants";
+import useSupplyOrders from "../hooks/useSupplyOrders";
+import { AppContext } from "@/app/lib/providers/Providers";
 
 const formatAddress = (value?: string) => {
   if (!value || value.length < 10) {
@@ -35,14 +34,9 @@ const formatTimestamp = (timestamp?: string) => {
   return new Date(ms).toLocaleString();
 };
 
-const Orders: FunctionComponent<OrderProps> = ({
-  loadingKeys,
-  handleCancelOrder,
-  dict,
-}) => {
+const SupplyOrders: FunctionComponent<SupplyOrderProps> = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const { address } = useAccount();
-  const context = useContext(AppContext);
 
   const {
     orders,
@@ -51,27 +45,33 @@ const Orders: FunctionComponent<OrderProps> = ({
     userOrdersLoading,
     userFilledOrders,
     userFilledLoading,
+    allFilledOrders,
+    allFilledLoading,
     hasMoreOrders,
     hasMoreUserOrders,
     hasMoreUserFilled,
+    hasMoreAllFilled,
     loadMoreOrders,
     loadMoreUserOrders,
     loadMoreUserFilledOrders,
-  } = useOrders(dict);
+    loadMoreAllFilledOrders,
+    handleCancelOrder,
+    loadingKeys,
+  } = useSupplyOrders(dict);
 
   type BuyEntry = {
-    filler: Filler;
-    order: Order;
+    filler: PurchaseRecord;
+    order: SellOrder;
   };
 
   type CombinedItem =
-    | { kind: "sell"; order: Order }
+    | { kind: "sell"; order: SellOrder }
     | { kind: "buy"; entry: BuyEntry };
 
   const allBuyOrders = useMemo<BuyEntry[]>(
     () =>
       orders.flatMap((order) =>
-        (order.fillers || []).map((fill) => ({
+        (order?.fillers || []).map((fill) => ({
           filler: fill,
           order: order,
         }))
@@ -79,20 +79,36 @@ const Orders: FunctionComponent<OrderProps> = ({
     [orders]
   );
 
-  const combinedAll = useMemo<CombinedItem[]>(
-    () =>
-      orders.flatMap<CombinedItem>((order) => {
-        const sellItem: CombinedItem = { kind: "sell", order };
-
-        const buyItems = (order.fillers || []).map<CombinedItem>((fill) => ({
-          kind: "buy",
-          entry: { filler: fill, order },
-        }));
-
-        return [sellItem, ...buyItems];
-      }),
-    [orders]
+  const allBuyOrdersWithDirect = useMemo<BuyEntry[]>(
+    () => [
+      ...allBuyOrders,
+      ...allFilledOrders.map((fill) => ({
+        filler: fill,
+        order: fill.order,
+      })),
+    ],
+    [allBuyOrders, allFilledOrders]
   );
+
+  const combinedAll = useMemo<CombinedItem[]>(() => {
+    const sellItems = orders.flatMap<CombinedItem>((order) => {
+      const sellItem: CombinedItem = { kind: "sell", order };
+
+      const buyItems = (order?.fillers || []).map<CombinedItem>((fill) => ({
+        kind: "buy",
+        entry: { filler: fill, order },
+      }));
+
+      return [sellItem, ...buyItems];
+    });
+
+    const directBuyItems = allFilledOrders.map<CombinedItem>((fill) => ({
+      kind: "buy",
+      entry: { filler: fill, order: fill.order },
+    }));
+
+    return [...sellItems, ...directBuyItems];
+  }, [orders, allFilledOrders]);
 
   const combinedMy = useMemo<CombinedItem[]>(() => {
     const sellItems = userOrders.map<CombinedItem>((order) => ({
@@ -125,10 +141,11 @@ const Orders: FunctionComponent<OrderProps> = ({
     myBuys: "You have no buy fills",
   };
 
-  const renderSellCard = (order: Order) => {
-    const totalQuantity = Number(order.quantity || "0");
-    const totalFilled = (order.fillers || []).reduce(
-      (sum, fill) => sum + Number(fill.quantity || "0"),
+  const renderSellCard = (order: SellOrder) => {
+    const context = useContext(AppContext);
+    const totalQuantity = Number(order?.amount || "0");
+    const totalFilled = (order?.fillers || []).reduce(
+      (sum, fill) => sum + Number(fill.amount || "0"),
       0
     );
     const remainingQuantity = Math.max(totalQuantity - totalFilled, 0);
@@ -139,28 +156,23 @@ const Orders: FunctionComponent<OrderProps> = ({
       address &&
       order?.seller?.toLowerCase() === address.toLowerCase();
 
-    const canFillOrder =
-      order?.isActive &&
-      !order?.filled &&
-      !order?.contract?.isSettled &&
-      address;
-
+    const canFillOrder = order?.isActive && !order?.filled && address;
     return (
       <div
-        key={`sell-${order.orderId}-${order.blockTimestamp || "0"}`}
+        key={`sell-${order?.orderId}-${order?.blockTimestamp || "0"}`}
         className="border-b border-gray-300 p-3 hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 flex-shrink-0 relative">
-            {order?.contract?.metadata?.image ? (
+            {order?.future?.child?.metadata?.image ? (
               <Image
                 draggable={false}
                 fill
                 objectFit="cover"
                 src={`${INFURA_GATEWAY}${
-                  order?.contract?.metadata?.image?.split("ipfs://")?.[1]
+                  order?.future?.child?.metadata?.image?.split("ipfs://")?.[1]
                 }`}
-                alt={order?.contract?.metadata?.title}
+                alt={order?.future?.child?.metadata?.title ?? ""}
                 className="border border-gray-300"
               />
             ) : (
@@ -170,69 +182,77 @@ const Orders: FunctionComponent<OrderProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs truncate">
-                {order?.contract?.metadata?.title}
+                {order?.future?.child?.metadata?.title}
               </span>
               <span
                 className={`text-xs px-2 py-1 rounded ${
-                  order.isActive
+                  order?.isActive
                     ? "bg-green-100 text-green-800"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {order.isActive ? "Active" : "Inactive"}
+                {order?.isActive ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                {Number(order.pricePerUnit) / 1e18} $MONA per unit
+                {Number(order?.pricePerUnit) / 1e18} $MONA per unit
               </span>
               <span className="text-xs text-gray-600">
-                Qty: {order.quantity}
+                Deadline:{" "}
+                {new Date(
+                  Number(order?.future?.deadline) * 1000
+                ).toLocaleString()}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-600">
-                Filled: {totalFilled} / {totalQuantity}
+                Qty: {order?.amount}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-600">
+                Sold: {totalFilled} / {totalQuantity}
               </span>
               <span className="text-xs text-gray-600">
-                Total: {(Number(order.pricePerUnit) * totalQuantity) / 1e18}{" "}
+                Total: {(Number(order?.pricePerUnit) * totalQuantity) / 1e18}{" "}
                 $MONA
               </span>
             </div>
             <div className="text-xs text-gray-500">
-              Seller: {formatAddress(order.seller)}
+              Seller: {formatAddress(order?.seller)}
             </div>
-            {order.transactionHash && (
+            {order?.transactionHash && (
               <a
                 href={`${getCurrentNetwork().blockExplorer}/tx/${
-                  order.transactionHash
+                  order?.transactionHash
                 }`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xxs text-blue-600 hover:text-blue-800 hover:underline"
               >
-                Tx: {formatAddress(order.transactionHash)}
+                Tx: {formatAddress(order?.transactionHash)}
               </a>
             )}
-            {(order.fillers || []).length > 0 && (
+            {(order?.fillers || []).length > 0 && (
               <div className="mt-2 border-t border-gray-200 pt-2">
                 <div className="text-xxs font-semibold text-gray-600 mb-1">
-                  Fills
+                  Purchases
                 </div>
                 <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
-                  {(order.fillers || []).map((fill) => {
+                  {(order?.fillers || []).map((fill) => {
                     const fillKey =
                       fill.transactionHash ||
-                      `${order.orderId}-${fill.filler}-${fill.blockTimestamp}-${fill.quantity}`;
+                      `${order?.orderId}-${fill.buyer}-${fill.blockTimestamp}-${fill.amount}`;
                     return (
                       <div
                         key={`fill-${fillKey}`}
                         className="flex items-center justify-between text-xxs text-gray-600"
                       >
-                        <span>{formatAddress(fill.filler)}</span>
+                        <span>{formatAddress(fill.buyer)}</span>
                         <span>
-                          {Number(fill.quantity || "0")} @{" "}
-                          {Number(fill.price || "0") / 1e18} $MONA
+                          {Number(fill.amount || "0")} @{" "}
+                          {Number(order?.pricePerUnit || "0") / 1e18} $MONA
                         </span>
                       </div>
                     );
@@ -245,11 +265,16 @@ const Orders: FunctionComponent<OrderProps> = ({
                 <div className="flex flex-wrap gap-2">
                   {canCancel && (
                     <button
-                      onClick={() => handleCancelOrder(Number(order.orderId))}
-                      disabled={loadingKeys[`order-${order.orderId}`]}
+                      onClick={() =>
+                        handleCancelOrder(
+                          Number(order?.orderId),
+                          Number(order?.future.tokenId)
+                        )
+                      }
+                      disabled={loadingKeys[`order-${order?.orderId}`]}
                       className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                      {loadingKeys[`order-${order.orderId}`]
+                      {loadingKeys[`order-${order?.orderId}`]
                         ? "..."
                         : "Cancel Order"}
                     </button>
@@ -260,11 +285,14 @@ const Orders: FunctionComponent<OrderProps> = ({
                     <button
                       onClick={() => {
                         context?.setFillOrder({
-                          orderId: Number(order.orderId),
+                          orderId: Number(order?.orderId),
                           maxQuantity: remainingQuantity,
-                          contractTitle: order?.contract?.metadata?.title,
-                          contractImage: order?.contract?.metadata?.image,
-                          pricePerUnit: Number(order.pricePerUnit),
+                          contractTitle:
+                            order?.future?.child?.metadata?.title || "",
+                          contractImage:
+                            order?.future?.child?.metadata?.image || "",
+                          pricePerUnit: Number(order?.pricePerUnit),
+                          supply: true,
                         });
                       }}
                       className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -282,22 +310,33 @@ const Orders: FunctionComponent<OrderProps> = ({
   };
 
   const renderBuyCard = (entry: BuyEntry) => {
-    const filler = entry.filler;
-    const order = entry?.order ?? filler?.order;
-    const cardKey =
-      filler.transactionHash ||
-      `${order?.orderId ?? "order"}-${filler.filler}-${filler.blockTimestamp}-${
-        filler.quantity
-      }`;
-    const title = order?.contract?.metadata?.title || "Unknown Contract";
-    const imageHash = order?.contract?.metadata?.image?.split("ipfs://")?.[1];
-    const imageSrc = imageHash ? `${INFURA_GATEWAY}${imageHash}` : null;
-    const canListSell =
-      !!address &&
-      filler.filler?.toLowerCase() === address.toLowerCase() &&
-      order &&
-      !order?.contract?.isSettled;
+    const context = useContext(AppContext);
 
+    const isDirectFutureBuy = !!entry?.filler?.future && !entry?.order;
+    const future = isDirectFutureBuy
+      ? entry?.filler?.future
+      : entry?.order?.future;
+    const pricePerUnit = isDirectFutureBuy
+      ? entry?.filler?.future?.pricePerUnit
+      : entry?.order?.pricePerUnit;
+    const supplier = isDirectFutureBuy
+      ? entry?.filler?.future?.supplier
+      : entry?.order?.seller;
+    const isActive = isDirectFutureBuy
+      ? entry?.filler?.future?.isActive && !entry?.filler?.future?.isClosed
+      : entry?.order?.isActive;
+
+    const canListSellSupply =
+      address && entry?.filler?.buyer?.toLowerCase() === address.toLowerCase();
+
+    const cardKey =
+      entry?.filler?.transactionHash ||
+      `${entry?.order?.orderId ?? `direct-${entry?.filler?.buyer}`}-${
+        entry?.filler?.buyer
+      }-${entry?.filler?.blockTimestamp}-${entry?.filler?.amount}`;
+    const title = future?.child?.metadata?.title || "Unknown Contract";
+    const imageHash = future?.child?.metadata?.image?.split("ipfs://")?.[1];
+    const imageSrc = imageHash ? `${INFURA_GATEWAY}${imageHash}` : null;
     return (
       <div
         key={`buy-${cardKey}`}
@@ -323,51 +362,60 @@ const Orders: FunctionComponent<OrderProps> = ({
               <span className="text-xs truncate">{title}</span>
               <span
                 className={`text-xs px-2 py-1 rounded ${
-                  order?.isActive
+                  isActive
                     ? "bg-green-100 text-green-800"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {order?.isActive ? "Active" : "Inactive"}
+                {isActive ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="flex items-center justify-between mb-1 text-xs text-gray-600">
-              <span>Buyer: {formatAddress(filler.filler)}</span>
+              <span>Buyer: {formatAddress(entry?.filler?.buyer)}</span>
               <span>
-                {Number(filler.quantity || "0")} @{" "}
-                {Number(filler.price || "0") / 1e18} $MONA
+                {Number(entry?.filler?.amount || "0")} @{" "}
+                {Number(pricePerUnit || "0") / 1e18} $MONA
               </span>
             </div>
-            {order?.seller && (
+            {supplier && (
               <div className="text-xxs text-gray-500 mb-1">
-                Seller: {formatAddress(order.seller)}
+                {isDirectFutureBuy ? "Supplier" : "Seller"}:{" "}
+                {formatAddress(supplier)}
               </div>
             )}
-            {filler.transactionHash && (
+            {entry?.filler?.transactionHash && (
               <a
                 href={`${getCurrentNetwork().blockExplorer}/tx/${
-                  filler.transactionHash
+                  entry?.filler?.transactionHash
                 }`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xxs text-blue-600 hover:text-blue-800 hover:underline"
               >
-                Tx: {formatAddress(filler.transactionHash)}
+                Tx: {formatAddress(entry?.filler?.transactionHash)}
               </a>
             )}
             <div className="text-xxs text-gray-400">
-              {formatTimestamp(filler.blockTimestamp)}
+              {formatTimestamp(entry?.filler?.blockTimestamp)}
             </div>
-            {canListSell && order && (
+            {isDirectFutureBuy && (
+              <div className="text-xxs text-gray-400 mt-1">
+                Direct Future Purchase
+              </div>
+            )}
+            {canListSellSupply && future && (
               <div className="mt-2 flex justify-end">
                 <button
                   onClick={() =>
                     context?.setSellOrder({
-                      orderId: Number(order.orderId),
-                      tokenId: order.contract.tokenId,
-                      maxQuantity: Number(filler.quantity || "0"),
-                      contractTitle: order?.contract?.metadata?.title,
-                      contractImage: order?.contract?.metadata?.image,
+                      orderId: 0,
+                      supply: true,
+                      tokenId: entry?.filler?.future?.tokenId,
+                      maxQuantity: Number(entry?.filler?.amount || "0"),
+                      contractTitle:
+                        entry?.filler?.future?.child?.metadata?.title!,
+                      contractImage:
+                        entry?.filler?.future?.child?.metadata?.image!,
                     })
                   }
                   className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -395,9 +443,12 @@ const Orders: FunctionComponent<OrderProps> = ({
         return {
           items: combinedAll,
           dataLength: combinedAll.length,
-          loader: ordersLoading,
-          hasMore: hasMoreOrders,
-          next: () => loadMoreOrders(),
+          loader: ordersLoading || allFilledLoading,
+          hasMore: hasMoreOrders || hasMoreAllFilled,
+          next: () => {
+            if (hasMoreOrders) loadMoreOrders();
+            if (hasMoreAllFilled) loadMoreAllFilledOrders();
+          },
           render: (item: CombinedItem) =>
             item.kind === "sell"
               ? renderSellCard(item.order)
@@ -410,15 +461,18 @@ const Orders: FunctionComponent<OrderProps> = ({
           loader: ordersLoading,
           hasMore: hasMoreOrders,
           next: () => loadMoreOrders(),
-          render: (order: Order) => renderSellCard(order),
+          render: (order: SellOrder) => renderSellCard(order),
         };
       case "allBuys":
         return {
-          items: allBuyOrders,
-          dataLength: allBuyOrders.length,
-          loader: ordersLoading,
-          hasMore: hasMoreOrders,
-          next: () => loadMoreOrders(),
+          items: allBuyOrdersWithDirect,
+          dataLength: allBuyOrdersWithDirect.length,
+          loader: ordersLoading || allFilledLoading,
+          hasMore: hasMoreOrders || hasMoreAllFilled,
+          next: () => {
+            if (hasMoreOrders) loadMoreOrders();
+            if (hasMoreAllFilled) loadMoreAllFilledOrders();
+          },
           render: (entry: BuyEntry) => renderBuyCard(entry),
         };
       case "my":
@@ -443,7 +497,7 @@ const Orders: FunctionComponent<OrderProps> = ({
           loader: userOrdersLoading,
           hasMore: hasMoreUserOrders,
           next: () => loadMoreUserOrders(),
-          render: (order: Order) => renderSellCard(order),
+          render: (order: SellOrder) => renderSellCard(order),
         };
       case "myBuys":
         return {
@@ -452,7 +506,7 @@ const Orders: FunctionComponent<OrderProps> = ({
           loader: userFilledLoading,
           hasMore: hasMoreUserFilled,
           next: () => loadMoreUserFilledOrders(),
-          render: (item: Filler) =>
+          render: (item: PurchaseRecord) =>
             renderBuyCard({ filler: item, order: item.order }),
         };
       default:
@@ -462,7 +516,7 @@ const Orders: FunctionComponent<OrderProps> = ({
           loader: ordersLoading,
           hasMore: hasMoreOrders,
           next: () => loadMoreOrders(),
-          render: (order: Order) => renderSellCard(order),
+          render: (order: SellOrder) => renderSellCard(order),
         };
     }
   }, [
@@ -470,12 +524,16 @@ const Orders: FunctionComponent<OrderProps> = ({
     combinedAll,
     orders,
     allBuyOrders,
+    allBuyOrdersWithDirect,
     combinedMy,
     userOrders,
     userFilledOrders,
     ordersLoading,
     hasMoreOrders,
     loadMoreOrders,
+    allFilledLoading,
+    hasMoreAllFilled,
+    loadMoreAllFilledOrders,
     userOrdersLoading,
     hasMoreUserOrders,
     loadMoreUserOrders,
@@ -542,4 +600,4 @@ const Orders: FunctionComponent<OrderProps> = ({
   );
 };
 
-export default Orders;
+export default SupplyOrders;

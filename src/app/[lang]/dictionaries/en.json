@@ -1,1 +1,27 @@
-{}
+{
+  "escrowDepositSuccess": "Physical rights deposited!",
+  "escrowWithdrawSuccess": "Physical rights withdrawn!",
+  "registerBotApproveSuccess": "Stake allowance approved!",
+  "registerBotSuccess": "Settlement bot registered!",
+  "registerBotStakeIncreaseSuccess": "Settlement bot stake increased!",
+  "registerBotStakeWithdrawSuccess": "Settlement bot stake decreased!",
+  "registerBotClaimSuccess": "Child rights claimed!",
+  "tradeOrderCancelSuccess": "Order cancelled!",
+  "tradeFutureCancelSuccess": "Future contract cancelled!",
+  "transferSuccess": "Physical rights transferred!",
+  "supplyApproveSuccess": "MONA allowance approved!",
+  "supplyApprovePrompt": "Please approve MONA spending first.",
+  "supplyPurchaseSuccess": "Supply futures purchased!",
+  "supplyOrderCancelSuccess": "Order cancelled!",
+  "settleEmergencySuccess": "Emergency settlement complete!",
+  "settleClaimSuccess": "Child claim complete!",
+  "settleClaimUnavailable": "Cannot claim at this time.",
+  "settleSupplySettlementSuccess": "Settlement complete!",
+  "settleSupplyClaimSuccess": "Claim complete!",
+  "settleSupplyContractNotFound": "Future contract not found.",
+  "settleSupplyDeadlinePending": "Deadline has not passed yet.",
+  "settleSupplyNotSettled": "Future is not settled yet.",
+  "settleSupplyNoBalance": "You have no balance to claim.",
+  "ordersSellSuccess": "Order created!",
+  "ordersFillSuccess": "Order filled!"
+}

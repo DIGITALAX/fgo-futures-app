@@ -1,11 +1,11 @@
 "use client";
 
-import { FunctionComponent, useMemo } from "react";
+import { FunctionComponent, useMemo, memo } from "react";
 import useFuturesSimulation from "../hooks/useFuturesSimulation";
 import Image from "next/image";
 import { INFURA_GATEWAY } from "@/app/lib/constants";
 
-const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
+const Futures: FunctionComponent<{ dict: any }> = memo(() => {
   const {
     elements,
     flashingElements,
@@ -34,7 +34,7 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
     if (element) {
       return (
         <div
-          key={`cell-${row}-${col}`}
+          key={`element-${row}-${col}`}
           className={`aspect-square border border-black flex gap-1 flex-col cursor-pointer relative p-px overflow-hidden ${
             flashingElements.has(element.childId)
               ? `animate-${flashingElements.get(element.childId)}`
@@ -44,6 +44,13 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
             gridRow: row + 1,
             gridColumn: col + 1,
           }}
+          onClick={() =>
+            window.open(
+              `https://fgo.themanufactory.xyz/${
+                Number(element?.futures?.pricePerUnit) > 0 ? "market/future" : "library/child"
+              }/${element?.childContract}/${element?.childId}`
+            )
+          }
         >
           <div className="relative w-full h-full">
             <Image
@@ -51,18 +58,18 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
               fill
               className="object-contain"
               src={`${INFURA_GATEWAY}${
-                element.metadata.image?.split("ipfs://")?.[1]
+                element?.metadata?.image?.split("ipfs://")?.[1]
               }`}
-              alt={element.metadata.title}
+              alt={element?.metadata?.title}
             />
           </div>
 
-          <div className="flex w-full h-fit flex-col justify-center">
-            <div className="text-xxs text-center leading-tight">
-              {element.metadata.title}
+          <div className="flex w-full h-fit flex-col items-center justify-center">
+            <div className="text-xxs w-fit h-fit text-center leading-tight hidden md:flex">
+              {element?.metadata?.title}
             </div>
-            <div className="text-xxs text-center">
-              {(Number(element.physicalPrice) / 10**18).toFixed(2)} $MONA
+            <div className="text-xxs w-fit h-fit text-center">
+              {(Number(element.physicalPrice) / 10 ** 18).toFixed(2)} $MONA
             </div>
           </div>
         </div>
@@ -92,9 +99,9 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
   };
 
   return (
-    <div className="w-full lex items-center justify-start relative">
-      <div className="relative w-full">
-        <div className="absolute inset-0 flex">
+    <div className="w-full h-full lg:h-[42rem] flex flex-col items-center justify-start relative">
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 flex hidden sm:flex">
           {Array.from({ length: gridDimensions.cols }).map((_, colIndex) => (
             <div
               key={`col-bg-${colIndex}`}
@@ -102,18 +109,18 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 highlightedColumns.has(colIndex) ? "bg-white" : ""
               }`}
               style={{
-                marginLeft: colIndex === 0 ? 0 : "0.5rem",
+                marginLeft: colIndex === 0 ? 0 : "0.25rem",
                 marginRight: colIndex === gridDimensions.cols - 1 ? 0 : 0,
               }}
             />
           ))}
         </div>
         <div
-          className="grid gap-2 w-full relative"
+          className="grid gap-1 sm:gap-2 w-full h-full relative"
           style={{
             gridTemplateColumns: `repeat(${gridDimensions.cols}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${gridDimensions.rows}, minmax(0, 1fr))`,
-            gridAutoRows: "minmax(80px, 1fr)",
+            gridAutoRows: "1fr",
           }}
         >
           {generateAllCells()}
@@ -121,6 +128,6 @@ const Futures: FunctionComponent<{ dict: any }> = ({ dict }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Futures;

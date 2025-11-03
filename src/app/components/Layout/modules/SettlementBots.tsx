@@ -1,23 +1,20 @@
 "use client";
 
 import { FunctionComponent, useContext } from "react";
-import { getCurrentNetwork } from "@/app/lib/constants";
+import { getCurrentNetwork, INFURA_GATEWAY } from "@/app/lib/constants";
 import Image from "next/image";
 import InfiniteScroll from "react-infinite-scroll-component";
 import useRegisterBot from "../hooks/useRegisterBot";
 import { AppContext } from "@/app/lib/providers/Providers";
 
-const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
+const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
   const network = getCurrentNetwork();
   const context = useContext(AppContext);
   const {
     settlementBotsLoading,
     hasMoreSettlementBots,
     loadMoreSettlementBots,
-  } = useRegisterBot();
-
-  console.log(context?.settlementBots);
-
+  } = useRegisterBot(dict);
   const calculateSlashScore = (
     totalSlashEvents: string,
     totalSettlements: string
@@ -30,20 +27,17 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
   };
 
   return (
-    <div className="w-full flex flex-col p-6">
-      <div className="text-2xl font-bold mb-6 text-left">
+    <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
+      <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
         Settlement Bots Network
       </div>
 
       {settlementBotsLoading && context?.settlementBots?.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-gray-500 py-4 sm:py-8">
           Loading settlement bots...
         </div>
       ) : (
-        <div
-          className="h-fit overflow-y-auto"
-          id="settlementbots-scrollable"
-        >
+        <div className="h-fit overflow-y-auto" id="settlementbots-scrollable">
           <InfiniteScroll
             dataLength={context?.settlementBots?.length || 0}
             next={loadMoreSettlementBots}
@@ -56,7 +50,7 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
             scrollableTarget="settlementbots-scrollable"
             scrollThreshold={0.8}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2  gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
               {context?.settlementBots?.map((bot, index) => {
                 const slashScore = calculateSlashScore(
                   bot.totalSlashEvents,
@@ -66,9 +60,9 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 return (
                   <div
                     key={bot.bot}
-                    className="border border-black p-4 flex flex-col"
+                    className="border gradient border-black p-2 sm:p-3 lg:p-4 flex flex-col"
                   >
-                    <div className="border-b border-gray-300 pb-3 mb-3">
+                    <div className="border-b border-gray-300 pb-2 sm:pb-3 lg:pb-3 mb-2 sm:mb-3 lg:mb-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs text-orange-600 font-medium">
                           BOT #{index + 1}
@@ -167,15 +161,19 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
                                   draggable={false}
                                   fill
                                   style={{ objectFit: "cover" }}
-                                  src={contract.contract.metadata.image}
-                                  alt={contract.contract.metadata.title}
+                                  src={`${INFURA_GATEWAY}${
+                                    contract.contract?.metadata?.image?.split(
+                                      "ipfs://"
+                                    )?.[1]
+                                  }`}
+                                  alt={contract.contract?.metadata?.title}
                                   className="border border-gray-200"
                                 />
                               </div>
 
                               <div className="flex-1 min-w-0">
                                 <div className="text-gray-700 truncate">
-                                  {contract.contract.metadata.title}
+                                  {contract.contract?.metadata?.title}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-1 text-xxs text-gray-500 mt-1">
@@ -240,4 +238,4 @@ const SettlmentBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
   );
 };
 
-export default SettlmentBots;
+export default SettlementBots;

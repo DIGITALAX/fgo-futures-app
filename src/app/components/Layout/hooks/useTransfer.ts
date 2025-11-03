@@ -7,7 +7,7 @@ import {
   getCurrentNetwork,
 } from "@/app/lib/constants";
 
-const useTransfer = () => {
+const useTransfer = (dict: any) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -49,7 +49,7 @@ const useTransfer = () => {
 
       await publicClient.waitForTransactionReceipt({ hash });
 
-      context?.showSuccess("Physical Rights Transferred!", hash);
+      context?.showSuccess(dict.transferSuccess, hash);
     } catch (err: any) {
       console.error(err.message);
       context?.showError(err.message);

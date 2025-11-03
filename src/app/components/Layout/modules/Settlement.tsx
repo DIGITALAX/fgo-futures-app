@@ -1,9 +1,9 @@
 "use client";
 
-import { FunctionComponent, useState, useContext } from "react";
+import { FunctionComponent, useContext } from "react";
 import useSettle from "../hooks/useSettle";
 import useRegisterBot from "../hooks/useRegisterBot";
-import { getCurrentNetwork } from "@/app/lib/constants";
+import { getCurrentNetwork, INFURA_GATEWAY } from "@/app/lib/constants";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import { AppContext } from "@/app/lib/providers/Providers";
@@ -18,10 +18,13 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
     contractsSettled,
     contractsLoading,
     handleEmergencySettle,
-    settleLoading,
+    claimChildSettlement,
+    loadingKeys,
     hasMoreContracts,
     loadMoreContracts,
-  } = useSettle();
+  } = useSettle(dict);
+
+
 
   const {
     registerSettlementLoading,
@@ -32,12 +35,10 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
     handleWithdrawStake,
     stakeLoading,
     settlementBot,
-    handleClaimChildSettled,
-    claimLoading,
     approveLoading,
     approveStake,
     isStakeApproved,
-  } = useRegisterBot();
+  } = useRegisterBot(dict);
 
   const isEligible =
     Number(context?.stats?.ionic) > 0 || Number(context?.stats?.genesis) > 0;
@@ -67,19 +68,29 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
   const canClaimChild = (settlement: ContractSettled) => {
     if (!address) return false;
 
-    const isOrderFulfiller = settlement.finalFillers?.some(
-      (filler: string) => filler?.toLowerCase() === address.toLowerCase()
+    return (
+      (settlement.balanceOf || 0) > 0 &&
+      settlement.isSettled &&
+      settlement.isFulfilled
     );
+  };
 
-    return isOrderFulfiller && settlement.isSettled;
+  const shouldShowFulfillerLate = (settlement: ContractSettled) => {
+    if (!address) return false;
+
+    return (
+      (settlement.balanceOf || 0) > 0 &&
+      settlement.isSettled &&
+      !settlement.isFulfilled
+    );
   };
 
   return (
-    <div className="max-w-sm flex flex-col w-full h-full bg-white border border-black">
+    <div className="w-full lg:max-w-sm flex flex-col w-full h-full bg-white border border-black">
       <div className="px-4 py-3 border-b border-black flex-shrink-0">
         <div className="flex items-center justify-start">
           <div>
-            <div className="text-lg">Settlement</div>
+            <div className="text-lg">Physical Rights Settlement</div>
             <div className="text-xs text-gray-600">
               {contractsSettled?.length} contracts settled
             </div>
@@ -88,7 +99,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
       </div>
 
       <div
-        className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden"
+        className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden lg:min-h-auto min-h-[30rem]"
         id="settlement-scrollable"
       >
         {contractsLoading && contractsSettled?.length === 0 ? (
@@ -120,8 +131,10 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       draggable={false}
                       fill
                       style={{ objectFit: "cover" }}
-                      src={settlement.child.metadata.image}
-                      alt={settlement.child.metadata.title}
+                      src={`${INFURA_GATEWAY}${
+                        settlement.child?.metadata?.image?.split("ipfs://")?.[1]
+                      }`}
+                      alt={settlement.child?.metadata?.title}
                       className="border border-gray-300"
                     />
                   </div>
@@ -142,7 +155,7 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                     </div>
 
                     <div className="text-xs text-gray-700 mb-1 truncate">
-                      {settlement.child.metadata.title}
+                      {settlement.child?.metadata?.title}
                     </div>
 
                     <div className="flex justify-between text-xxs text-gray-500 mb-1">
@@ -217,22 +230,31 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                         onClick={() =>
                           handleEmergencySettle(Number(settlement.contractId))
                         }
-                        disabled={settleLoading}
+                        disabled={loadingKeys[`settle-${settlement.contractId}`]}
                         className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300"
                       >
-                        {settleLoading ? "Settling..." : "Emergency Settle"}
+                        {loadingKeys[`settle-${settlement.contractId}`] ? "..." : "Emergency Settle"}
                       </button>
                     )}
 
                     {canClaimChild(settlement) && (
                       <button
                         onClick={() =>
-                          handleClaimChildSettled(Number(settlement.contractId))
+                          claimChildSettlement(Number(settlement.contractId))
                         }
-                        disabled={claimLoading}
+                        disabled={loadingKeys[`claim-${settlement.contractId}`]}
                         className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300"
                       >
-                        {claimLoading ? "Claiming..." : "Claim Child"}
+                        {loadingKeys[`claim-${settlement.contractId}`] ? "..." : "Claim Child"}
+                      </button>
+                    )}
+
+                    {shouldShowFulfillerLate(settlement) && (
+                      <button
+                        disabled
+                        className="w-full mt-2 py-1 px-2 text-xs rounded transition-all bg-gray-300 text-gray-600 cursor-not-allowed"
+                      >
+                        Fulfiller Late
                       </button>
                     )}
                   </div>
@@ -266,17 +288,26 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
             <div className="flex gap-1">
               <button
                 onClick={() => {
+                  if (stakeAmount < Number(context?.minValues?.stake)) {
+                    return;
+                  }
                   if (!isStakeApproved) {
                     approveStake();
                   } else {
                     handleIncreaseStake();
                   }
                 }}
-                disabled={stakeLoading || approveLoading}
+                disabled={
+                  stakeLoading ||
+                  approveLoading ||
+                  stakeAmount < Number(context?.minValues?.stake)
+                }
                 className={`w-full py-2 px-3 text-xs border border-black transition-colors ${
-                  stakeLoading
-                    ? "bg-black text-white hover:bg-gray-800"
-                    : "bg-white text-gray-400 cursor-not-allowed"
+                  stakeLoading ||
+                  approveLoading ||
+                  stakeAmount < Number(context?.minValues?.stake)
+                    ? "bg-white text-gray-400 cursor-not-allowed"
+                    : "bg-black text-white hover:bg-gray-800"
                 }`}
               >
                 {!isStakeApproved
@@ -301,26 +332,24 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
         ) : (
           <>
             <div className="text-xs text-gray-600 mb-2">
-              Min Stake: {context?.minStake} $MONA
+              Min Stake: {context?.minValues?.stake} $MONA
             </div>
 
             <input
               type="number"
               value={stakeAmount}
-              min={context?.minStake}
-              onChange={(e) =>
-                setStakeAmount(
-                  Number(e.target.value) < context?.minStake!
-                    ? context?.minStake!
-                    : Number(e.target.value)
-                )
-              }
-              placeholder={String(context?.minStake!)}
+              min={context?.minValues?.stake}
+              onChange={(e) => setStakeAmount(Number(e.target.value))}
+              placeholder={String(context?.minValues?.stake!)}
               className="w-full py-1 px-2 text-xs border border-gray-300 rounded mb-2"
             />
 
             <button
               onClick={() => {
+                if (stakeAmount < Number(context?.minValues?.stake)) {
+                  return;
+                }
+
                 if (!isStakeApproved) {
                   approveStake();
                 } else {
@@ -328,12 +357,18 @@ const Settlement: FunctionComponent<{ dict: any }> = ({ dict }) => {
                 }
               }}
               disabled={
-                !isEligible || approveLoading || registerSettlementLoading
+                stakeAmount < Number(context?.minValues?.stake) ||
+                !isEligible ||
+                approveLoading ||
+                registerSettlementLoading
               }
               className={`w-full py-2 px-3 text-xs border border-black transition-colors ${
-                isEligible
-                  ? "bg-black text-white hover:bg-gray-800"
-                  : "bg-white text-gray-400 cursor-not-allowed"
+                stakeAmount < Number(context?.minValues?.stake) ||
+                !isEligible ||
+                approveLoading ||
+                registerSettlementLoading
+                  ? "bg-white text-gray-400 cursor-not-allowed"
+                  : "bg-black text-white hover:bg-gray-800"
               }`}
             >
               {registerSettlementLoading
