@@ -6,16 +6,16 @@ import { Providers } from "./lib/providers/Providers";
 export const metadata: Metadata = {
   metadataBase: new URL("https://futures.themanufactory.xyz/"),
   title: "FGO Futures",
-  description: "Fractional Garment Ownership Futures.",
+  description: "Fractional Garment Ownership Futures. A Babylonian map of the world.",
   twitter: {
     card: "summary_large_image",
     creator: "@emmajane1313",
     title: "FGO Futures",
-    description: "Fractional Garment Ownership Futures.",
+    description: "Fractional Garment Ownership Futures. A Babylonian map of the world.",
   },
   openGraph: {
     title: "FGO Futures",
-    description: "Fractional Garment Ownership Futures.",
+    description: "Fractional Garment Ownership Futures. A Babylonian map of the world.",
   },
   robots: {
     googleBot: {

@@ -11,5 +11,5 @@ export default async function Home({
   const { lang } = await params;
 
   const dict = await (getDictionary as (locale: any) => Promise<any>)(lang);
-  return <Entry dict={dict} />;
+  return <Entry dict={dict} lang={lang} />;
 }

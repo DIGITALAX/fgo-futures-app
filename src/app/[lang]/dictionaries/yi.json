@@ -244,5 +244,18 @@
   "noBotsRegisteredLabel": "קיין סעטלמענט באטס רעגיסטערד",
   "successText": "סוקסעס",
   "transferEmptyAll": "קיין פיזיכע רעכטן געפונען",
-  "transferEmptyUser": "קיין פיזיכע רעכטן פּון די ניצער געפונען"
+  "transferEmptyUser": "קיין פיזיכע רעכטן פּון די ניצער געפונען",
+  "statusPending": "פענדינג",
+  "settledContractLabel": "סעטלד קאָנטראַקט",
+  "pendingSettlementLabel": "פּענדינג סעטלמענט",
+  "timeRemainingLabel": "טיים רימיינינג",
+  "createdAt": "קריאייטיד",
+  "stillTrading": "סטיל טריידינג",
+  "settleNow": "סעטל נאו",
+  "cancelOrderAction": "קענסל אָרדער",
+  "claimUnusedRights": "קליים אונניוזד",
+  "cancelled": "קאָנטראַקט קאנסעלד",
+  "settlementBotsTitle": "סעטלמענט באטס",
+  "settlementBotsLoading": "לאָדינג באטס...",
+  "unknownContractLabel": "אנביקנאָון קאָנטראַקט"
 }

@@ -244,5 +244,18 @@
   "noBotsRegisteredLabel": "Chan eil bots sgaoilte air an chlàradh",
   "successText": "SOIRBHEACHAS",
   "transferEmptyAll": "Chan eil còraichean fhisiceach air an lorg",
-  "transferEmptyUser": "Chan eil còraichean fhisiceach an neach-cleachdaidh air an lorg"
+  "transferEmptyUser": "Chan eil còraichean fhisiceach an neach-cleachdaidh air an lorg",
+  "statusPending": "FEITHEAMH",
+  "settledContractLabel": "Cùmhnant air sgaoileadh",
+  "pendingSettlementLabel": "Sgaoileadh feitheamh",
+  "timeRemainingLabel": "Ùine fhathast",
+  "createdAt": "Air a chruthachadh",
+  "stillTrading": "Fhathast a' Malairt",
+  "settleNow": "Sgaoileadh Nise",
+  "cancelOrderAction": "Sgur Òrdugh",
+  "claimUnusedRights": "Tagradh Gun Chleachdadh",
+  "cancelled": "Cùmhnant air a Sgur Dheth",
+  "settlementBotsTitle": "Bots Soilbheachaidh",
+  "settlementBotsLoading": "A' luchdachadh bots...",
+  "unknownContractLabel": "Cùmhnant Neo-aithnichte"
 }

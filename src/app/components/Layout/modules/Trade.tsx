@@ -23,13 +23,11 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
     hasMoreEscrowedRightsUser,
     loadMoreEscrowedRights,
     loadMoreEscrowedRightsUser,
+    claimUnusedRights,
+    claimLoadingKey
   } = useEscrow(dict);
 
-  const {
-    loadingKeys,
-    handleCancelOrder,
-    handleCancelFuture,
-  } = useTrade(dict);
+  const { loadingKeys, handleCancelOrder, handleCancelFuture } = useTrade(dict);
 
   const {
     physicalRights,
@@ -84,6 +82,8 @@ const Trade: FunctionComponent<{ dict: any }> = ({ dict }) => {
           />
           <Create
             dict={dict}
+            claimLoadingKey={claimLoadingKey}
+            claimUnusedRights={claimUnusedRights}
             escrowLoading={escrowLoading}
             escrowUserLoading={escrowUserLoading}
             escrowedRights={escrowedRights}

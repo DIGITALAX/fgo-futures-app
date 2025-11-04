@@ -244,5 +244,18 @@
   "noBotsRegisteredLabel": "No settlement bots registered",
   "successText": "SUCCESS",
   "transferEmptyAll": "No physical rights found",
-  "transferEmptyUser": "No user physical rights found"
+  "transferEmptyUser": "No user physical rights found",
+  "statusPending": "PENDING",
+  "settledContractLabel": "Settled Contract",
+  "pendingSettlementLabel": "Pending Settlement",
+  "timeRemainingLabel": "Time Remaining",
+  "createdAt": "Created",
+  "stillTrading": "Still Trading",
+  "settleNow": "Settle Now",
+  "cancelOrderAction": "Cancel Order",
+  "claimUnusedRights": "Claim Unused",
+  "cancelled": "Contract Cancelled",
+  "settlementBotsTitle": "Settlement Bots",
+  "settlementBotsLoading": "Loading bots...",
+  "unknownContractLabel": "Unknown Contract"
 }

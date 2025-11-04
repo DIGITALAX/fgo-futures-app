@@ -7,5 +7,5 @@ export default async function HeaderEntry({ params }: { params: tParams }) {
   const dict = await (getDictionary as (locale: any) => Promise<any>)(
     lang ?? "en"
   );
-  return <Header dict={dict} />;
+  return <Header dict={dict} lang={lang ?? "en"} />;
 }

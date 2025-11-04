@@ -45,7 +45,6 @@ const useFulfillers = () => {
     try {
       const skipValue = reset ? 0 : fulfillersSkip;
       const data = await getFulfillers(20, skipValue);
-
       let allFulfillers = data?.data?.fulfillers;
       if (!allFulfillers || allFulfillers.length < 20) {
         setHasMoreFulfillers(false);

@@ -22,6 +22,8 @@ const Create: FunctionComponent<CreateProps> = ({
   loadMoreEscrowedRightsUser,
   handleCancelFuture,
   loadingKeys,
+  claimUnusedRights,
+  claimLoadingKey,
 }) => {
   const context = useContext(AppContext);
   const { address } = useAccount();
@@ -31,7 +33,7 @@ const Create: FunctionComponent<CreateProps> = ({
   }>({});
 
   return (
-    <div className="flex gradient h-[45rem] md:h-full flex-col overflow-hidden border border-black">
+    <div className="flex noise h-[45rem] md:h-full flex-col overflow-hidden border border-black bg-parchment">
       <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
         <div className="text-sm sm:text-base lg:text-lg">
           {dict?.createTitle}
@@ -134,7 +136,7 @@ const Create: FunctionComponent<CreateProps> = ({
                         </span>
                       </div>
                       <div className="text-xs text-gray-700 mb-1">
-                        {dict?.createAvailableLabel} {" "}
+                        {dict?.createAvailableLabel}{" "}
                         {Number(right.amount) -
                           Number(right.amountUsedForFutures)}
                       </div>
@@ -142,7 +144,7 @@ const Create: FunctionComponent<CreateProps> = ({
                         {dict?.createUsedLabel} {right.amountUsedForFutures}
                       </div>
                       <div className="text-xs text-gray-700 mb-2">
-                        {dict?.createFuturesCreatedLabel} {" "}
+                        {dict?.createFuturesCreatedLabel}{" "}
                         {right.futuresCreated
                           ? dict?.booleanYes
                           : dict?.booleanNo}
@@ -158,7 +160,17 @@ const Create: FunctionComponent<CreateProps> = ({
                           Number(right.amount) -
                           Number(right.amountUsedForFutures);
                         const canCreateWithdraw =
-                          canManageRights && availableAmount > 0;
+                          canManageRights &&
+                          availableAmount > 0 &&
+                          !escrowedRights.every((right) =>
+                            right.contracts.every((con) => con.isSettled)
+                          );
+                        const canClaimUnused =
+                          canManageRights &&
+                          availableAmount > 0 &&
+                          escrowedRights.every((right) =>
+                            right.contracts.every((con) => con.isSettled)
+                          );
 
                         return canCreateWithdraw ? (
                           <div className="flex items-center gap-2 flex-wrap">
@@ -206,7 +218,9 @@ const Create: FunctionComponent<CreateProps> = ({
                                     disabled={isWithdrawing}
                                     className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
                                   >
-                                    {isWithdrawing ? dict?.loadingDots : dict?.createWithdrawAction}
+                                    {isWithdrawing
+                                      ? dict?.loadingDots
+                                      : dict?.createWithdrawAction}
                                   </button>
                                 </>
                               );
@@ -223,7 +237,56 @@ const Create: FunctionComponent<CreateProps> = ({
                                     estimatedDeliveryDuration: Number(
                                       right.estimatedDeliveryDuration
                                     ),
-                                    allContracts: right.contracts
+                                    allContracts: right.contracts,
+                                  });
+                                }}
+                                className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors"
+                              >
+                                {dict?.createFutureAction}
+                              </button>
+                            }
+                          </div>
+                        ) : canClaimUnused ? (
+                          <div className="flex items-center flex-wrap gap-2">
+                            {(() => {
+                              const withdrawKey = right.rightsKey;
+                              const isWithdrawing =
+                                claimLoadingKey === withdrawKey;
+
+                              return (
+                                <button
+                                  onClick={() =>
+                                    claimUnusedRights({
+                                      childId: Number(right.childId),
+                                      orderId: Number(right.orderId),
+                                      amount: 0,
+                                      originalMarket: right.originalMarket,
+                                      childContract: right.childContract,
+                                      key: withdrawKey,
+                                    })
+                                  }
+                                  disabled={isWithdrawing}
+                                  className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                >
+                                  {isWithdrawing
+                                    ? dict?.loadingDots
+                                    : dict?.claimUnusedRights}
+                                </button>
+                              );
+                            })()}
+                            {
+                              <button
+                                onClick={() => {
+                                  context?.setOpenContract({
+                                    childId: Number(right.childId),
+                                    orderId: Number(right.orderId),
+                                    maxAmount: availableAmount,
+                                    childContract: right.childContract,
+                                    originalMarket: right.originalMarket,
+                                    estimatedDeliveryDuration: Number(
+                                      right.estimatedDeliveryDuration
+                                    ),
+                                    allContracts: right.contracts,
                                   });
                                 }}
                                 className="px-3 py-1 text-xs border border-black bg-white text-black hover:bg-gray-50 transition-colors"
@@ -278,7 +341,8 @@ const Create: FunctionComponent<CreateProps> = ({
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between mb-0.5">
                                         <div className="truncate font-medium">
-                                          {contract.metadata?.title || dict?.unknownLabel}
+                                          {contract.metadata?.title ||
+                                            dict?.unknownLabel}
                                         </div>
                                         <span
                                           className={`text-xxs px-1.5 py-0.5 rounded ml-1 flex-shrink-0 ${
@@ -293,8 +357,11 @@ const Create: FunctionComponent<CreateProps> = ({
                                         </span>
                                       </div>
                                       <div className="text-gray-500 truncate text-xxs">
-                                        {dict?.quantityLabel} {contract.quantity} | {dict?.balanceLabel}{" "}
-                                        {contract.balanceOf ?? "0"} | {dict?.ordersLabel}{" "}
+                                        {dict?.quantityLabel}{" "}
+                                        {contract.quantity} |{" "}
+                                        {dict?.balanceLabel}{" "}
+                                        {contract.balanceOf ?? "0"} |{" "}
+                                        {dict?.ordersLabel}{" "}
                                         {contract.orders?.length || 0}
                                       </div>
                                       <div className="text-gray-400 truncate text-xxs">

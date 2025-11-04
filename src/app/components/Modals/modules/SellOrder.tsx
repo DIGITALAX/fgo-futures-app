@@ -4,7 +4,7 @@ import Image from "next/image";
 import useOrders from "../hooks/useOrders";
 import { INFURA_GATEWAY } from "@/app/lib/constants";
 
-export const SellOrder = ({ dict }: { dict: any }) => {
+export const SellOrder = ({ dict, lang }: { dict: any; lang: string }) => {
   const context = useContext(AppContext);
   const {
     handleSellOrder,
@@ -35,7 +35,10 @@ export const SellOrder = ({ dict }: { dict: any }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      dir={lang == "yi" ? "rtl" : "ltr"}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
       <div className="bg-white border border-black max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
@@ -77,7 +80,10 @@ export const SellOrder = ({ dict }: { dict: any }) => {
 
           <div>
             <label className="block text-xs mb-1">
-              {dict?.quantityMaxLabel?.replace("{max}", context.sellOrder.maxQuantity)}
+              {dict?.quantityMaxLabel?.replace(
+                "{max}",
+                context.sellOrder.maxQuantity
+              )}
             </label>
             <input
               type="number"
@@ -98,7 +104,9 @@ export const SellOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div>
-            <label className="block text-xs mb-1">{dict?.pricePerUnitMona}</label>
+            <label className="block text-xs mb-1">
+              {dict?.pricePerUnitMona}
+            </label>
             <input
               type="number"
               min="0"
@@ -123,7 +131,9 @@ export const SellOrder = ({ dict }: { dict: any }) => {
               disabled={sellOrderLoading || !pricePerUnit || quantity <= 0}
               className="px-4 py-2 text-xs border border-black bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {sellOrderLoading ? dict?.creatingLabel : dict?.createSellOrderLabel}
+              {sellOrderLoading
+                ? dict?.creatingLabel
+                : dict?.createSellOrderLabel}
             </button>
           </div>
         </div>

@@ -127,11 +127,11 @@ export const getSettlementBotsAll = async (
 
 const CONTRACTS_ALL = `
 query($first: Int!, $skip: Int!) {
-  futuresContracts(orderBy: blockTimestamp, orderDirection: desc, where: {lastUpdate_gt: 0}, first: $first, skip: $skip) {
+  futuresContracts(orderBy: blockTimestamp, orderDirection: desc, first: $first, skip: $skip) {
     contractId
     childId
-    orderId
     tokenId
+    marketOrderId
     quantity
     isFulfilled
     pricePerUnit
@@ -147,7 +147,6 @@ query($first: Int!, $skip: Int!) {
     isActive
     isSettled
     uri
-    finalFillers
     timeSinceCompletion
     maxSettlementDelay
     metadata {

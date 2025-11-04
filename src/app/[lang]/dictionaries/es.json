@@ -244,5 +244,18 @@
   "noBotsRegisteredLabel": "No hay bots de liquidación registrados",
   "successText": "ÉXITO",
   "transferEmptyAll": "No se encontraron derechos físicos",
-  "transferEmptyUser": "No se encontraron derechos físicos del usuario"
+  "transferEmptyUser": "No se encontraron derechos físicos del usuario",
+  "statusPending": "PENDIENTE",
+  "settledContractLabel": "Contrato Liquidado",
+  "pendingSettlementLabel": "Liquidación Pendiente",
+  "timeRemainingLabel": "Tiempo Restante",
+  "createdAt": "Creado",
+  "stillTrading": "Aún Negociándose",
+  "settleNow": "Liquidar Ahora",
+  "cancelOrderAction": "Cancelar Orden",
+  "claimUnusedRights": "Reclamar No Utilizado",
+  "cancelled": "Contrato Cancelado",
+  "settlementBotsTitle": "Bots de Liquidación",
+  "settlementBotsLoading": "Cargando bots...",
+  "unknownContractLabel": "Contrato Desconocido"
 }

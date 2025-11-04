@@ -516,9 +516,9 @@ const useFuturesSimulation = () => {
       let cols = 14;
       if (width < 640) {
         cols = 6;
-      } else if (width < 1024) {
+      } else if (width < 1280) {
         cols = 10;
-      }
+      } 
 
       const rows = height > 900 ? 9 : height > 700 ? 8 : 7;
       setGridDimensions({ cols, rows });

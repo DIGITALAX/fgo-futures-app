@@ -27,6 +27,13 @@ query($first: Int!, $skip: Int!) {
       designId
       infraCurrency
       uri
+      allNested {
+        childId
+        child {
+          uri
+        }
+        childContract
+      }
       metadata {
         title
         image

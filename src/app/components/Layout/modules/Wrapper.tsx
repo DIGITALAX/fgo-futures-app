@@ -13,9 +13,9 @@ export default function Wrapper({
 }) {
   return (
     <div className="flex relative w-full flex-col gap-3 py-4 min-h-screen">
-      <Header dict={dict} />
+      <Header dict={dict} lang={"en"} />
       {page}
-      <Modals dict={dict} />
+      <Modals dict={dict} lang={"en"} />
     </div>
   );
 }

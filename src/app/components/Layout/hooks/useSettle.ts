@@ -20,7 +20,9 @@ const useSettle = (dict: any) => {
     []
   );
   const [contractsLoading, setContractsLoading] = useState<boolean>(false);
-  const [loadingKeys, setLoadingKeys] = useState<{ [key: string]: boolean }>({});
+  const [loadingKeys, setLoadingKeys] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   const [contractsSkip, setContractsSkip] = useState<number>(0);
   const [hasMoreContracts, setHasMoreContracts] = useState<boolean>(true);
 
@@ -29,7 +31,6 @@ const useSettle = (dict: any) => {
     try {
       const skipValue = reset ? 0 : contractsSkip;
       const res = await getContractsSettled(20, skipValue);
-
       let allContracts = res?.data?.futuresContracts;
 
       if (!allContracts || allContracts.length < 20) {
@@ -42,7 +43,7 @@ const useSettle = (dict: any) => {
 
           if (publicClient && address && con?.tokenId) {
             const res = await publicClient.readContract({
-              address: contracts.futures,
+              address: contracts.trading,
               abi: [
                 {
                   type: "function",

@@ -35,7 +35,7 @@ const Futures: FunctionComponent<{ dict: any }> = memo(() => {
       return (
         <div
           key={`element-${row}-${col}`}
-          className={`aspect-square border border-black flex gap-1 flex-col cursor-pointer relative p-px overflow-hidden ${
+          className={`aspect-square gradient border border-[#dc7d2f] flex gap-1 flex-col cursor-pointer relative p-px overflow-hidden ${
             flashingElements.has(element.childId)
               ? `animate-${flashingElements.get(element.childId)}`
               : ""
@@ -79,7 +79,7 @@ const Futures: FunctionComponent<{ dict: any }> = memo(() => {
     return (
       <div
         key={`empty-${row}-${col}`}
-        className={`aspect-square border border-black ${getRandomBgColor()}`}
+        className={`aspect-square gradient border border-[#dc7d2f] ${getRandomBgColor()}`}
         style={{
           gridRow: row + 1,
           gridColumn: col + 1,

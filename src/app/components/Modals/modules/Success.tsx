@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { AppContext } from "@/app/lib/providers/Providers";
 import { getCurrentNetwork } from "@/app/lib/constants";
 
-export const Success = () => {
+export const Success = ({ lang }: { lang: string }) => {
   const context = useContext(AppContext);
 
   if (!context?.successData) return null;
@@ -13,7 +13,10 @@ export const Success = () => {
     : null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      dir={lang == "yi" ? "rtl" : "ltr"}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
       <div className="bg-white border border-black max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
@@ -31,7 +34,7 @@ export const Success = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="p-4 space-y-4">
           <div>
             <p className="text-sm leading-relaxed">

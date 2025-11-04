@@ -68,6 +68,7 @@ export interface PhysicalStep {
 export interface Parent {
   parentContract: string;
   designId: string;
+  allNested: GraphChild[];
   infraCurrency: string;
   uri: string;
   metadata: {
@@ -189,6 +190,7 @@ export interface ContractSettled {
   contractId: string;
   childId: string;
   tokenId: string;
+  marketOrderId: string;
   isFulfilled: boolean;
   quantity: string;
   balanceOf?: number;
@@ -357,15 +359,9 @@ export interface Supplier {
 }
 
 export type CreateProps = {
-  handleWithdrawPhysicalRights: (chosenRights: {
-    childId: number;
-    orderId: number;
-    amount: number;
-    originalMarket: string;
-    childContract: string;
-    key: string;
-  }) => Promise<void>;
+  handleWithdrawPhysicalRights: (chosenRights: RightsAction) => Promise<void>;
   dict: any;
+  claimLoadingKey: string | null;
   escrowLoading: boolean;
   escrowUserLoading: boolean;
   escrowedRights: EscrowedRight[];
@@ -376,6 +372,7 @@ export type CreateProps = {
   loadMoreEscrowedRights: () => void;
   loadMoreEscrowedRightsUser: () => void;
   handleCancelFuture: (contractId: number) => Promise<void>;
+  claimUnusedRights: (chosenRights: RightsAction) => Promise<void>;
   loadingKeys: { [key: string]: boolean };
 };
 

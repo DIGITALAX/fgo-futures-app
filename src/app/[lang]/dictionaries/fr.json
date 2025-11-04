@@ -244,5 +244,18 @@
   "noBotsRegisteredLabel": "Aucun bot de règlement enregistré",
   "successText": "SUCCÈS",
   "transferEmptyAll": "Aucun droit physique trouvé",
-  "transferEmptyUser": "Aucun droit physique de l'utilisateur trouvé"
+  "transferEmptyUser": "Aucun droit physique de l'utilisateur trouvé",
+  "statusPending": "EN ATTENTE",
+  "settledContractLabel": "Contrat réglé",
+  "pendingSettlementLabel": "Règlement en attente",
+  "timeRemainingLabel": "Temps restant",
+  "createdAt": "Créé",
+  "stillTrading": "Toujours En Cours",
+  "settleNow": "Régler Maintenant",
+  "cancelOrderAction": "Annuler la Commande",
+  "claimUnusedRights": "Réclamer Non Utilisé",
+  "cancelled": "Contrat Annulé",
+  "settlementBotsTitle": "Bots de Règlement",
+  "settlementBotsLoading": "Chargement des bots...",
+  "unknownContractLabel": "Contrat Inconnu"
 }

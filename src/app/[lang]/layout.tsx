@@ -21,7 +21,7 @@ export default function RootLayout({
   params: tParams;
 }>) {
   return (
-    <div className="flex relative w-full flex-col gap-3 py-4 min-h-screen">
+    <div className="flex relative bg-trading-hero w-full flex-col gap-3 py-4 min-h-screen">
       <HeaderEntry params={params} />
       {children}
       <ModalsEntry params={params} />

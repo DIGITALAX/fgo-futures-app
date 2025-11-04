@@ -12,13 +12,18 @@ import Supply from "./Supply";
 import Drag from "./Drag";
 import Suppliers from "./Suppliers";
 import SettlementSupply from "./SettlementSupply";
+import Image from "next/image";
 
-const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
+const Entry: FunctionComponent<{ dict: any; lang: string }> = ({
+  dict,
+  lang,
+}) => {
   const contexto = useContext(AppContext);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div
+      dir={lang == "yi" ? "rtl" : "ltr"}
       className="w-full flex flex-col items-center justify-center relative"
       ref={containerRef}
     >
@@ -31,7 +36,7 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
             <SettlementSupply dict={dict} />
           )}
         </div>
-        <div className="relative w-full h-fit border-y border-black py-3 font-fash flex flex-row">
+        <div className="relative w-full h-fit border-y border-[#dc2f8e] py-3 font-fash flex flex-row bg-white text-[#dc2f8e]">
           <Marquee gradient={false} speed={70} direction={"right"}>
             <span className="relative text-sm px-2 whitespace-nowrap w-fit h-fit flex">
               {dict?.marqueeText}
@@ -65,14 +70,24 @@ const Entry: FunctionComponent<{ dict: any }> = ({ dict }) => {
       </div>
       {contexto?.type == 0 ? <Trade dict={dict} /> : <Supply dict={dict} />}
       {contexto?.type == 0 ? (
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 h-fit p-2 sm:p-4">
-          <Fulfillers dict={dict} />
-          <SettlementBots dict={dict} />
+        <div className="w-full p-2 sm:p-4 lg:p-6 flex items-center justify-center">
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 h-fit md:h-[45rem]">
+            <Fulfillers dict={dict} />
+            <SettlementBots dict={dict} />
+          </div>
         </div>
       ) : (
         <Suppliers dict={dict} />
       )}
       {contexto?.dragBox && <Drag containerRef={containerRef} />}
+      <div className="relative w-full h-fit flex py-4 px-1 text-black underline text-sm items-end justify-end">
+        <div
+          className="relative w-fit h-fit flex cursor-pointer"
+          onClick={() => window.open("https://digitalax.xyz")}
+        >
+          www.digitalax.xyz
+        </div>
+      </div>
     </div>
   );
 };

@@ -25,7 +25,7 @@ const useHeader = () => {
   const languageOptions = [
     { code: "en" as Language, name: "Aussie" },
     { code: "es" as Language, name: "Español" },
-    { code: "yi" as Language, name: "יישיד" },
+    { code: "yi" as Language, name: "יידיש" },
     { code: "pt" as Language, name: "Português" },
     { code: "fr" as Language, name: "Français" },
     { code: "gd" as Language, name: "Gàidhlig" },
@@ -146,7 +146,8 @@ const useHeader = () => {
 
       const segments = path.split("/");
       const hasLangSegment =
-        segments[1] && ["en", "es", "pt"].includes(segments[1]);
+        segments[1] &&
+        ["en", "es", "pt", "yi", "fr", "gd"].includes(segments[1]);
 
       let newPath;
       if (hasLangSegment) {

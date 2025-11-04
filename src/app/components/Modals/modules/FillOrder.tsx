@@ -4,7 +4,7 @@ import Image from "next/image";
 import useOrders from "../hooks/useOrders";
 import { INFURA_GATEWAY } from "@/app/lib/constants";
 
-export const FillOrder = ({ dict }: { dict: any }) => {
+export const FillOrder = ({ dict, lang }: { dict: any; lang: string }) => {
   const context = useContext(AppContext);
   const [quantity, setQuantity] = useState<number>(1);
   const [isApproved, setIsApproved] = useState<boolean>(false);
@@ -40,18 +40,18 @@ export const FillOrder = ({ dict }: { dict: any }) => {
 
   const handleSubmit = async () => {
     if (quantity <= 0) return;
-    if (   Number(context?.fillOrder?.supply) > 0) {
-      await handleFillOrderSupply(
-        context.fillOrder?.orderId!,
-        quantity
-      );
+    if (Number(context?.fillOrder?.supply) > 0) {
+      await handleFillOrderSupply(context.fillOrder?.orderId!, quantity);
     } else {
       await handleFillOrder(context.fillOrder?.orderId!, quantity);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      dir={lang == "yi" ? "rtl" : "ltr"}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
       <div className="bg-white border border-black max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
@@ -90,7 +90,9 @@ export const FillOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div className="bg-gray-50 p-3 rounded border border-gray-200">
-            <div className="text-xs text-gray-600 mb-1">{dict?.pricePerUnitLabel}</div>
+            <div className="text-xs text-gray-600 mb-1">
+              {dict?.pricePerUnitLabel}
+            </div>
             <div className="text-sm font-medium">
               {(context.fillOrder.pricePerUnit / 1e18).toFixed(4)} $MONA
             </div>
@@ -98,7 +100,10 @@ export const FillOrder = ({ dict }: { dict: any }) => {
 
           <div>
             <label className="block text-xs mb-1">
-              {dict?.quantityMaxLabel?.replace("{max}", context.fillOrder.maxQuantity)}
+              {dict?.quantityMaxLabel?.replace(
+                "{max}",
+                context.fillOrder.maxQuantity
+              )}
             </label>
             <input
               type="number"
@@ -119,7 +124,9 @@ export const FillOrder = ({ dict }: { dict: any }) => {
           </div>
 
           <div className="bg-blue-50 p-3 rounded border border-blue-200">
-            <div className="text-xs text-blue-600 mb-1">{dict?.totalCostLabel}</div>
+            <div className="text-xs text-blue-600 mb-1">
+              {dict?.totalCostLabel}
+            </div>
             <div className="text-lg font-bold text-blue-800">
               {totalCost.toFixed(4)} $MONA
             </div>

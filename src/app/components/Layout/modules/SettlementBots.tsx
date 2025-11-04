@@ -27,9 +27,11 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
   };
 
   return (
-    <div className="w-full flex flex-col p-2 sm:p-4 lg:p-6">
-      <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
-        {dict?.settlementBotsTitle}
+    <div className="flex noise bg-parchment h-[45rem] md:h-full flex-col border border-black">
+      <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 flex-shrink-0">
+        <div className="text-lg sm:text-2xl font-bold mb-3 sm:mb-6 text-left">
+          {dict?.settlementBotsTitle}
+        </div>
       </div>
 
       {settlementBotsLoading && context?.settlementBots?.length === 0 ? (
@@ -37,197 +39,212 @@ const SettlementBots: FunctionComponent<{ dict: any }> = ({ dict }) => {
           {dict?.settlementBotsLoading}
         </div>
       ) : (
-        <div className="h-fit overflow-y-auto" id="settlementbots-scrollable">
-          <InfiniteScroll
-            dataLength={context?.settlementBots?.length || 0}
-            next={loadMoreSettlementBots}
-            hasMore={hasMoreSettlementBots && !settlementBotsLoading}
-            loader={
-              <div className="text-center text-xs text-gray-500 py-2">
-                {dict?.settlementBotsLoadingMore}
-              </div>
-            }
-            scrollableTarget="settlementbots-scrollable"
-            scrollThreshold={0.8}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-              {context?.settlementBots?.map((bot, index) => {
-                const slashScore = calculateSlashScore(
-                  bot.totalSlashEvents,
-                  bot.totalSettlements
-                );
+        <div className="flex-1 min-h-0 overflow-y-auto" id="settlementbots-scrollable">
+            <InfiniteScroll
+              dataLength={context?.settlementBots?.length || 0}
+              next={loadMoreSettlementBots}
+              hasMore={hasMoreSettlementBots && !settlementBotsLoading}
+              loader={
+                <div className="text-center text-xs text-gray-500 py-2">
+                  {dict?.settlementBotsLoadingMore}
+                </div>
+              }
+              scrollableTarget="settlementbots-scrollable"
+              scrollThreshold={0.8}
+            >
+              <div className="grid grid-cols-1 px-2 sm:px-3 lg:px-4 gap-3 sm:gap-4 lg:gap-6 py-2">
+                {context?.settlementBots?.map((bot, index) => {
+                  const slashScore = calculateSlashScore(
+                    bot.totalSlashEvents,
+                    bot.totalSettlements
+                  );
 
-                return (
-                  <div
-                    key={bot.bot}
-                    className="border gradient border-black p-2 sm:p-3 lg:p-4 flex flex-col"
-                  >
-                    <div className="border-b border-gray-300 pb-2 sm:pb-3 lg:pb-3 mb-2 sm:mb-3 lg:mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs text-orange-600 font-medium">
-                          BOT #{index + 1}
-                        </div>
-                        <div className={`text-xs font-bold`}>
-                          {slashScore.toFixed(1)}% {dict?.successText}
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-gray-600 mb-1">
-                        {dict?.botAddressLabel}
-                      </div>
-                      <a
-                        href={`${network.blockExplorer}/address/${bot.bot}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-mono text-orange-600 hover:text-orange-800 underline mb-2 block"
-                      >
-                        {bot.bot.slice(0, 8)}...{bot.bot.slice(-6)}
-                      </a>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-gray-600">{dict?.stakeLabel}</span>
-                          <div className="font-medium">
-                            {(
-                              Number(bot.stakeAmount) /
-                              10 ** 18
-                            ).toLocaleString()}{" "}
-                            $MONA
+                  return (
+                    <div
+                      key={bot.bot}
+                      className="border bg-white border-black p-2 sm:p-3 lg:p-4 flex flex-col"
+                    >
+                      <div className="border-b border-gray-300 pb-2 sm:pb-3 lg:pb-3 mb-2 sm:mb-3 lg:mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs text-orange-600 font-medium">
+                            BOT #{index + 1}
+                          </div>
+                          <div className={`text-xs font-bold`}>
+                            {slashScore.toFixed(1)}% {dict?.successText}
                           </div>
                         </div>
-                        <div>
-                          <span className="text-gray-600">{dict?.settlementsCountLabel}</span>
-                          <div className="font-medium">
-                            {bot.totalSettlements}
-                          </div>
-                        </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                        <div>
-                          <span className="text-gray-600">{dict?.avgDelayLabel}</span>
-                          <div className="font-medium">
-                            {bot.averageDelaySeconds}s
-                          </div>
+                        <div className="text-xs text-gray-600 mb-1">
+                          {dict?.botAddressLabel}
                         </div>
-                        <div>
-                          <span className="text-gray-600">{dict?.slashesLabel}</span>
-                          <div className="text-red-600">
-                            {bot.totalSlashEvents}
-                          </div>
-                        </div>
-                      </div>
-
-                      {Number(bot.totalAmountSlashed) > 0 && (
-                        <div className="mt-2 text-xs">
-                          <span className="text-gray-600">{dict?.amountSlashedLabel}</span>
-                          <div className="text-red-600">
-                            {(
-                              Number(bot.totalAmountSlashed) /
-                              10 ** 18
-                            ).toLocaleString()}{" "}
-                            $MONA
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="mt-2 text-xs text-gray-500">
                         <a
-                          href={`${network.blockExplorer}/tx/${bot.transactionHash}`}
+                          href={`${network.blockExplorer}/address/${bot.bot}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-orange-600 hover:text-orange-800 underline"
+                          className="text-xs font-mono text-orange-600 hover:text-orange-800 underline mb-2 block"
                         >
-                          {dict?.registrationTxLabel} {bot.transactionHash.slice(0, 8)}...
-                          {bot.transactionHash.slice(-6)}
+                          {bot.bot.slice(0, 8)}...{bot.bot.slice(-6)}
                         </a>
-                      </div>
-                    </div>
 
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-700 mb-2">
-                        {dict?.recentSettlementsLabel} ({bot.settledContracts?.length || 0})
-                      </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-gray-600">
+                              {dict?.stakeLabel}
+                            </span>
+                            <div className="font-medium">
+                              {(
+                                Number(bot.stakeAmount) /
+                                10 ** 18
+                              ).toLocaleString()}{" "}
+                              $MONA
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">
+                              {dict?.settlementsCountLabel}
+                            </span>
+                            <div className="font-medium">
+                              {bot.totalSettlements}
+                            </div>
+                          </div>
+                        </div>
 
-                      <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {bot.settledContracts?.map((contract) => (
-                          <div
-                            key={contract.contractId}
-                            className="border border-gray-200 p-2 text-xs"
+                        <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                          <div>
+                            <span className="text-gray-600">
+                              {dict?.avgDelayLabel}
+                            </span>
+                            <div className="font-medium">
+                              {bot.averageDelaySeconds}s
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">
+                              {dict?.slashesLabel}
+                            </span>
+                            <div className="text-red-600">
+                              {bot.totalSlashEvents}
+                            </div>
+                          </div>
+                        </div>
+
+                        {Number(bot.totalAmountSlashed) > 0 && (
+                          <div className="mt-2 text-xs">
+                            <span className="text-gray-600">
+                              {dict?.amountSlashedLabel}
+                            </span>
+                            <div className="text-red-600">
+                              {(
+                                Number(bot.totalAmountSlashed) /
+                                10 ** 18
+                              ).toLocaleString()}{" "}
+                              $MONA
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mt-2 text-xs text-gray-500">
+                          <a
+                            href={`${network.blockExplorer}/tx/${bot.transactionHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-600 hover:text-orange-800 underline"
                           >
-                            <div className="flex items-start gap-2">
-                              <div className="w-8 h-8 flex-shrink-0 relative">
-                                <Image
-                                  draggable={false}
-                                  fill
-                                  style={{ objectFit: "cover" }}
-                                  src={`${INFURA_GATEWAY}${
-                                    contract.contract?.metadata?.image?.split(
-                                      "ipfs://"
-                                    )?.[1]
-                                  }`}
-                                  alt={contract.contract?.metadata?.title}
-                                  className="border border-gray-200"
-                                />
-                              </div>
+                            {dict?.registrationTxLabel}{" "}
+                            {bot.transactionHash.slice(0, 8)}...
+                            {bot.transactionHash.slice(-6)}
+                          </a>
+                        </div>
+                      </div>
 
-                              <div className="flex-1 min-w-0">
-                                <div className="text-gray-700 truncate">
-                                  {contract.contract?.metadata?.title}
+                      <div className="flex-1">
+                        <div className="text-xs text-gray-700 mb-2">
+                          {dict?.recentSettlementsLabel} (
+                          {bot.settledContracts?.length || 0})
+                        </div>
+
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {bot.settledContracts?.map((contract) => (
+                            <div
+                              key={contract.contractId}
+                              className="border border-gray-200 p-2 text-xs"
+                            >
+                              <div className="flex items-start gap-2">
+                                <div className="w-8 h-8 flex-shrink-0 relative">
+                                  <Image
+                                    draggable={false}
+                                    fill
+                                    style={{ objectFit: "cover" }}
+                                    src={`${INFURA_GATEWAY}${
+                                      contract.contract?.metadata?.image?.split(
+                                        "ipfs://"
+                                      )?.[1]
+                                    }`}
+                                    alt={contract.contract?.metadata?.title}
+                                    className="border border-gray-200"
+                                  />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-1 text-xxs text-gray-500 mt-1">
-                                  <span>{dict?.contractNumberLabel} #{contract.contractId}</span>
-                                  <span>
-                                    {dict?.rewardContractLabel}{" "}
-                                    {(
-                                      Number(contract.reward) /
-                                      10 ** 18
-                                    ).toFixed(0)}{" "}
-                                    $MONA
-                                  </span>
-                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-gray-700 truncate">
+                                    {contract.contract?.metadata?.title}
+                                  </div>
 
-                                <div className="text-xxs text-gray-500 mt-1">
-                                  <span>
-                                    {new Date(
-                                      parseInt(contract.blockTimestamp) * 1000
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
+                                  <div className="grid grid-cols-2 gap-1 text-xxs text-gray-500 mt-1">
+                                    <span>
+                                      {dict?.contractNumberLabel} #
+                                      {contract.contractId}
+                                    </span>
+                                    <span>
+                                      {dict?.rewardContractLabel}{" "}
+                                      {(
+                                        Number(contract.reward) /
+                                        10 ** 18
+                                      ).toFixed(0)}{" "}
+                                      $MONA
+                                    </span>
+                                  </div>
 
-                                <div className="text-xxs text-gray-400 mt-1">
-                                  <a
-                                    href={`${network.blockExplorer}/tx/${contract.transactionHash}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-orange-600 hover:text-orange-800 underline"
-                                  >
-                                    Tx: {contract.transactionHash.slice(0, 6)}
-                                    ...
-                                    {contract.transactionHash.slice(-4)}
-                                  </a>
+                                  <div className="text-xxs text-gray-500 mt-1">
+                                    <span>
+                                      {new Date(
+                                        parseInt(contract.blockTimestamp) * 1000
+                                      ).toLocaleDateString()}
+                                    </span>
+                                  </div>
+
+                                  <div className="text-xxs text-gray-400 mt-1">
+                                    <a
+                                      href={`${network.blockExplorer}/tx/${contract.transactionHash}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-orange-600 hover:text-orange-800 underline"
+                                    >
+                                      Tx: {contract.transactionHash.slice(0, 6)}
+                                      ...
+                                      {contract.transactionHash.slice(-4)}
+                                    </a>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {(!bot.settledContracts ||
-                        bot.settledContracts.length === 0) && (
-                        <div className="text-xs text-gray-400 text-center py-4">
-                          {dict?.noSettlementsLabel}
+                          ))}
                         </div>
-                      )}
+
+                        {(!bot.settledContracts ||
+                          bot.settledContracts.length === 0) && (
+                          <div className="text-xs text-gray-400 text-center py-4">
+                            {dict?.noSettlementsLabel}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </InfiniteScroll>
-        </div>
-      )}
+                  );
+                })}
+              </div>
+            </InfiniteScroll>
+          </div>
+        )}
 
       {context?.settlementBots?.length === 0 && !settlementBotsLoading && (
         <div className="text-center text-gray-500 py-8">

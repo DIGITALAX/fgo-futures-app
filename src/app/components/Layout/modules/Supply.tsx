@@ -59,9 +59,9 @@ const Supply: FunctionComponent<{ dict: any }> = ({ dict }) => {
   } = useSupply(dict);
 
   return (
-    <div className="w-full p-2 sm:p-4 lg:p-6 flex items-center justify-center">
+    <div className="w-full noise p-2 sm:p-4 lg:p-6 flex items-center justify-center">
       <div className="w-full flex flex-col items-center justify-center gap-3 sm:gap-4 lg:gap-6">
-        <div className="w-full flex gradient h-[45rem] flex-col overflow-hidden border border-black">
+        <div className="w-full flex bg-parchment noise h-[45rem] flex-col overflow-hidden border border-black">
           <div className="px-2 sm:px-3 lg:px-4 py-2 sm:py-3 border-b border-black">
             <div className="text-sm sm:text-base lg:text-lg">
               {dict?.supplyTitle}

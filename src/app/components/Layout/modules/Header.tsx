@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import useHeader from "../hooks/useHeader";
 import { AppContext } from "@/app/lib/providers/Providers";
 
-const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
+const Header: FunctionComponent<{ dict: any, lang: string }> = ({ dict, lang }) => {
   const context = useContext(AppContext);
 
   const handleFGOClick = () => {
@@ -26,17 +26,25 @@ const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
   } = useHeader();
 
   return (
-    <div className="w-full h-fit flex px-4 flex-wrap items-center justify-between relative gap-3">
+    <div
+      dir={lang == "yi" ? "rtl" : "ltr"}
+      className="w-full h-fit flex px-4 flex-wrap items-center justify-between relative gap-3"
+    >
       <div className="relative w-fit h-fit flex gap-2 z-10 flex-wrap">
         <div className="px-3 py-2 border border-black bg-white text-xs">
           {dict?.monaLabel}{" "}
           {statsLoading ? "..." : context?.stats.mona.toFixed(2) || "0.00"}
         </div>
         <div className="px-3 py-2 border border-black bg-white text-xs">
-          {dict?.genesisLabel} {statsLoading ? "..." : context?.stats.genesis || "0"}
+          {dict?.genesisLabel}{" "}
+          {statsLoading ? "..." : context?.stats.genesis || "0"}
         </div>
-        <div className="px-3 py-2 border border-black bg-white text-xs">
-          {dict?.ionicLabel} {statsLoading ? "..." : context?.stats.ionic || "0"}
+        <div
+          className="px-3 py-2 border cursor-pointer border-black bg-white text-xs"
+          onClick={() => window.open("https://ionic.digitalax.xyz")}
+        >
+          {dict?.ionicLabel}{" "}
+          {statsLoading ? "..." : context?.stats.ionic || "0"}
         </div>
         <div className="px-3 py-2 border border-black bg-white text-xs">
           {dict?.blockLabel} {context?.stats.blockTimestamp}
@@ -48,8 +56,9 @@ const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
             onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
             className="px-3 py-2 border border-black bg-white text-xs cursor-pointer hover:bg-gray-50 transition-colors"
           >
-            {languageOptions.find((opt) => opt.code === context?.selectedLanguage)
-              ?.name ?? "Aussie"}
+            {languageOptions.find(
+              (opt) => opt.code === context?.selectedLanguage
+            )?.name ?? "Aussie"}
           </div>
           {isLanguageDropdownOpen && (
             <div className="absolute text-xs z-20 w-full mt-1 border border-black bg-white cursor-pointer">
@@ -103,7 +112,11 @@ const Header: FunctionComponent<{ dict: any }> = ({ dict }) => {
                       `${address?.slice(0, 6)}...${address?.slice(-4)}`}
                   </>
                 ) : (
-                  <>{isConnecting ? dict?.connectingLabel : dict?.connectWalletLabel}</>
+                  <>
+                    {isConnecting
+                      ? dict?.connectingLabel
+                      : dict?.connectWalletLabel}
+                  </>
                 )}
               </div>
             );

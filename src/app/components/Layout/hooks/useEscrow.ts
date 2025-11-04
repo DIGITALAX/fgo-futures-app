@@ -30,6 +30,7 @@ const useEscrow = (dict: any) => {
   const [withdrawLoadingKey, setWithdrawLoadingKey] = useState<string | null>(
     null
   );
+  const [claimLoadingKey, setClaimLoadingKey] = useState<string | null>(null);
 
   const [escrowedRightsSkip, setEscrowedRightsSkip] = useState<number>(0);
   const [escrowedRightsUserSkip, setEscrowedRightsUserSkip] =
@@ -41,6 +42,39 @@ const useEscrow = (dict: any) => {
 
   const network = getCurrentNetwork();
   const contracts = getCoreContractAddresses(network.chainId);
+
+  const claimUnusedRights = async (chosenRights: RightsAction) => {
+    if (!walletClient || !publicClient || !address) return;
+    setClaimLoadingKey(chosenRights.key);
+
+    try {
+      if (
+        !escrowedRights.every((right) =>
+          right.contracts.every((con) => con.isSettled)
+        )
+      ) {
+        context?.showError(dict?.settleClaimUnavailable);
+        setClaimLoadingKey(chosenRights.key);
+        return;
+      }
+
+      const hash = await walletClient.writeContract({
+        address: contracts.escrow,
+        abi: ABIS.FGOFuturesEscrow,
+        functionName: "claimUnusedRights",
+        args: [chosenRights.key],
+        account: address,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      context?.showSuccess(dict?.settleClaimSuccess, hash);
+    } catch (err: any) {
+      context?.showError(err.message);
+    } finally {
+      setClaimLoadingKey(chosenRights.key);
+    }
+  };
 
   const handleDepositPhysicalRights = async (chosenRights: RightsAction) => {
     if (!walletClient || !publicClient || !address || !chosenRights) return;
@@ -73,16 +107,13 @@ const useEscrow = (dict: any) => {
   const handleWithdrawPhysicalRights = async (chosenRights: RightsAction) => {
     if (!walletClient || !publicClient || !address || !chosenRights) return;
 
-    const { childId, orderId, amount, originalMarket, childContract, key } =
-      chosenRights;
-
-    setWithdrawLoadingKey(key);
+    setWithdrawLoadingKey(chosenRights.key);
     try {
       const hash = await walletClient.writeContract({
         address: contracts.escrow,
         abi: ABIS.FGOFuturesEscrow,
         functionName: "withdrawPhysicalRights",
-        args: [childId, orderId, amount, childContract, originalMarket],
+        args: [BigInt(chosenRights.amount), chosenRights.key],
         account: address,
       });
 
@@ -94,7 +125,7 @@ const useEscrow = (dict: any) => {
       context?.showError(err.message);
     }
     setWithdrawLoadingKey((currentKey) =>
-      currentKey === key ? null : currentKey
+      currentKey === chosenRights.key ? null : currentKey
     );
   };
 
@@ -246,7 +277,6 @@ const useEscrow = (dict: any) => {
         })
       );
 
-
       if (reset) {
         setEscrowedRightsUser(allRights);
         setEscrowedRightsUserSkip(20);
@@ -300,6 +330,8 @@ const useEscrow = (dict: any) => {
     hasMoreEscrowedRightsUser,
     loadMoreEscrowedRights,
     loadMoreEscrowedRightsUser,
+    claimUnusedRights,
+    claimLoadingKey,
   };
 };
 

@@ -1,14 +1,16 @@
 import { AppContext } from "@/app/lib/providers/Providers";
 import { useContext } from "react";
 
-export const Error = () => {
-  const context = useContext(AppContext
-  );
+export const Error = ({ lang }: { lang: string }) => {
+  const context = useContext(AppContext);
 
   if (!context?.errorData) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      dir={lang == "yi" ? "rtl" : "ltr"}
+    >
       <div className="bg-white border border-black max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-3 border-b border-black">
           <div className="flex items-center justify-between">
@@ -26,7 +28,7 @@ export const Error = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="p-4">
           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
             {context.errorData.message}

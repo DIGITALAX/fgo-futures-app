@@ -7,5 +7,5 @@ export default async function ModalsEntry({ params }: { params: tParams }) {
   const dict = await (getDictionary as (locale: any) => Promise<any>)(
     lang ?? "en"
   );
-  return <Modals dict={dict} />;
+  return <Modals dict={dict} lang={lang ?? "en"} />;
 }
