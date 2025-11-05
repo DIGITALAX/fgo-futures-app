@@ -80,14 +80,6 @@ const Entry: FunctionComponent<{ dict: any; lang: string }> = ({
         <Suppliers dict={dict} />
       )}
       {contexto?.dragBox && <Drag containerRef={containerRef} />}
-      <div className="relative w-full h-fit flex py-4 px-1 text-black underline text-sm items-end justify-end">
-        <div
-          className="relative w-fit h-fit flex cursor-pointer"
-          onClick={() => window.open("https://digitalax.xyz")}
-        >
-          www.digitalax.xyz
-        </div>
-      </div>
     </div>
   );
 };

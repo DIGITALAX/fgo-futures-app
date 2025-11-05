@@ -12,6 +12,7 @@ import {
 import { DragState, Language } from "../types/layout.types";
 import { INFO } from "@/app/lib/constants";
 import { AppContext } from "@/app/lib/providers/Providers";
+import Image from "next/image";
 
 export default function Drag({
   containerRef,
@@ -117,7 +118,7 @@ export default function Drag({
   return (
     <div
       ref={frameRef}
-      className="border active:cursor-grabbing cursor-grab border-black w-[90vw] sm:w-80 absolute bg-white z-10 text-black font-fash flex h-80 p-3 text-sm text-center"
+      className="border active:cursor-grabbing cursor-grab border-black w-[90vw] sm:w-80 absolute bg-white z-10 text-black flex flex-col font-fash h-80 p-3 text-sm text-center"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -127,8 +128,31 @@ export default function Drag({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      <div className="relative w-full h-full overflow-y-scroll whitespace-pre-line p-4">
+      <div className="overflow-y-auto flex-1 whitespace-pre-line p-4 mb-2">
         {INFO[context?.selectedLanguage! as Language]}
+        <div className="mt-6 flex flex-col gap-6 items-center justify-center">
+          <div className="w-full flex justify-center text-center flex-col gap-2 items-center">
+            <div className="relative w-full max-w-xs">
+              <Image
+                alt="Le trader rouennais"
+                layout="responsive"
+                width={436}
+                height={711}
+                src={"/images/trader.png"}
+                draggable={false}
+              />
+            </div>
+            <div className="text-lg">
+              Le trader de Rouen
+            </div>
+          </div>
+          <div
+            className="cursor-pointer underline"
+            onClick={() => window.open("https://digitalax.xyz")}
+          >
+            www.digitalax.xyz
+          </div>
+        </div>
       </div>
     </div>
   );
