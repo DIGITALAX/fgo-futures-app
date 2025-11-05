@@ -12,7 +12,7 @@ export default function Wrapper({
   page: JSX.Element;
 }) {
   return (
-    <div className="flex relative w-full flex-col gap-3 py-4 min-h-screen">
+    <div className="flex relative bg-trading-hero w-full flex-col gap-3 py-4 min-h-screen">
       <Header dict={dict} lang={"en"} />
       {page}
       <Modals dict={dict} lang={"en"} />

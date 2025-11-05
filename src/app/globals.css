@@ -289,7 +289,7 @@ button:disabled {
 
 .bg-trading-hero {
   @apply relative h-screen w-full;
-  background-color: black;
+  /* background-color: black; */
   opacity: 0.95;
 }
 
