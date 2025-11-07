@@ -96,7 +96,7 @@ const usePhysicalRights = () => {
 
         let allRights = data?.data?.physicalRights_collection;
 
-        if (!allRights && reset) {
+        if ((!allRights || allRights?.length < 1) && reset) {
           allRights = SAMPLE_RIGHTS;
         }
 
