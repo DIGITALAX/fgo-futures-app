@@ -68,7 +68,9 @@ const useHeader = () => {
     if (!publicClient) return;
     setStatsLoading(true);
     try {
-      let monaBalance, ionicBalance, genesisBalance;
+      let monaBalance: bigint = BigInt(0),
+        ionicBalance: bigint = BigInt(0),
+        genesisBalance: bigint = BigInt(0);
       if (address) {
         [monaBalance, ionicBalance, genesisBalance] = await Promise.all([
           publicClient.readContract({
