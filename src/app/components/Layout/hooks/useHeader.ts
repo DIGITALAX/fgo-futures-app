@@ -65,11 +65,12 @@ const useHeader = () => {
   };
 
   const getStats = async () => {
-    if (!publicClient || !address) return;
+    if (!publicClient) return;
     setStatsLoading(true);
     try {
-      const [monaBalance, ionicBalance, genesisBalance, currentBlock] =
-        await Promise.all([
+      let monaBalance, ionicBalance, genesisBalance;
+      if (address) {
+        [monaBalance, ionicBalance, genesisBalance] = await Promise.all([
           publicClient.readContract({
             address: contracts.mona,
             abi: [
@@ -124,14 +125,15 @@ const useHeader = () => {
             functionName: "balanceOf",
             args: [address],
           }),
-          publicClient.getBlock(),
         ]);
+      }
+      const currentBlock = await publicClient.getBlock();
 
       context?.setStats({
         mona: Number(monaBalance) / 10 ** 18,
         ionic: Number(ionicBalance),
         genesis: Number(genesisBalance),
-        blockTimestamp: Number(currentBlock.timestamp),
+        blockTimestamp: Number(currentBlock?.timestamp),
       });
     } catch (err: any) {
       console.error(err.message);
@@ -181,7 +183,6 @@ const useHeader = () => {
   useEffect(() => {
     if (
       !statsLoading &&
-      address &&
       publicClient &&
       context &&
       Object.values(context?.stats).every((val) => val == 0)

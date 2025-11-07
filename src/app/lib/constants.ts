@@ -25,13 +25,17 @@ export const NETWORKS = {
 export type NetworkConfig = (typeof NETWORKS)[keyof typeof NETWORKS];
 
 export const DEFAULT_NETWORK =
-  process.env.NODE_ENV === "production"
-    ? NETWORKS.LENS_MAINNET
-    : NETWORKS.LENS_TESTNET;
+  // process.env.NODE_ENV === "production"
+  //   ? 
+    NETWORKS.LENS_MAINNET
+    // : NETWORKS.LENS_TESTNET;
 
 export const getCurrentNetwork = (): NetworkConfig => {
-  const isMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
-  return isMainnet ? NETWORKS.LENS_MAINNET : NETWORKS.LENS_TESTNET;
+  // const isMainnet = process.env.NEXT_PUBLIC_NETWORK === "mainnet";
+  return NETWORKS.LENS_MAINNET;
+  // isMainnet ?
+
+  // : NETWORKS.LENS_TESTNET;
 };
 
 export const CORE_CONTRACT_ADDRESSES: Record<number, CoreContractAddresses> = {
@@ -56,7 +60,6 @@ export const CORE_CONTRACT_ADDRESSES: Record<number, CoreContractAddresses> = {
     mona: "0x28547B5b6B405A1444A17694AC84aa2d6A03b3Bd",
   },
 };
-
 
 export const FLASH_PATTERNS: string[] = [
   "flash-quick",
