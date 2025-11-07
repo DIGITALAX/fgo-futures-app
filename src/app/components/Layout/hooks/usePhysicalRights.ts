@@ -8,6 +8,7 @@ import {
 } from "@/app/lib/subgraph/queries/getPhysicalRights";
 import { useAccount } from "wagmi";
 import { AppContext } from "@/app/lib/providers/Providers";
+import { SAMPLE_RIGHTS } from "@/app/lib/constants";
 
 const usePhysicalRights = () => {
   const context = useContext(AppContext);
@@ -93,8 +94,11 @@ const usePhysicalRights = () => {
 
         const data = await getPhysicalRightsAll(20, skipValue);
 
-
         let allRights = data?.data?.physicalRights_collection;
+
+        if (!allRights && reset) {
+          allRights = SAMPLE_RIGHTS;
+        }
 
         if (!allRights || allRights.length < 20) {
           setHasMorePhysicalRights(false);
@@ -125,7 +129,6 @@ const usePhysicalRights = () => {
     try {
       const skipValue = reset ? 0 : physicalRightsEscrowedSkip;
       const data = await getPhysicalRightsAllEscrowed(20, skipValue);
-
       let allRights = data?.data?.physicalRights_collection;
 
       if (!allRights || allRights.length < 20) {
@@ -158,7 +161,6 @@ const usePhysicalRights = () => {
       const data = await getPhysicalRightsBuyer(address, 20, skipValue);
 
       let allRights = data?.data?.physicalRights_collection;
-
       if (!allRights || allRights.length < 20) {
         setHasMorePhysicalRightsUser(false);
       }
@@ -189,7 +191,6 @@ const usePhysicalRights = () => {
       const data = await getPhysicalRightsBuyerEscrowed(address, 20, skipValue);
 
       let allRights = data?.data?.physicalRights_collection;
-
       if (!allRights || allRights.length < 20) {
         setHasMorePhysicalRightsUserEscrowed(false);
       }

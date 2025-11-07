@@ -40,7 +40,7 @@ const config = createConfig(
     appIcon: "https://futures.themanufactory.xyz/favicon.ico",
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "",
-    chains: [chains.testnet],
+    chains: [chains.mainnet],
     connectors: [],
     transports: {
       [currentNetwork.chainId]: http(),

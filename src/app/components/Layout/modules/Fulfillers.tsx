@@ -23,7 +23,6 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
     useState<{
       [key: string]: boolean;
     }>({});
-
   const toggleFulfillmentExpanded = (
     fulfillerAddress: string,
     fulfillmentIndex: number
@@ -85,7 +84,10 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto" id="fulfillers-scrollable">
+      <div
+        className="flex-1 min-h-0 overflow-y-auto"
+        id="fulfillers-scrollable"
+      >
         <div className="px-2 sm:px-3 lg:px-4">
           <InfiniteScroll
             dataLength={fulfillers?.length || 0}
@@ -99,9 +101,9 @@ const Fulfillers: FunctionComponent<{ dict: any }> = ({ dict }) => {
             scrollableTarget="fulfillers-scrollable"
           >
             <div className="space-y-3 sm:space-y-4 lg:space-y-8">
-              {fulfillers?.map((fulfiller) => (
+              {fulfillers?.map((fulfiller, i) => (
                 <div
-                  key={fulfiller?.fulfiller}
+                  key={i}
                   className="border border-black p-2 bg-white sm:p-3 lg:p-4 relative w-full h-fit flex flex-col"
                 >
                   <div className="pb-2 sm:pb-3 lg:pb-4 mb-2 sm:mb-3 lg:mb-4 w-full h-fit flex">
