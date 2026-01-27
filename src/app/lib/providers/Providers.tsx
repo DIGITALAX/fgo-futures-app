@@ -1,8 +1,9 @@
 "use client";
 
 import { WagmiProvider, createConfig, http } from "wagmi";
+import { injected } from "wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConnectKitProvider, getDefaultConfig } from "connectkit";
+import { ConnectKitProvider } from "connectkit";
 import { createContext, SetStateAction, useState } from "react";
 import { chains } from "@lens-chain/sdk/viem";
 import { getCurrentNetwork } from "../constants";
@@ -32,21 +33,17 @@ export const SimulationContext = createContext<
     }
   | undefined
 >(undefined);
-const config = createConfig(
-  getDefaultConfig({
-    appName: "FGO Futures",
-    appDescription: "Fractional Garment Ownership Futures.",
-    appUrl: "https://futures.themanufactory.xyz",
-    appIcon: "https://futures.themanufactory.xyz/favicon.ico",
-    walletConnectProjectId:
-      process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "",
-    chains: [chains.mainnet],
-    connectors: [],
-    transports: {
-      [currentNetwork.chainId]: http(),
-    },
-  })
-);
+const config = createConfig({
+  chains: [chains.mainnet],
+  connectors: [
+    injected({
+      target: "metaMask",
+    }),
+  ],
+  transports: {
+    [currentNetwork.chainId]: http(),
+  },
+});
 
 const queryClient = new QueryClient();
 
